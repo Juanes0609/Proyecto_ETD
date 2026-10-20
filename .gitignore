@@ -1,0 +1,13 @@
+# Compilados de Maven e IntelliJ
+target/
+out/
+*.class
+
+# Archivos de configuración local de IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Archivos del sistema operativo (macOS)
+.DS_Store
