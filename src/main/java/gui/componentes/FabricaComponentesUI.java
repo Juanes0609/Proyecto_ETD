@@ -4,6 +4,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -88,6 +89,15 @@ public final class FabricaComponentesUI {
         return area;
     }
 
+    /** Control con su etiqueta encima, para barras de filtros fuera de un {@link FormularioFlexible}. */
+    public static VBox crearCampoEtiquetado(String etiqueta, Control control) {
+        Label lbl = new Label(etiqueta);
+        lbl.getStyleClass().add("formulario-etiqueta");
+        lbl.setLabelFor(control);
+        control.setAccessibleText(etiqueta);
+        return new VBox(4, lbl, control);
+    }
+
     // ---------- Contenedores ----------
 
     /** Fila horizontal de acciones; los nodos {@link #crearEspaciador()} empujan a la derecha. */
@@ -156,7 +166,8 @@ public final class FabricaComponentesUI {
         if (estado == null || estado.isBlank()) {
             return "—";
         }
-        String texto = estado.replace('_', ' ').toLowerCase(Locale.ROOT);
+        String texto = estado.replace('_', ' ').toLowerCase(Locale.ROOT)
+                .replace("preparacion", "preparación"); // los enums no llevan tildes
         return Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
     }
 

@@ -3,6 +3,8 @@ package gui;
 import gui.integracion.ConectorSGAProveedor;
 import gui.navegacion.GestorNavegacion;
 import gui.navegacion.TipoVista;
+import gui.vistas.VistaBusquedaDisponibilidad;
+import gui.vistas.VistaConsultaReservas;
 import gui.vistas.VistaMenuPrincipal;
 import gui.vistas.VistaRegistroApartamentos;
 import gui.vistas.VistaRegistroHuespedes;
@@ -45,5 +47,7 @@ public class AplicacionSGA extends Application {
         navegacion.registrar(TipoVista.TABLERO_APARTAMENTOS, VistaTableroApartamentos::new);
         navegacion.registrar(TipoVista.REGISTRO_APARTAMENTOS, VistaRegistroApartamentos::new);
         navegacion.registrar(TipoVista.REGISTRO_HUESPEDES, VistaRegistroHuespedes::new);
+        navegacion.registrar(TipoVista.BUSQUEDA_DISPONIBILIDAD, VistaBusquedaDisponibilidad::new);
+        navegacion.registrar(TipoVista.CONSULTA_RESERVAS, VistaConsultaReservas::new);
     }
 }
