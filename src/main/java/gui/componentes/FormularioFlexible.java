@@ -10,9 +10,7 @@ import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -182,23 +180,6 @@ public class FormularioFlexible extends VBox {
             primeroConError.control.requestFocus();
         }
         return primeroConError == null;
-    }
-
-    /** Compatibilidad con las vistas anteriores. */
-    public List<String> validarObligatorios() {
-        List<String> faltantes = new ArrayList<>();
-        campos.forEach((etiqueta, campo) -> {
-            campo.tocado = true;
-            if (!campo.validar()) {
-                faltantes.add(etiqueta);
-            }
-        });
-        return faltantes;
-    }
-
-    /** Compatibilidad con las vistas anteriores. */
-    public FormularioFlexible agregarCampoObligatorio(String etiqueta, Control control, String ayuda) {
-        return agregarCampo(etiqueta, control, ayuda);
     }
 
     /** Vacía los campos y quita las marcas de validación. */

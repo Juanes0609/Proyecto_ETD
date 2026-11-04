@@ -66,21 +66,4 @@ public abstract class VistaBase {
     protected void ocultarHoja() {
         contenedor.ocultarHoja();
     }
-
-    /** Compatibilidad con las vistas anteriores. */
-    protected void mostrarInspector(String titulo, Node contenidoInspector) {
-        mostrarHoja(titulo, contenidoInspector);
-    }
-
-    /** Compatibilidad con las vistas anteriores. */
-    protected void ocultarInspector() {
-        ocultarHoja();
-    }
-
-    /** Compatibilidad con las vistas anteriores (solo en ventanas con sidebar). */
-    protected void navegarA(TipoVista destino) {
-        if (contenedor instanceof gui.VentanaPrincipalSGA ventana) {
-            ventana.getNavegacion().navegarA(destino);
-        }
-    }
 }

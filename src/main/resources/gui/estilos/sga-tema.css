@@ -922,6 +922,7 @@
     -fx-text-fill: -sga-texto;
     -fx-padding: 0 10 0 10;
     -fx-border-color: transparent;
+    -fx-alignment: center-left;
 }
 
 .table-row-cell:empty, .table-row-cell:empty:hover {
@@ -986,6 +987,13 @@
 
 .mapa-pasillo:hover {
     -fx-stroke: -sga-primario;
+}
+
+/* Trazo invisible y ancho encima de cada pasillo para que sea fácil de clicar */
+.mapa-zona-clic {
+    -fx-stroke: transparent;
+    -fx-stroke-width: 14;
+    -fx-cursor: hand;
 }
 
 .mapa-pasillo-cerrado {

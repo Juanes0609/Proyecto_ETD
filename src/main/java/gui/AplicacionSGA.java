@@ -1,5 +1,9 @@
 package gui;
 
+import gui.admin.VistaCatalogos;
+import gui.admin.VistaEdificio;
+import gui.admin.VistaReportes;
+import gui.admin.VistaTemporadas;
 import gui.cliente.VentanaCliente;
 import gui.integracion.ConectorSGA;
 import gui.integracion.ConectorSGADemo;
@@ -78,6 +82,11 @@ public class AplicacionSGA extends Application {
         navegacion.registrar(TipoVista.RECEPCION_LLEGADAS, VistaLlegadasSalidas::new);
         navegacion.registrar(TipoVista.RECEPCION_FOLIOS, VistaFolios::new);
         navegacion.registrar(TipoVista.RECEPCION_PREPARACION, VistaPreparacion::new);
+
+        navegacion.registrar(TipoVista.ADMIN_REPORTES, VistaReportes::new);
+        navegacion.registrar(TipoVista.ADMIN_EDIFICIO, VistaEdificio::new);
+        navegacion.registrar(TipoVista.ADMIN_CATALOGOS, VistaCatalogos::new);
+        navegacion.registrar(TipoVista.ADMIN_TEMPORADAS, VistaTemporadas::new);
     }
 
     private void cambiarRaiz(Parent raiz) {

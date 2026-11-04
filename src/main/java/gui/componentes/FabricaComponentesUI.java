@@ -314,11 +314,6 @@ public final class FabricaComponentesUI {
         return badge;
     }
 
-    /** Compatibilidad: ver {@link Formato#estado(String)}. */
-    public static String formatearEstado(String estado) {
-        return Formato.estado(estado);
-    }
-
     private static String claseBadge(String estado) {
         if (estado == null || estado.isBlank()) {
             return "badge-neutro";
