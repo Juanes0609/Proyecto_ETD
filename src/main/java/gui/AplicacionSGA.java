@@ -6,6 +6,11 @@ import gui.integracion.ConectorSGADemo;
 import gui.integracion.dto.Rol;
 import gui.integracion.dto.UsuarioDTO;
 import gui.navegacion.GestorNavegacion;
+import gui.navegacion.TipoVista;
+import gui.recepcion.VistaFolios;
+import gui.recepcion.VistaLlegadasSalidas;
+import gui.recepcion.VistaPreparacion;
+import gui.recepcion.VistaReservarRecepcion;
 import gui.sesion.VistaLogin;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
@@ -69,6 +74,10 @@ public class AplicacionSGA extends Application {
      * constante en {@code TipoVista} y una línea aquí.
      */
     private void registrarVistas(GestorNavegacion navegacion) {
+        navegacion.registrar(TipoVista.RECEPCION_RESERVAR, VistaReservarRecepcion::new);
+        navegacion.registrar(TipoVista.RECEPCION_LLEGADAS, VistaLlegadasSalidas::new);
+        navegacion.registrar(TipoVista.RECEPCION_FOLIOS, VistaFolios::new);
+        navegacion.registrar(TipoVista.RECEPCION_PREPARACION, VistaPreparacion::new);
     }
 
     private void cambiarRaiz(Parent raiz) {

@@ -65,6 +65,7 @@ public final class Formato {
             return "—";
         }
         String texto = estado.replace('_', ' ').toLowerCase(Locale.ROOT)
+                .replace("pendiente preparacion", "pendiente de preparación")
                 .replace("preparacion", "preparación")
                 .replace("anulacion", "anulación");
         return Character.toUpperCase(texto.charAt(0)) + texto.substring(1);

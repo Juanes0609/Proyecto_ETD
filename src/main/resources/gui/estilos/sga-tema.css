@@ -921,6 +921,16 @@
 .table-row-cell .table-cell {
     -fx-text-fill: -sga-texto;
     -fx-padding: 0 10 0 10;
+    -fx-border-color: transparent;
+}
+
+.table-row-cell:empty, .table-row-cell:empty:hover {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.table-view .filler, .table-view .column-header:last-visible {
+    -fx-background-color: transparent;
 }
 
 .table-view:focused {

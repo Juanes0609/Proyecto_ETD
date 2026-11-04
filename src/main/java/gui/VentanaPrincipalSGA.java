@@ -59,8 +59,11 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
         this.destinos = new BarraNavegacion<>(BarraNavegacion.Disposicion.LATERAL, navegacion::navegarA);
         TipoVista.deRol(rol).forEach(t -> destinos.agregar(t, t.getIcono(), t.getTitulo()));
         setLeft(crearSidebar());
-        setTop(crearBarraSuperior());
-        setCenter(crearAreaCentral());
+        // La barra superior va dentro del área central para que el sidebar (con la marca)
+        // ocupe toda la altura y la marca quede siempre arriba a la izquierda.
+        VBox derecha = new VBox(crearBarraSuperior(), crearAreaCentral());
+        VBox.setVgrow(derecha.getChildren().get(1), Priority.ALWAYS);
+        setCenter(derecha);
     }
 
     /** Muestra el primer destino del rol. Se llama después de registrar las vistas. */
