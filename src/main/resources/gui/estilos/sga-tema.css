@@ -242,7 +242,7 @@
     -fx-min-width: 320;
 }
 
-.inspector-scroll, .inspector-scroll > .viewport {
+.scroll-transparente, .scroll-transparente > .viewport {
     -fx-background-color: transparent;
     -fx-background: transparent;
 }

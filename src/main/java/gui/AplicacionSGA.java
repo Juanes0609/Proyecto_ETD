@@ -3,6 +3,8 @@ package gui;
 import gui.integracion.ConectorSGAProveedor;
 import gui.navegacion.GestorNavegacion;
 import gui.navegacion.TipoVista;
+import gui.vistas.VistaMenuPrincipal;
+import gui.vistas.VistaTableroApartamentos;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -37,5 +39,7 @@ public class AplicacionSGA extends Application {
      * en {@link TipoVista} y una línea aquí.
      */
     private void registrarVistas(GestorNavegacion navegacion) {
+        navegacion.registrar(TipoVista.MENU_PRINCIPAL, VistaMenuPrincipal::new);
+        navegacion.registrar(TipoVista.TABLERO_APARTAMENTOS, VistaTableroApartamentos::new);
     }
 }

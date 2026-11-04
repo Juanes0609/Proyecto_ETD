@@ -122,7 +122,7 @@ public class VentanaPrincipalSGA extends BorderPane {
 
         HBox encabezado = new HBox(lblTituloInspector, FabricaComponentesUI.crearEspaciador(), cerrar);
         contenidoInspector.setFitToWidth(true);
-        contenidoInspector.getStyleClass().add("inspector-scroll");
+        contenidoInspector.getStyleClass().add("scroll-transparente");
         contenidoInspector.setPadding(Insets.EMPTY);
         VBox.setVgrow(contenidoInspector, Priority.ALWAYS);
 
