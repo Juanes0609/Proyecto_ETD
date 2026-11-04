@@ -242,6 +242,11 @@
     -fx-min-width: 320;
 }
 
+.inspector-scroll, .inspector-scroll > .viewport {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
 .inspector-titulo {
     -fx-font-size: 15px;
     -fx-font-weight: bold;

@@ -1,14 +1,15 @@
 package gui;
 
+import gui.integracion.ConectorSGAProveedor;
+import gui.navegacion.GestorNavegacion;
+import gui.navegacion.TipoVista;
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 /**
- * Aplicación JavaFX del SGA. Crea el único {@link Stage} del sistema
- * y aplica la hoja de estilos centralizada.
+ * Aplicación JavaFX del SGA. Crea el único {@link Stage} del sistema,
+ * aplica la hoja de estilos centralizada y registra las vistas.
  */
 public class AplicacionSGA extends Application {
 
@@ -17,8 +18,11 @@ public class AplicacionSGA extends Application {
 
     @Override
     public void start(Stage escenario) {
-        StackPane raiz = new StackPane(new Label(TITULO));
-        Scene escena = new Scene(raiz, 1280, 800);
+        VentanaPrincipalSGA ventana = new VentanaPrincipalSGA(new ConectorSGAProveedor());
+        registrarVistas(ventana.getNavegacion());
+        ventana.iniciar(TipoVista.MENU_PRINCIPAL);
+
+        Scene escena = new Scene(ventana, 1280, 800);
         escena.getStylesheets().add(getClass().getResource(HOJA_ESTILOS).toExternalForm());
 
         escenario.setTitle(TITULO);
@@ -26,5 +30,12 @@ public class AplicacionSGA extends Application {
         escenario.setMinHeight(640);
         escenario.setScene(escena);
         escenario.show();
+    }
+
+    /**
+     * Registro de vistas: para agregar una sección nueva basta con una constante
+     * en {@link TipoVista} y una línea aquí.
+     */
+    private void registrarVistas(GestorNavegacion navegacion) {
     }
 }
