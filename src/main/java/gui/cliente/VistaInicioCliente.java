@@ -75,6 +75,13 @@ public class VistaInicioCliente extends VistaBase {
                 .filter(s -> filtro.coincide(s.capacidad(), s.tarifa(temporada))).toList();
         filtro.setResultado(visibles.size());
         grilla.getChildren().clear();
+        grilla.setAlignment(visibles.isEmpty() ? javafx.geometry.Pos.TOP_CENTER : javafx.geometry.Pos.TOP_LEFT);
+        if (suites.isEmpty()) {
+            grilla.getChildren().add(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.CAMA,
+                    "Aún no hay aparta-suites disponibles",
+                    "Vuelve pronto: el catálogo del complejo se está actualizando.", null));
+            return;
+        }
         if (visibles.isEmpty()) {
             grilla.getChildren().add(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.FILTRO,
                     "Ningún aparta-suite coincide",

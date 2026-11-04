@@ -55,7 +55,7 @@ public class TarjetaApartaSuite extends VBox {
 
         Label nombre = new Label(suite.nombre());
         nombre.getStyleClass().add("suite-nombre");
-        nombre.setWrapText(true);
+        nombre.setTooltip(new javafx.scene.control.Tooltip(suite.nombre()));
         Label ubicacion = FabricaComponentesUI.crearTextoSecundario(suite.ubicacion());
         Label datos = FabricaComponentesUI.crearTexto(Formato.plural(suite.dormitorios(), "dormitorio", "dormitorios")
                 + " · hasta " + Formato.plural(suite.capacidad(), "huésped", "huéspedes"));

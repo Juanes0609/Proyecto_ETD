@@ -83,6 +83,10 @@ public class VistaReservarRecepcion extends VistaBase {
         }
         if (filtro != null) {
             pintarSuites();
+        } else {
+            panelSuites.getChildren().setAll(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.CAMA,
+                    "No hay aparta-suites reservables",
+                    "El administrador puede registrarlos en Catálogos.", null));
         }
         mostrarSegmento(segmento);
     }
@@ -113,6 +117,7 @@ public class VistaReservarRecepcion extends VistaBase {
                 .filter(s -> filtro.coincide(s.capacidad(), s.tarifa(temporada))).toList();
         filtro.setResultado(visibles.size());
         grilla.getChildren().clear();
+        grilla.setAlignment(visibles.isEmpty() ? javafx.geometry.Pos.TOP_CENTER : javafx.geometry.Pos.TOP_LEFT);
         if (visibles.isEmpty()) {
             grilla.getChildren().add(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.FILTRO,
                     "Ningún aparta-suite coincide", "Ajusta el número de personas o el precio.",
