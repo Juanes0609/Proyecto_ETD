@@ -1,25 +1,25 @@
 package gui.navegacion;
 
-import gui.VentanaPrincipalSGA;
+import gui.ContenedorVistas;
 import gui.componentes.NotificadorUI;
 import gui.integracion.ConectorSGA;
+import gui.integracion.dto.UsuarioDTO;
 import javafx.scene.Node;
 
 /**
- * Clase base de todas las pantallas del área central.
+ * Clase base de todas las pantallas.
  * <p>
  * Cada vista construye su contenido una sola vez ({@link #construir()}) y se
- * reutiliza al volver a ella, conservando lo que el usuario había escrito.
- * Desde aquí accede a los servicios compartidos de la ventana: inspector
- * lateral, notificaciones inline, navegación y conector con el núcleo.
+ * reutiliza al volver a ella; {@link #alMostrar()} sirve para refrescar datos.
+ * Desde aquí accede a los servicios compartidos de su ventana.
  */
 public abstract class VistaBase {
 
-    private final VentanaPrincipalSGA ventana;
+    private final ContenedorVistas contenedor;
     private Node contenido;
 
-    protected VistaBase(VentanaPrincipalSGA ventana) {
-        this.ventana = ventana;
+    protected VistaBase(ContenedorVistas contenedor) {
+        this.contenedor = contenedor;
     }
 
     /** Construye el nodo raíz de la vista. Se invoca una sola vez. */
@@ -43,27 +43,44 @@ public abstract class VistaBase {
         return contenido;
     }
 
-    protected VentanaPrincipalSGA ventana() {
-        return ventana;
+    protected ContenedorVistas contenedor() {
+        return contenedor;
     }
 
     protected NotificadorUI notificador() {
-        return ventana.getNotificador();
+        return contenedor.getNotificador();
     }
 
     protected ConectorSGA conector() {
-        return ventana.getConector();
+        return contenedor.getConector();
     }
 
-    protected void navegarA(TipoVista destino) {
-        ventana.getNavegacion().navegarA(destino);
+    protected UsuarioDTO usuario() {
+        return contenedor.getUsuario();
     }
 
+    protected void mostrarHoja(String titulo, Node contenidoHoja) {
+        contenedor.mostrarHoja(titulo, contenidoHoja);
+    }
+
+    protected void ocultarHoja() {
+        contenedor.ocultarHoja();
+    }
+
+    /** Compatibilidad con las vistas anteriores. */
     protected void mostrarInspector(String titulo, Node contenidoInspector) {
-        ventana.mostrarInspector(titulo, contenidoInspector);
+        mostrarHoja(titulo, contenidoInspector);
     }
 
+    /** Compatibilidad con las vistas anteriores. */
     protected void ocultarInspector() {
-        ventana.ocultarInspector();
+        ocultarHoja();
+    }
+
+    /** Compatibilidad con las vistas anteriores (solo en ventanas con sidebar). */
+    protected void navegarA(TipoVista destino) {
+        if (contenedor instanceof gui.VentanaPrincipalSGA ventana) {
+            ventana.getNavegacion().navegarA(destino);
+        }
     }
 }

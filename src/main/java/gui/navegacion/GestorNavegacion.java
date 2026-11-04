@@ -62,6 +62,14 @@ public class GestorNavegacion {
         mostrar(historial.pop());
     }
 
+    /** Vuelve a cargar los datos de la vista activa (por ejemplo, tras recargar el escenario). */
+    public void refrescarActual() {
+        VistaBase vista = vistaActual.get() == null ? null : vistasCreadas.get(vistaActual.get());
+        if (vista != null) {
+            vista.alMostrar();
+        }
+    }
+
     private void mostrar(TipoVista destino) {
         VistaBase anterior = vistaActual.get() == null ? null : vistasCreadas.get(vistaActual.get());
         if (anterior != null) {

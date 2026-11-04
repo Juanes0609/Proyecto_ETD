@@ -110,6 +110,22 @@ public class FormularioFlexible extends VBox {
         return agregar(etiqueta, control, ayuda, false);
     }
 
+    /**
+     * Campo cuya presentación es un nodo compuesto (por ejemplo, contraseña con botón
+     * para mostrarla). {@code control} es el que se valida y lee.
+     */
+    public FormularioFlexible agregarCampoCompuesto(String etiqueta, Control control, Node visual, String ayuda) {
+        return agregar(etiqueta, control, visual, ayuda, true);
+    }
+
+    /** Hace que otro control (alternativo al principal) también active el label del campo. */
+    public FormularioFlexible vincularFoco(String etiqueta, Control otro) {
+        Campo campo = campos.get(etiqueta);
+        otro.focusedProperty().addListener((obs, antes, enfocado) ->
+                campo.etiqueta.pseudoClassStateChanged(ACTIVO, enfocado));
+        return this;
+    }
+
     /** Dato informativo que el usuario no puede editar (por ejemplo, datos del aparta-suite). */
     public FormularioFlexible agregarDatoSoloLectura(String etiqueta, String valor) {
         Label lblEtiqueta = new Label(etiqueta);
@@ -201,6 +217,11 @@ public class FormularioFlexible extends VBox {
     }
 
     private FormularioFlexible agregar(String etiqueta, Control control, String ayuda, boolean obligatorio) {
+        return agregar(etiqueta, control, control, ayuda, obligatorio);
+    }
+
+    private FormularioFlexible agregar(String etiqueta, Control control, Node visual, String ayuda,
+                                       boolean obligatorio) {
         Label lblEtiqueta = new Label(etiqueta);
         lblEtiqueta.getStyleClass().add("campo-label");
         lblEtiqueta.setLabelFor(control);
@@ -224,7 +245,7 @@ public class FormularioFlexible extends VBox {
             }
         });
 
-        VBox bloque = new VBox(6, filaEtiqueta, control, campo.mensaje);
+        VBox bloque = new VBox(6, filaEtiqueta, visual, campo.mensaje);
         bloque.getStyleClass().add("campo");
         getChildren().add(bloque);
         campos.put(etiqueta, campo);

@@ -1,53 +1,77 @@
 package gui;
 
-import gui.integracion.ConectorSGAProveedor;
+import gui.integracion.ConectorSGA;
+import gui.integracion.ConectorSGADemo;
+import gui.integracion.dto.Rol;
+import gui.integracion.dto.UsuarioDTO;
 import gui.navegacion.GestorNavegacion;
-import gui.navegacion.TipoVista;
-import gui.vistas.VistaBusquedaDisponibilidad;
-import gui.vistas.VistaConsultaReservas;
-import gui.vistas.VistaMenuPrincipal;
-import gui.vistas.VistaRegistroApartamentos;
-import gui.vistas.VistaRegistroHuespedes;
-import gui.vistas.VistaTableroApartamentos;
+import gui.sesion.VistaLogin;
+import javafx.animation.FadeTransition;
 import javafx.application.Application;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.Region;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
- * Aplicación JavaFX del SGA. Crea el único {@link Stage} del sistema,
- * aplica la hoja de estilos centralizada y registra las vistas.
+ * Aplicación JavaFX del SGA. Crea el único {@link Stage} del sistema y cambia
+ * su contenido según la sesión: inicio de sesión → experiencia del rol → cerrar
+ * sesión vuelve al inicio. Nunca se abre una segunda ventana.
  */
 public class AplicacionSGA extends Application {
 
-    public static final String TITULO = "SGA — Aparta-Suites UQ";
+    public static final String TITULO = MarcaApp.NOMBRE;
     private static final String HOJA_ESTILOS = "/gui/estilos/sga-tema.css";
+
+    /** Cambiar por {@code new ConectorSGAProveedor()} cuando el núcleo esté listo. */
+    private final ConectorSGA conector = new ConectorSGADemo();
+    private Stage escenario;
+    private Scene escena;
 
     @Override
     public void start(Stage escenario) {
-        VentanaPrincipalSGA ventana = new VentanaPrincipalSGA(new ConectorSGAProveedor());
-        registrarVistas(ventana.getNavegacion());
-        ventana.iniciar(TipoVista.MENU_PRINCIPAL);
-
-        Scene escena = new Scene(ventana, 1280, 800);
+        this.escenario = escenario;
+        escena = new Scene(new Region(), 1280, 800);
         escena.getStylesheets().add(getClass().getResource(HOJA_ESTILOS).toExternalForm());
 
-        escenario.setTitle(TITULO);
-        escenario.setMinWidth(960);
-        escenario.setMinHeight(640);
+        escenario.setMinWidth(1024);
+        escenario.setMinHeight(680);
         escenario.setScene(escena);
+        mostrarLogin();
         escenario.show();
     }
 
+    private void mostrarLogin() {
+        escenario.setTitle(TITULO);
+        cambiarRaiz(new VistaLogin(conector, this::entrar));
+    }
+
+    private void entrar(UsuarioDTO usuario) {
+        ContextoApp contexto = new ContextoApp(conector, usuario, this::mostrarLogin);
+        escenario.setTitle(TITULO + " — " + usuario.rol().getEtiqueta());
+        cambiarRaiz(crearVentana(contexto, usuario.rol()));
+    }
+
+    private Parent crearVentana(ContextoApp contexto, Rol rol) {
+        VentanaPrincipalSGA ventana = new VentanaPrincipalSGA(contexto, rol);
+        registrarVistas(ventana.getNavegacion());
+        ventana.iniciar();
+        return ventana;
+    }
+
     /**
-     * Registro de vistas: para agregar una sección nueva basta con una constante
-     * en {@link TipoVista} y una línea aquí.
+     * Registro de destinos del personal: agregar una sección nueva es una
+     * constante en {@code TipoVista} y una línea aquí.
      */
     private void registrarVistas(GestorNavegacion navegacion) {
-        navegacion.registrar(TipoVista.MENU_PRINCIPAL, VistaMenuPrincipal::new);
-        navegacion.registrar(TipoVista.TABLERO_APARTAMENTOS, VistaTableroApartamentos::new);
-        navegacion.registrar(TipoVista.REGISTRO_APARTAMENTOS, VistaRegistroApartamentos::new);
-        navegacion.registrar(TipoVista.REGISTRO_HUESPEDES, VistaRegistroHuespedes::new);
-        navegacion.registrar(TipoVista.BUSQUEDA_DISPONIBILIDAD, VistaBusquedaDisponibilidad::new);
-        navegacion.registrar(TipoVista.CONSULTA_RESERVAS, VistaConsultaReservas::new);
+    }
+
+    private void cambiarRaiz(Parent raiz) {
+        escena.setRoot(raiz);
+        raiz.setOpacity(0);
+        FadeTransition aparecer = new FadeTransition(Duration.millis(180), raiz);
+        aparecer.setToValue(1);
+        aparecer.play();
     }
 }

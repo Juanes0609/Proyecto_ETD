@@ -137,6 +137,35 @@ public final class FabricaComponentesUI {
         return area;
     }
 
+    /** Selector de fecha con formato dd/mm/aaaa (también acepta escritura manual). */
+    public static javafx.scene.control.DatePicker crearSelectorFecha(String sugerencia) {
+        javafx.scene.control.DatePicker selector = new javafx.scene.control.DatePicker();
+        selector.setPromptText(sugerencia == null ? "dd/mm/aaaa" : sugerencia);
+        java.time.format.DateTimeFormatter formato = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        selector.setConverter(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(java.time.LocalDate fecha) {
+                return fecha == null ? "" : formato.format(fecha);
+            }
+
+            @Override
+            public java.time.LocalDate fromString(String texto) {
+                try {
+                    return texto == null || texto.isBlank() ? null : java.time.LocalDate.parse(texto.trim(), formato);
+                } catch (java.time.format.DateTimeParseException e) {
+                    return null;
+                }
+            }
+        });
+        // Al salir del campo, confirma lo escrito a mano.
+        selector.focusedProperty().addListener((obs, antes, enfocado) -> {
+            if (!enfocado) {
+                selector.setValue(selector.getConverter().fromString(selector.getEditor().getText()));
+            }
+        });
+        return selector;
+    }
+
     /** Control con su etiqueta encima, para barras de filtros fuera de un {@link FormularioFlexible}. */
     public static VBox crearCampoEtiquetado(String etiqueta, Control control) {
         Label lbl = new Label(etiqueta);
