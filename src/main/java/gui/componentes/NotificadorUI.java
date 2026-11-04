@@ -23,6 +23,7 @@ public class NotificadorUI extends HBox {
     };
 
     private final Label mensaje = new Label();
+    private final javafx.scene.layout.StackPane espacioIcono = new javafx.scene.layout.StackPane();
     private final PauseTransition temporizador = new PauseTransition();
 
     public NotificadorUI() {
@@ -31,30 +32,31 @@ public class NotificadorUI extends HBox {
         mensaje.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(mensaje, Priority.ALWAYS);
 
-        Button cerrar = new Button("✕");
+        Button cerrar = new Button();
+        cerrar.setGraphic(Iconos.crear(Iconos.Icono.CERRAR, 16));
         cerrar.getStyleClass().add("boton-icono");
         cerrar.setAccessibleText("Cerrar notificación");
         cerrar.setOnAction(e -> ocultar());
 
-        getChildren().addAll(mensaje, cerrar);
+        getChildren().addAll(espacioIcono, mensaje, cerrar);
         temporizador.setOnFinished(e -> ocultar());
         ocultar();
     }
 
     public void mostrarExito(String texto) {
-        mostrar("notificacion-exito", texto, 4);
+        mostrar("notificacion-exito", Iconos.Icono.CHECK, texto, 4);
     }
 
     public void mostrarInfo(String texto) {
-        mostrar("notificacion-info", texto, 4);
+        mostrar("notificacion-info", Iconos.Icono.INFO, texto, 5);
     }
 
     public void mostrarAdvertencia(String texto) {
-        mostrar("notificacion-advertencia", texto, 6);
+        mostrar("notificacion-advertencia", Iconos.Icono.ALERTA, texto, 6);
     }
 
     public void mostrarError(String texto) {
-        mostrar("notificacion-error", texto, 8);
+        mostrar("notificacion-error", Iconos.Icono.ALERTA, texto, 8);
     }
 
     /**
@@ -96,7 +98,8 @@ public class NotificadorUI extends HBox {
         setManaged(false);
     }
 
-    private void mostrar(String claseTipo, String texto, int segundos) {
+    private void mostrar(String claseTipo, Iconos.Icono icono, String texto, int segundos) {
+        espacioIcono.getChildren().setAll(Iconos.crear(icono, 18));
         getStyleClass().removeAll(CLASES_TIPO);
         getStyleClass().add(claseTipo);
         mensaje.setText(texto);

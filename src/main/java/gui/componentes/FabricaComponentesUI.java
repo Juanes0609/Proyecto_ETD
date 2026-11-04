@@ -10,13 +10,17 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.text.Normalizer;
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -33,21 +37,46 @@ public final class FabricaComponentesUI {
     public static VBox crearEncabezado(String titulo, String descripcion) {
         Label lblTitulo = new Label(titulo);
         lblTitulo.getStyleClass().add("encabezado-vista");
+        lblTitulo.setWrapText(true);
         VBox caja = new VBox(2, lblTitulo);
         if (descripcion != null && !descripcion.isBlank()) {
-            Label lblDescripcion = new Label(descripcion);
-            lblDescripcion.getStyleClass().add("texto-secundario");
-            lblDescripcion.setWrapText(true);
-            caja.getChildren().add(lblDescripcion);
+            caja.getChildren().add(crearTextoSecundario(descripcion));
         }
         return caja;
     }
 
-    public static Label crearTextoSecundario(String texto) {
+    /** Título grande de página con subtítulo opcional. */
+    public static VBox crearTituloPagina(String titulo, String subtitulo) {
+        Label lblTitulo = new Label(titulo);
+        lblTitulo.getStyleClass().add("titulo-seccion");
+        lblTitulo.setWrapText(true);
+        VBox caja = new VBox(2, lblTitulo);
+        if (subtitulo != null && !subtitulo.isBlank()) {
+            caja.getChildren().add(crearTextoSecundario(subtitulo));
+        }
+        return caja;
+    }
+
+    public static Label crearTexto(String texto, String... clases) {
         Label lbl = new Label(texto);
-        lbl.getStyleClass().add("texto-secundario");
+        lbl.getStyleClass().addAll(clases);
         lbl.setWrapText(true);
         return lbl;
+    }
+
+    public static Label crearTextoSecundario(String texto) {
+        return crearTexto(texto, "texto-secundario");
+    }
+
+    /** Texto con icono delante (por ejemplo, "✓ Cancelación gratuita"). */
+    public static HBox crearTextoConIcono(Iconos.Icono icono, String texto, String clase) {
+        Label lbl = new Label(texto);
+        lbl.setWrapText(true);
+        HBox fila = new HBox(6, Iconos.crear(icono, 15), lbl);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        fila.getStyleClass().add(clase);
+        lbl.getStyleClass().add(clase);
+        return fila;
     }
 
     // ---------- Botones ----------
@@ -62,6 +91,25 @@ public final class FabricaComponentesUI {
 
     public static Button crearBotonPeligro(String texto, Runnable accion) {
         return crearBoton(texto, "boton-peligro", accion);
+    }
+
+    public static Button crearEnlace(String texto, Runnable accion) {
+        return crearBoton(texto, "enlace", accion);
+    }
+
+    /** Botón de solo icono; {@code descripcion} es el texto accesible y el tooltip. */
+    public static Button crearBotonIcono(Iconos.Icono icono, String descripcion, Runnable accion) {
+        Button boton = crearBoton(null, "boton-icono", accion);
+        boton.setGraphic(Iconos.crear(icono, 18));
+        boton.setAccessibleText(descripcion);
+        boton.setTooltip(new javafx.scene.control.Tooltip(descripcion));
+        return boton;
+    }
+
+    public static Button conIcono(Button boton, Iconos.Icono icono) {
+        boton.setGraphic(Iconos.crear(icono, 16));
+        boton.setGraphicTextGap(8);
+        return boton;
     }
 
     private static Button crearBoton(String texto, String claseEstilo, Runnable accion) {
@@ -92,10 +140,10 @@ public final class FabricaComponentesUI {
     /** Control con su etiqueta encima, para barras de filtros fuera de un {@link FormularioFlexible}. */
     public static VBox crearCampoEtiquetado(String etiqueta, Control control) {
         Label lbl = new Label(etiqueta);
-        lbl.getStyleClass().add("formulario-etiqueta");
+        lbl.getStyleClass().add("campo-label");
         lbl.setLabelFor(control);
         control.setAccessibleText(etiqueta);
-        return new VBox(4, lbl, control);
+        return new VBox(6, lbl, control);
     }
 
     // ---------- Contenedores ----------
@@ -111,6 +159,7 @@ public final class FabricaComponentesUI {
     public static HBox crearBarraFiltros(Node... nodos) {
         HBox barra = new HBox(nodos);
         barra.getStyleClass().add("barra-filtros");
+        barra.setAlignment(Pos.BOTTOM_LEFT);
         return barra;
     }
 
@@ -121,54 +170,124 @@ public final class FabricaComponentesUI {
         return espacio;
     }
 
+    public static Region crearSeparador() {
+        Region linea = new Region();
+        linea.getStyleClass().add("separador");
+        return linea;
+    }
+
     public static VBox crearTarjeta(Node... contenido) {
         VBox tarjeta = new VBox(contenido);
         tarjeta.getStyleClass().add("tarjeta");
         return tarjeta;
     }
 
-    /** Tarjeta de indicador numérico; el {@link Label} del valor se devuelve dentro para actualizarlo. */
+    /** Tarjeta de indicador numérico; el {@link Label} del valor se pasa para actualizarlo. */
     public static VBox crearTarjetaIndicador(String etiqueta, Label valor) {
         valor.getStyleClass().add("indicador-valor");
         Label lblEtiqueta = new Label(etiqueta);
         lblEtiqueta.getStyleClass().add("indicador-etiqueta");
+        lblEtiqueta.setWrapText(true);
         VBox tarjeta = crearTarjeta(valor, lblEtiqueta);
         tarjeta.setMinWidth(170);
         return tarjeta;
     }
 
-    /** Mensaje centrado para listas o tablas sin elementos. */
+    /** Mensaje centrado para listas vacías, con una acción de destino opcional. */
     public static VBox crearEstadoVacio(String titulo, String descripcion) {
+        return crearEstadoVacio(null, titulo, descripcion, null);
+    }
+
+    public static VBox crearEstadoVacio(Iconos.Icono icono, String titulo, String descripcion, Button accion) {
         Label lblTitulo = new Label(titulo);
         lblTitulo.getStyleClass().add("estado-vacio-titulo");
+        lblTitulo.setWrapText(true);
         Label lblDescripcion = crearTextoSecundario(descripcion);
         lblDescripcion.setMaxWidth(420);
         lblDescripcion.setAlignment(Pos.CENTER);
-        VBox caja = new VBox(lblTitulo, lblDescripcion);
+        lblDescripcion.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        VBox caja = new VBox();
+        if (icono != null) {
+            caja.getChildren().add(Iconos.crear(icono, 36));
+        }
+        caja.getChildren().addAll(lblTitulo, lblDescripcion);
+        if (accion != null) {
+            VBox.setMargin(accion, new javafx.geometry.Insets(8, 0, 0, 0));
+            caja.getChildren().add(accion);
+        }
         caja.getStyleClass().add("estado-vacio");
         return caja;
+    }
+
+    /** Mensaje de error dentro de una tarjeta o formulario (no un banner global). */
+    public static HBox crearErrorInline(String mensaje) {
+        Label lbl = new Label(mensaje);
+        lbl.setWrapText(true);
+        HBox caja = new HBox(8, Iconos.crear(Iconos.Icono.ALERTA, 16), lbl);
+        caja.setAlignment(Pos.CENTER_LEFT);
+        caja.getStyleClass().add("error-inline");
+        return caja;
+    }
+
+    /** Píldora con texto y botón para quitarla (filtros activos). */
+    public static HBox crearChip(String texto, Runnable alQuitar) {
+        Label lbl = new Label(texto);
+        HBox chip = new HBox(lbl);
+        chip.getStyleClass().add("chip");
+        if (alQuitar != null) {
+            Button quitar = crearBotonIcono(Iconos.Icono.CERRAR, "Quitar filtro " + texto, alQuitar);
+            quitar.setGraphic(Iconos.crear(Iconos.Icono.CERRAR, 12));
+            chip.getChildren().add(quitar);
+        }
+        return chip;
+    }
+
+    public static Label crearEtiquetaCaracteristica(String texto) {
+        Label lbl = new Label(texto);
+        lbl.getStyleClass().add("etiqueta-caracteristica");
+        return lbl;
+    }
+
+    /**
+     * Control segmentado (dos a cuatro opciones excluyentes dentro de una misma vista).
+     * La opción activa se distingue por fondo, peso del texto y sombra.
+     */
+    public static HBox crearSegmentado(List<String> opciones, int seleccionInicial, Consumer<Integer> alCambiar) {
+        HBox contenedor = new HBox();
+        contenedor.getStyleClass().add("segmentado");
+        contenedor.setMaxWidth(Region.USE_PREF_SIZE);
+        ToggleGroup grupo = new ToggleGroup();
+        for (int i = 0; i < opciones.size(); i++) {
+            int indice = i;
+            ToggleButton segmento = new ToggleButton(opciones.get(i));
+            segmento.getStyleClass().add("segmento");
+            segmento.setToggleGroup(grupo);
+            segmento.setSelected(i == seleccionInicial);
+            segmento.setOnAction(e -> {
+                segmento.setSelected(true);
+                alCambiar.accept(indice);
+            });
+            contenedor.getChildren().add(segmento);
+        }
+        return contenedor;
     }
 
     // ---------- Estados ----------
 
     /**
      * Etiqueta coloreada para un estado ({@code EstadoOperativo}, {@code EstadoReserva}...).
-     * La clase CSS se deriva del nombre: "FUERA_DE_SERVICIO" → {@code badge-fuera-de-servicio}.
+     * Siempre lleva el texto del estado, de modo que no depende solo del color.
      */
     public static Label crearBadgeEstado(String estado) {
-        Label badge = new Label(formatearEstado(estado));
+        Label badge = new Label(Formato.estado(estado));
         badge.getStyleClass().addAll("badge", claseBadge(estado));
+        badge.setMinWidth(Region.USE_PREF_SIZE);
         return badge;
     }
 
-    /** Convierte un nombre de enum en texto legible: "FUERA_DE_SERVICIO" → "Fuera de servicio". */
+    /** Compatibilidad: ver {@link Formato#estado(String)}. */
     public static String formatearEstado(String estado) {
-        if (estado == null || estado.isBlank()) {
-            return "—";
-        }
-        String texto = estado.replace('_', ' ').toLowerCase(Locale.ROOT)
-                .replace("preparacion", "preparación"); // los enums no llevan tildes
-        return Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
+        return Formato.estado(estado);
     }
 
     private static String claseBadge(String estado) {
@@ -196,6 +315,21 @@ public final class FabricaComponentesUI {
         TableColumn<T, String> columna = new TableColumn<>(titulo);
         columna.setCellValueFactory(celda -> new ReadOnlyStringWrapper(extractor.apply(celda.getValue())));
         tabla.getColumns().add(columna);
+        return columna;
+    }
+
+    /** Columna que muestra un badge de estado en lugar de texto plano. */
+    public static <T> TableColumn<T, String> agregarColumnaEstado(TableView<T> tabla, String titulo,
+                                                                  Function<T, String> extractor) {
+        TableColumn<T, String> columna = agregarColumna(tabla, titulo, extractor);
+        columna.setCellFactory(c -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(String estado, boolean vacio) {
+                super.updateItem(estado, vacio);
+                setText(null);
+                setGraphic(vacio || estado == null ? null : crearBadgeEstado(estado));
+            }
+        });
         return columna;
     }
 }

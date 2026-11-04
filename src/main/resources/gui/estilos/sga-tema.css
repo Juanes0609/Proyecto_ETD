@@ -1,107 +1,94 @@
 /* =========================================================================
    SGA Aparta-Suites UQ — Tema visual único de la aplicación.
-   Todos los colores, tamaños y estados se definen aquí; las clases Java solo
-   asignan clases de estilo (getStyleClass) y nunca colores en línea.
+   Las clases Java solo asignan clases de estilo; colores, tamaños y estados
+   viven aquí. Principios (emil-design-eng / apple-design): jerarquía con peso
+   y tamaño, una acción primaria por vista, feedback inmediato al presionar y
+   estados que no dependen solo del color.
    ========================================================================= */
 
 /* ---------- Tokens ---------- */
 .root {
+    /* Marca y acentos */
     -sga-primario: #2f6b4f;
     -sga-primario-hover: #275a43;
-    -sga-primario-suave: #e6f0ea;
+    -sga-primario-suave: #e4efe8;
+    /* Acción primaria: tinta oscura, como en las referencias */
+    -sga-tinta: #17211c;
+    -sga-tinta-hover: #2a3631;
 
-    -sga-fondo: #f5f6f4;
+    /* Superficies */
+    -sga-fondo: #f2f1ed;
     -sga-superficie: #ffffff;
-    -sga-borde: #dfe3de;
-    -sga-texto: #1f2a24;
-    -sga-texto-secundario: #5d6b63;
+    -sga-superficie-hundida: #f7f6f3;
+    -sga-borde: #e3e1db;
+    -sga-borde-input: #d3d0c8;
+
+    /* Texto */
+    -sga-texto: #1b201d;
+    -sga-texto-secundario: #5c635f;
+    -sga-texto-terciario: #8b918d;
     -sga-texto-inverso: #ffffff;
 
-    -sga-exito: #2e7d4f;
-    -sga-exito-fondo: #e5f4ea;
-    -sga-advertencia: #9a6200;
-    -sga-advertencia-fondo: #fdf1dc;
-    -sga-error: #b3261e;
-    -sga-error-fondo: #fbe7e5;
-    -sga-info: #2d5b8a;
-    -sga-info-fondo: #e6eef7;
+    /* Estados */
+    -sga-exito: #23704a;
+    -sga-exito-fondo: #e3f2e9;
+    -sga-advertencia: #8a5a00;
+    -sga-advertencia-fondo: #fcf0d9;
+    -sga-error: #b42318;
+    -sga-error-fondo: #fdeceb;
+    -sga-info: #2c5a88;
+    -sga-info-fondo: #e7eff8;
 
-    -sga-sidebar: #1f3a2d;
-    -sga-sidebar-hover: #2a4a3a;
-    -sga-sidebar-texto: #cfdcd4;
+    /* Sidebar del personal */
+    -sga-sidebar: #18241e;
+    -sga-sidebar-hover: #24332b;
+    -sga-sidebar-texto: #c3d0c8;
+
+    -icono-color: -sga-texto;
+    -icono-detalle-relleno: -sga-superficie;
 
     -fx-font-family: "System";
     -fx-font-size: 13px;
-    -fx-text-fill: -sga-texto;
     -fx-background-color: -sga-fondo;
     -fx-accent: -sga-primario;
-    -fx-focus-color: -sga-primario;
-    -fx-faint-focus-color: #2f6b4f22;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
-/* ---------- Barra lateral ---------- */
-.sidebar {
-    -fx-background-color: -sga-sidebar;
-    -fx-padding: 20 12 20 12;
-    -fx-spacing: 4;
-    -fx-pref-width: 230;
+/* ---------- Iconos (contorno por defecto, relleno en estado activo) ---------- */
+.icono .icono-forma {
+    -fx-fill: transparent;
+    -fx-stroke: -icono-color;
+    -fx-stroke-width: 1.8;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
 }
 
-.sidebar-marca {
-    -fx-text-fill: -sga-texto-inverso;
-    -fx-font-size: 17px;
+.icono .icono-detalle {
+    -fx-fill: transparent;
+    -fx-stroke: -icono-color;
+    -fx-stroke-width: 1.8;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+}
+
+.icono:relleno .icono-forma {
+    -fx-fill: -icono-color;
+}
+
+.icono:relleno .icono-detalle {
+    -fx-stroke: -icono-detalle-relleno;
+}
+
+/* ---------- Tipografía ---------- */
+.titulo-grande {
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
-    -fx-padding: 0 8 0 8;
-}
-
-.sidebar-submarca {
-    -fx-text-fill: -sga-sidebar-texto;
-    -fx-font-size: 11px;
-    -fx-padding: 0 8 18 8;
-}
-
-.sidebar-item {
-    -fx-background-color: transparent;
-    -fx-text-fill: -sga-sidebar-texto;
-    -fx-alignment: center-left;
-    -fx-padding: 9 12 9 12;
-    -fx-background-radius: 6;
-    -fx-max-width: infinity;
-    -fx-cursor: hand;
-}
-
-.sidebar-item:hover {
-    -fx-background-color: -sga-sidebar-hover;
-    -fx-text-fill: -sga-texto-inverso;
-}
-
-.sidebar-item:selected {
-    -fx-background-color: -sga-primario;
-    -fx-text-fill: -sga-texto-inverso;
-    -fx-font-weight: bold;
-}
-
-/* ---------- Barra superior ---------- */
-.barra-superior {
-    -fx-background-color: -sga-superficie;
-    -fx-border-color: transparent transparent -sga-borde transparent;
-    -fx-padding: 12 24 12 24;
-    -fx-spacing: 12;
-    -fx-alignment: center-left;
 }
 
 .titulo-seccion {
-    -fx-font-size: 18px;
+    -fx-font-size: 19px;
     -fx-font-weight: bold;
-}
-
-/* ---------- Contenido ---------- */
-.contenido-central {
-    -fx-padding: 24;
-}
-
-.vista {
-    -fx-spacing: 16;
 }
 
 .encabezado-vista {
@@ -113,13 +100,452 @@
     -fx-text-fill: -sga-texto-secundario;
 }
 
-.tarjeta {
+.texto-terciario {
+    -fx-text-fill: -sga-texto-terciario;
+    -fx-font-size: 12px;
+}
+
+.texto-exito {
+    -fx-text-fill: -sga-exito;
+    -fx-font-weight: bold;
+    -icono-color: -sga-exito;
+}
+
+.texto-error {
+    -fx-text-fill: -sga-error;
+    -icono-color: -sga-error;
+}
+
+/* ---------- Marca (siempre arriba a la izquierda) ---------- */
+.marca {
+    -fx-alignment: center-left;
+}
+
+.marca-logo {
+    -fx-background-color: -sga-tinta;
+    -fx-background-radius: 10;
+}
+
+.marca-monograma {
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-weight: bold;
+}
+
+.marca-nombre {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.marca-lema {
+    -fx-font-size: 11px;
+    -fx-text-fill: -sga-texto-secundario;
+}
+
+.sidebar .marca-nombre {
+    -fx-text-fill: -sga-texto-inverso;
+}
+
+.sidebar .marca-lema {
+    -fx-text-fill: -sga-sidebar-texto;
+}
+
+.sidebar .marca-logo {
+    -fx-background-color: -sga-primario;
+}
+
+/* ---------- Botones ---------- */
+.button, .toggle-button {
+    -fx-cursor: hand;
+}
+
+.boton-primario {
+    -fx-background-color: -sga-tinta;
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 10;
+    -fx-padding: 10 20 10 20;
+    -icono-color: -sga-texto-inverso;
+}
+
+.boton-primario:hover {
+    -fx-background-color: -sga-tinta-hover;
+}
+
+/* Feedback inmediato al presionar (apple-design §1) */
+.boton-primario:pressed, .boton-secundario:pressed, .boton-peligro:pressed, .boton-sutil:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+.boton-primario:disabled {
+    -fx-opacity: 0.4;
+}
+
+.boton-secundario {
+    -fx-background-color: -sga-superficie;
+    -fx-text-fill: -sga-texto;
+    -fx-font-weight: bold;
+    -fx-border-color: -sga-borde-input;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 9 16 9 16;
+}
+
+.boton-secundario:hover {
+    -fx-background-color: -sga-superficie-hundida;
+}
+
+.boton-peligro {
+    -fx-background-color: -sga-superficie;
+    -fx-text-fill: -sga-error;
+    -fx-font-weight: bold;
+    -fx-border-color: -sga-error;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 9 16 9 16;
+}
+
+.boton-peligro:hover {
+    -fx-background-color: -sga-error-fondo;
+}
+
+.boton-peligro-solido {
+    -fx-background-color: -sga-error;
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-padding: 10 20 10 20;
+}
+
+/* Botón discreto (por ejemplo, "Filtrar" sobre las cards) */
+.boton-sutil {
+    -fx-background-color: transparent;
+    -fx-text-fill: -sga-texto;
+    -fx-border-color: -sga-borde-input;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 6 14 6 12;
+    -fx-graphic-text-gap: 8;
+}
+
+.boton-sutil:hover, .boton-sutil:selected {
+    -fx-background-color: -sga-superficie;
+}
+
+.enlace {
+    -fx-background-color: transparent;
+    -fx-text-fill: -sga-texto;
+    -fx-font-weight: bold;
+    -fx-padding: 2 4 2 4;
+    -fx-underline: false;
+}
+
+.enlace:hover {
+    -fx-underline: true;
+}
+
+.boton-icono {
+    -fx-background-color: transparent;
+    -fx-background-radius: 20;
+    -fx-padding: 6;
+    -icono-color: -sga-texto-secundario;
+}
+
+.boton-icono:hover {
+    -fx-background-color: -sga-superficie-hundida;
+    -icono-color: -sga-texto;
+}
+
+/* Foco de teclado visible en cualquier botón */
+/* Anillo de foco de teclado: se dibuja con un efecto para no cambiar el tamaño del botón */
+.button:focused, .toggle-button:focused {
+    -fx-effect: dropshadow(gaussian, #2f6b4f, 3, 1.0, 0, 0);
+}
+
+/* ---------- Campos de entrada (referencia: label arriba, ayuda abajo) ---------- */
+.formulario {
+    -fx-spacing: 16;
+}
+
+.formulario-seccion {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -sga-texto-secundario;
+    -fx-padding: 6 0 0 0;
+}
+
+.campo-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: -sga-texto;
+}
+
+.campo-label:activo {
+    -fx-text-fill: -sga-primario;
+}
+
+.campo-label:invalido {
+    -fx-text-fill: -sga-error;
+}
+
+.campo-opcional {
+    -fx-font-size: 12px;
+    -fx-text-fill: -sga-texto-terciario;
+}
+
+.campo-mensaje .label {
+    -fx-font-size: 12px;
+}
+
+.campo-ayuda .label {
+    -fx-text-fill: -sga-texto-secundario;
+}
+
+.campo-ayuda {
+    -icono-color: -sga-texto-terciario;
+}
+
+.campo-error .label {
+    -fx-text-fill: -sga-error;
+}
+
+.campo-error {
+    -icono-color: -sga-error;
+}
+
+.text-field, .password-field, .text-area, .combo-box, .date-picker, .spinner {
     -fx-background-color: -sga-superficie;
     -fx-background-radius: 10;
-    -fx-border-color: -sga-borde;
+    -fx-border-color: -sga-borde-input;
+    -fx-border-width: 1.5;
     -fx-border-radius: 10;
-    -fx-padding: 16;
+    -fx-background-insets: 0;
+    -fx-prompt-text-fill: -sga-texto-terciario;
+    -fx-text-fill: -sga-texto;
+    -fx-highlight-fill: -sga-primario-suave;
+    -fx-highlight-text-fill: -sga-texto;
+}
+
+.text-field, .password-field {
+    -fx-padding: 9 12 9 12;
+}
+
+.text-area .content {
+    -fx-background-color: transparent;
+    -fx-padding: 6 8 6 8;
+}
+
+/* Los editores internos no dibujan su propio borde */
+.date-picker > .text-field, .spinner > .text-field, .combo-box .text-field {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.text-field:focused, .password-field:focused, .text-area:focused, .combo-box:focused,
+.date-picker:focused, .spinner:focused {
+    -fx-border-color: -sga-primario;
+}
+
+.text-field:invalido, .password-field:invalido, .text-area:invalido, .combo-box:invalido,
+.date-picker:invalido, .spinner:invalido {
+    -fx-border-color: -sga-error;
+}
+
+.text-field:readonly {
+    -fx-background-color: -sga-superficie-hundida;
+}
+
+.combo-box .arrow-button, .date-picker .arrow-button, .spinner .increment-arrow-button,
+.spinner .decrement-arrow-button {
+    -fx-background-color: transparent;
+}
+
+.dato-solo-lectura {
+    -fx-background-color: -sga-superficie-hundida;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 12;
+    -fx-text-fill: -sga-texto;
+}
+
+/* ---------- Navegación por destinos ---------- */
+/* Tab bar inferior del huésped */
+.barra-pestanas {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 22;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 22;
+    -fx-padding: 6 10 6 10;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.12), 24, 0, 0, 6);
+}
+
+.pestana {
+    -fx-background-color: transparent;
+    -fx-background-radius: 14;
+    -fx-padding: 6 18 4 18;
+    -fx-min-width: 84;
+    -icono-color: -sga-texto-terciario;
+}
+
+.pestana:hover {
+    -fx-background-color: -sga-superficie-hundida;
+}
+
+.pestana:selected {
+    -icono-color: -sga-tinta;
+}
+
+.pestana .destino-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: -sga-texto-terciario;
+}
+
+.pestana:selected .destino-label {
+    -fx-text-fill: -sga-tinta;
+    -fx-font-weight: bold;
+}
+
+.pestana .destino-indicador {
+    -fx-min-width: 18;
+    -fx-pref-width: 18;
+    -fx-max-width: 18;
+    -fx-min-height: 3;
+    -fx-pref-height: 3;
+    -fx-max-height: 3;
+    -fx-background-radius: 2;
+    -fx-background-color: transparent;
+}
+
+.pestana:selected .destino-indicador {
+    -fx-background-color: -sga-tinta;
+}
+
+/* Sidebar de recepción y administración */
+.sidebar {
+    -fx-background-color: -sga-sidebar;
+    -fx-padding: 20 12 16 12;
     -fx-spacing: 6;
+    -fx-pref-width: 240;
+    -fx-min-width: 220;
+}
+
+.sidebar-seccion {
+    -fx-text-fill: -sga-sidebar-texto;
+    -fx-font-size: 11px;
+    -fx-padding: 18 12 6 12;
+}
+
+.destino-lateral {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 0;
+    -fx-alignment: center-left;
+    -icono-color: -sga-sidebar-texto;
+    -icono-detalle-relleno: -sga-sidebar;
+}
+
+.destino-lateral:hover {
+    -fx-background-color: -sga-sidebar-hover;
+}
+
+.destino-lateral:selected {
+    -fx-background-color: -sga-sidebar-hover;
+    -icono-color: -sga-texto-inverso;
+    -icono-detalle-relleno: -sga-sidebar-hover;
+}
+
+.destino-lateral .destino-label {
+    -fx-text-fill: -sga-sidebar-texto;
+    -fx-font-size: 13px;
+}
+
+.destino-lateral:selected .destino-label {
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-weight: bold;
+}
+
+.destino-lateral .destino-indicador {
+    -fx-min-width: 4;
+    -fx-pref-width: 4;
+    -fx-max-width: 4;
+    -fx-min-height: 20;
+    -fx-pref-height: 20;
+    -fx-max-height: 20;
+    -fx-background-radius: 0 3 3 0;
+    -fx-background-color: transparent;
+}
+
+.destino-lateral:selected .destino-indicador {
+    -fx-background-color: #7fc79d;
+}
+
+.sidebar-pie {
+    -fx-background-color: -sga-sidebar-hover;
+    -fx-background-radius: 12;
+    -fx-padding: 12;
+    -fx-spacing: 2;
+    -icono-color: -sga-sidebar-texto;
+}
+
+.sidebar-pie .label {
+    -fx-text-fill: -sga-sidebar-texto;
+    -fx-font-size: 12px;
+}
+
+.sidebar-pie .sidebar-pie-valor {
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+/* ---------- Barras superiores ---------- */
+.barra-superior {
+    -fx-background-color: -sga-superficie;
+    -fx-border-color: transparent transparent -sga-borde transparent;
+    -fx-padding: 12 24 12 24;
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+}
+
+.barra-cliente {
+    -fx-background-color: -sga-fondo;
+    -fx-padding: 16 32 8 32;
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+}
+
+.avatar {
+    -fx-background-color: -sga-primario-suave;
+    -fx-background-radius: 20;
+    -fx-min-width: 34;
+    -fx-min-height: 34;
+    -fx-max-width: 34;
+    -fx-max-height: 34;
+    -fx-alignment: center;
+}
+
+.avatar .label {
+    -fx-text-fill: -sga-primario;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Contenido ---------- */
+.contenido-central {
+    -fx-padding: 24 28 24 28;
+}
+
+.vista {
+    -fx-spacing: 18;
+}
+
+.tarjeta {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 16;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 16;
+    -fx-padding: 18;
+    -fx-spacing: 8;
 }
 
 .tarjeta-interactiva {
@@ -127,7 +553,15 @@
 }
 
 .tarjeta-interactiva:hover {
-    -fx-border-color: -sga-primario;
+    -fx-border-color: -sga-borde-input;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.10), 18, 0, 0, 4);
+}
+
+.separador {
+    -fx-background-color: -sga-borde;
+    -fx-min-height: 1;
+    -fx-pref-height: 1;
+    -fx-max-height: 1;
 }
 
 .indicador-valor {
@@ -142,12 +576,13 @@
 
 .estado-vacio {
     -fx-alignment: center;
-    -fx-padding: 32;
-    -fx-spacing: 6;
+    -fx-padding: 40;
+    -fx-spacing: 8;
+    -icono-color: -sga-texto-terciario;
 }
 
 .estado-vacio-titulo {
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-font-weight: bold;
     -fx-text-fill: -sga-texto-secundario;
 }
@@ -157,107 +592,118 @@
     -fx-alignment: center-left;
 }
 
-/* ---------- Botones ---------- */
-.boton-primario {
-    -fx-background-color: -sga-primario;
-    -fx-text-fill: -sga-texto-inverso;
+.chip {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 16;
+    -fx-border-color: -sga-borde-input;
+    -fx-border-radius: 16;
+    -fx-padding: 4 6 4 12;
+    -fx-spacing: 4;
+    -fx-alignment: center-left;
+}
+
+.chip .label {
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-background-radius: 6;
-    -fx-padding: 8 16 8 16;
-    -fx-cursor: hand;
 }
 
-.boton-primario:hover {
-    -fx-background-color: -sga-primario-hover;
+.chip .boton-icono {
+    -fx-padding: 2;
 }
 
-.boton-secundario {
+.etiqueta-caracteristica {
+    -fx-background-color: -sga-superficie-hundida;
+    -fx-background-radius: 8;
+    -fx-padding: 5 10 5 10;
+    -fx-font-size: 12px;
+}
+
+/* ---------- Card de aparta-suite (referencia #4) ---------- */
+.tarjeta-suite {
     -fx-background-color: -sga-superficie;
-    -fx-text-fill: -sga-texto;
+    -fx-background-radius: 18;
     -fx-border-color: -sga-borde;
-    -fx-border-radius: 6;
-    -fx-background-radius: 6;
-    -fx-padding: 7 14 7 14;
+    -fx-border-radius: 18;
     -fx-cursor: hand;
 }
 
-.boton-secundario:hover {
-    -fx-background-color: -sga-primario-suave;
+.tarjeta-suite:hover {
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.14), 22, 0, 0, 6);
 }
 
-.boton-peligro {
-    -fx-background-color: -sga-superficie;
-    -fx-text-fill: -sga-error;
-    -fx-border-color: -sga-error;
-    -fx-border-radius: 6;
-    -fx-background-radius: 6;
-    -fx-padding: 7 14 7 14;
-    -fx-cursor: hand;
+.tarjeta-suite-cuerpo {
+    -fx-padding: 16 18 18 18;
+    -fx-spacing: 4;
 }
 
-.boton-peligro:hover {
-    -fx-background-color: -sga-error-fondo;
+.suite-foto {
+    -fx-background-color: linear-gradient(to bottom right, #d7e6dc, #b9d2c2);
+    -fx-background-radius: 18 18 0 0;
+    -icono-color: rgba(23, 33, 28, 0.35);
 }
 
-.boton-icono {
-    -fx-background-color: transparent;
-    -fx-text-fill: -sga-texto-secundario;
-    -fx-font-size: 15px;
-    -fx-padding: 2 8 2 8;
-    -fx-cursor: hand;
+.suite-foto-b {
+    -fx-background-color: linear-gradient(to bottom right, #e8dfcf, #d4c3a5);
 }
 
-.boton-icono:hover {
-    -fx-text-fill: -sga-texto;
+.suite-foto-c {
+    -fx-background-color: linear-gradient(to bottom right, #dbe2ea, #bccbdb);
 }
 
-/* ---------- Formularios ---------- */
-.formulario {
-    -fx-hgap: 12;
-    -fx-vgap: 10;
-}
-
-.formulario-etiqueta {
+.suite-foto-codigo {
+    -fx-text-fill: rgba(23, 33, 28, 0.55);
     -fx-font-weight: bold;
     -fx-font-size: 12px;
 }
 
-.formulario-ayuda {
+.suite-nombre {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.suite-precio {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.suite-moneda {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
     -fx-text-fill: -sga-texto-secundario;
-    -fx-font-size: 11px;
 }
 
-.campo-invalido {
-    -fx-border-color: -sga-error;
-    -fx-border-radius: 3;
+.boton-favorito {
+    -fx-background-color: rgba(255, 255, 255, 0.92);
+    -fx-background-radius: 20;
+    -fx-padding: 7;
+    -icono-color: -sga-texto;
 }
 
-/* ---------- Inspector (panel lateral derecho) ---------- */
-.inspector {
+.boton-favorito:selected {
+    -icono-color: #c8363d;
+}
+
+/* ---------- Hoja lateral ("mini menú") ---------- */
+.hoja-lateral {
     -fx-background-color: -sga-superficie;
-    -fx-border-color: transparent transparent transparent -sga-borde;
-    -fx-padding: 20;
-    -fx-spacing: 14;
-    -fx-pref-width: 360;
-    -fx-min-width: 320;
+    -fx-background-radius: 18;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 18;
+    -fx-padding: 20 22 20 22;
+    -fx-spacing: 16;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.18), 36, 0, 0, 10);
 }
 
-/* Solo se quita el color de fondo: NO tocar -fx-background, porque Modena
-   deriva de él el color del texto de las etiquetas (quedarían en blanco). */
-.scroll-transparente, .scroll-transparente > .viewport {
-    -fx-background-color: transparent;
-}
-
-.inspector-titulo {
-    -fx-font-size: 15px;
+.hoja-titulo {
+    -fx-font-size: 19px;
     -fx-font-weight: bold;
 }
 
 /* ---------- Notificaciones inline ---------- */
 .notificacion {
-    -fx-padding: 10 16 10 16;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
+    -fx-padding: 10 12 10 16;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
     -fx-spacing: 10;
     -fx-alignment: center-left;
 }
@@ -265,6 +711,7 @@
 .notificacion-exito {
     -fx-background-color: -sga-exito-fondo;
     -fx-border-color: -sga-exito;
+    -icono-color: -sga-exito;
 }
 
 .notificacion-exito .label {
@@ -274,6 +721,7 @@
 .notificacion-advertencia {
     -fx-background-color: -sga-advertencia-fondo;
     -fx-border-color: -sga-advertencia;
+    -icono-color: -sga-advertencia;
 }
 
 .notificacion-advertencia .label {
@@ -283,6 +731,7 @@
 .notificacion-error {
     -fx-background-color: -sga-error-fondo;
     -fx-border-color: -sga-error;
+    -icono-color: -sga-error;
 }
 
 .notificacion-error .label {
@@ -292,76 +741,288 @@
 .notificacion-info {
     -fx-background-color: -sga-info-fondo;
     -fx-border-color: -sga-info;
+    -icono-color: -sga-info;
 }
 
 .notificacion-info .label {
     -fx-text-fill: -sga-info;
 }
 
-/* ---------- Badges de estado ---------- */
+/* ---------- Badges de estado (texto + color, nunca solo color) ---------- */
 .badge {
-    -fx-padding: 2 8 2 8;
+    -fx-padding: 3 9 3 9;
     -fx-background-radius: 10;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
 }
 
-.badge-preparado, .badge-confirmada {
+.badge-preparado, .badge-confirmada, .badge-finalizada-ok, .badge-cargo-pagado {
     -fx-background-color: -sga-exito-fondo;
     -fx-text-fill: -sga-exito;
 }
 
-.badge-ocupado, .badge-en-curso {
+.badge-ocupado, .badge-en-curso, .badge-pago {
     -fx-background-color: -sga-info-fondo;
     -fx-text-fill: -sga-info;
 }
 
-.badge-pendiente-preparacion, .badge-en-preparacion, .badge-pendiente {
+.badge-pendiente-preparacion, .badge-en-preparacion, .badge-pendiente, .badge-cargo, .badge-media {
     -fx-background-color: -sga-advertencia-fondo;
     -fx-text-fill: -sga-advertencia;
 }
 
-.badge-fuera-de-servicio, .badge-cancelada, .badge-no-show {
+.badge-fuera-de-servicio, .badge-cancelada, .badge-no-show, .badge-alta {
     -fx-background-color: -sga-error-fondo;
     -fx-text-fill: -sga-error;
 }
 
-.badge-finalizada, .badge-neutro {
-    -fx-background-color: -sga-borde;
+.badge-finalizada, .badge-neutro, .badge-anulacion-cargo, .badge-anulacion-pago, .badge-baja {
+    -fx-background-color: -sga-superficie-hundida;
     -fx-text-fill: -sga-texto-secundario;
+}
+
+/* ---------- Control segmentado ---------- */
+.segmentado {
+    -fx-background-color: #e7e5df;
+    -fx-background-radius: 12;
+    -fx-padding: 3;
+    -fx-spacing: 2;
+}
+
+.segmento {
+    -fx-background-color: transparent;
+    -fx-background-radius: 9;
+    -fx-padding: 6 16 6 16;
+    -fx-text-fill: -sga-texto-secundario;
+}
+
+.segmento:selected {
+    -fx-background-color: -sga-superficie;
+    -fx-text-fill: -sga-texto;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.10), 6, 0, 0, 1);
+}
+
+/* ---------- Inicio de sesión (referencia #3) ---------- */
+.login-fondo {
+    -fx-background-color: -sga-fondo;
+}
+
+.login-card {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 22;
+    -fx-padding: 28 32 28 32;
+    -fx-spacing: 18;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.12), 40, 0, 0, 12);
+}
+
+.login-titulo {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.rol-detectado {
+    -fx-background-color: -sga-primario-suave;
+    -fx-background-radius: 14;
+    -fx-padding: 5 12 5 10;
+    -fx-spacing: 6;
+    -icono-color: -sga-primario;
+}
+
+.rol-detectado .label {
+    -fx-text-fill: -sga-primario;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.error-inline {
+    -fx-background-color: -sga-error-fondo;
+    -fx-background-radius: 10;
+    -fx-padding: 8 12 8 10;
+    -fx-spacing: 8;
+    -icono-color: -sga-error;
+}
+
+.error-inline .label {
+    -fx-text-fill: -sga-error;
+}
+
+.separador-texto .label {
+    -fx-text-fill: -sga-texto-terciario;
+    -fx-font-size: 12px;
+}
+
+.campo-con-boton .boton-icono {
+    -fx-padding: 4;
 }
 
 /* ---------- Tablas ---------- */
 .table-view {
     -fx-background-color: -sga-superficie;
     -fx-border-color: -sga-borde;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 4;
 }
 
 .table-view .column-header-background {
     -fx-background-color: -sga-superficie;
+    -fx-background-radius: 14 14 0 0;
 }
 
 .table-view .column-header {
     -fx-background-color: transparent;
     -fx-border-color: transparent transparent -sga-borde transparent;
+    -fx-padding: 6 0 6 0;
 }
 
 .table-view .column-header .label {
     -fx-font-weight: bold;
     -fx-text-fill: -sga-texto-secundario;
+    -fx-alignment: center-left;
+}
+
+.table-row-cell {
+    -fx-background-color: -sga-superficie;
+    -fx-cell-size: 40;
+    -fx-border-color: transparent transparent -sga-superficie-hundida transparent;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: -sga-superficie-hundida;
 }
 
 .table-row-cell:selected {
     -fx-background-color: -sga-primario-suave;
 }
 
-.table-row-cell:selected .table-cell {
+.table-row-cell .table-cell {
     -fx-text-fill: -sga-texto;
+    -fx-padding: 0 10 0 10;
 }
 
-/* ---------- Pestañas ---------- */
+.table-view:focused {
+    -fx-border-color: -sga-primario;
+}
+
+/* ---------- Scroll ---------- */
+/* Solo se quita el color de fondo: NO tocar -fx-background, porque Modena
+   deriva de él el color del texto de las etiquetas (quedarían en blanco). */
+.scroll-transparente, .scroll-transparente > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(23, 33, 28, 0.22);
+    -fx-background-radius: 6;
+}
+
+.scroll-bar .increment-button, .scroll-bar .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+}
+
+.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
+}
+
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ---------- Mapa del edificio ---------- */
+.mapa {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 16;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 16;
+}
+
+.mapa-pasillo {
+    -fx-stroke: #9aa39e;
+    -fx-stroke-width: 3;
+    -fx-stroke-line-cap: round;
+    -fx-cursor: hand;
+}
+
+.mapa-pasillo:hover {
+    -fx-stroke: -sga-primario;
+}
+
+.mapa-pasillo-cerrado {
+    -fx-stroke: -sga-error;
+    -fx-stroke-dash-array: 6 6;
+}
+
+.mapa-peso {
+    -fx-fill: -sga-texto-terciario;
+    -fx-font-size: 10px;
+}
+
+.mapa-nodo {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 10;
+    -fx-border-color: -sga-borde-input;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 10;
+    -fx-padding: 5 9 5 9;
+    -fx-spacing: 5;
+    -fx-alignment: center;
+    -icono-color: -sga-error;
+}
+
+.mapa-nodo .label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.mapa-nodo-servicio {
+    -fx-background-color: -sga-tinta;
+    -fx-border-color: -sga-tinta;
+}
+
+.mapa-nodo-servicio .label {
+    -fx-text-fill: -sga-texto-inverso;
+}
+
+.mapa-nodo-paso {
+    -fx-background-color: -sga-superficie-hundida;
+}
+
+.mapa-nodo-inalcanzable {
+    -fx-border-color: -sga-error;
+    -fx-background-color: -sga-error-fondo;
+}
+
+.mapa-nodo-inalcanzable .label {
+    -fx-text-fill: -sga-error;
+}
+
+.mapa-nodo-atenuado {
+    -fx-opacity: 0.3;
+}
+
+/* ---------- Barras de reporte ---------- */
+.barra-dato {
+    -fx-background-color: -sga-primario;
+    -fx-background-radius: 6;
+    -fx-min-height: 12;
+    -fx-pref-height: 12;
+}
+
+.barra-fondo {
+    -fx-background-color: -sga-superficie-hundida;
+    -fx-background-radius: 6;
+}
+
+/* ---------- Pestañas (TabPane) ---------- */
 .tab-pane .tab-header-background {
     -fx-background-color: transparent;
 }
@@ -371,15 +1032,14 @@
 }
 
 .tab-pane .tab:selected {
-    -fx-border-color: transparent transparent -sga-primario transparent;
+    -fx-border-color: transparent transparent -sga-tinta transparent;
     -fx-border-width: 0 0 2 0;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-font-weight: bold;
 }
 
 .tab-pane > .tab-content-area {
     -fx-padding: 12 0 0 0;
-}
-
-.split-pane {
-    -fx-background-color: transparent;
-    -fx-padding: 0;
 }
