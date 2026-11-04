@@ -48,7 +48,6 @@ public class VentanaPrincipalSGA extends BorderPane {
 
     private final VBox inspector = new VBox();
     private final Label lblTituloInspector = new Label();
-    private final ScrollPane contenidoInspector = new ScrollPane();
 
     public VentanaPrincipalSGA(ConectorSGA conector) {
         this.conector = conector;
@@ -121,13 +120,8 @@ public class VentanaPrincipalSGA extends BorderPane {
         cerrar.setOnAction(e -> ocultarInspector());
 
         HBox encabezado = new HBox(lblTituloInspector, FabricaComponentesUI.crearEspaciador(), cerrar);
-        contenidoInspector.setFitToWidth(true);
-        contenidoInspector.getStyleClass().add("scroll-transparente");
-        contenidoInspector.setPadding(Insets.EMPTY);
-        VBox.setVgrow(contenidoInspector, Priority.ALWAYS);
-
         inspector.getStyleClass().add("inspector");
-        inspector.getChildren().addAll(encabezado, contenidoInspector);
+        inspector.getChildren().add(encabezado);
     }
 
     // ---------- API para vistas y navegación ----------
@@ -148,14 +142,24 @@ public class VentanaPrincipalSGA extends BorderPane {
 
     /** Abre el panel lateral derecho con un detalle o formulario contextual. */
     public void mostrarInspector(String titulo, Node contenido) {
+        // Se crea un ScrollPane nuevo en cada apertura: reutilizarlo puede mostrar
+        // el contenido anterior cacheado por su skin.
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.getStyleClass().add("scroll-transparente");
+        scroll.setPadding(Insets.EMPTY);
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+
         lblTituloInspector.setText(titulo);
-        contenidoInspector.setContent(contenido);
+        inspector.getChildren().setAll(inspector.getChildren().getFirst(), scroll);
         setRight(inspector);
     }
 
     public void ocultarInspector() {
         setRight(null);
-        contenidoInspector.setContent(null);
+        if (inspector.getChildren().size() > 1) {
+            inspector.getChildren().remove(1);
+        }
     }
 
     public NotificadorUI getNotificador() {

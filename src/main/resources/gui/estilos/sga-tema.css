@@ -242,9 +242,10 @@
     -fx-min-width: 320;
 }
 
+/* Solo se quita el color de fondo: NO tocar -fx-background, porque Modena
+   deriva de él el color del texto de las etiquetas (quedarían en blanco). */
 .scroll-transparente, .scroll-transparente > .viewport {
     -fx-background-color: transparent;
-    -fx-background: transparent;
 }
 
 .inspector-titulo {
@@ -372,6 +373,10 @@
 .tab-pane .tab:selected {
     -fx-border-color: transparent transparent -sga-primario transparent;
     -fx-border-width: 0 0 2 0;
+}
+
+.tab-pane > .tab-content-area {
+    -fx-padding: 12 0 0 0;
 }
 
 .split-pane {
