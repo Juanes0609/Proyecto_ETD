@@ -1,0 +1,375 @@
+/* =========================================================================
+   SGA Aparta-Suites UQ — Tema visual único de la aplicación.
+   Todos los colores, tamaños y estados se definen aquí; las clases Java solo
+   asignan clases de estilo (getStyleClass) y nunca colores en línea.
+   ========================================================================= */
+
+/* ---------- Tokens ---------- */
+.root {
+    -sga-primario: #2f6b4f;
+    -sga-primario-hover: #275a43;
+    -sga-primario-suave: #e6f0ea;
+
+    -sga-fondo: #f5f6f4;
+    -sga-superficie: #ffffff;
+    -sga-borde: #dfe3de;
+    -sga-texto: #1f2a24;
+    -sga-texto-secundario: #5d6b63;
+    -sga-texto-inverso: #ffffff;
+
+    -sga-exito: #2e7d4f;
+    -sga-exito-fondo: #e5f4ea;
+    -sga-advertencia: #9a6200;
+    -sga-advertencia-fondo: #fdf1dc;
+    -sga-error: #b3261e;
+    -sga-error-fondo: #fbe7e5;
+    -sga-info: #2d5b8a;
+    -sga-info-fondo: #e6eef7;
+
+    -sga-sidebar: #1f3a2d;
+    -sga-sidebar-hover: #2a4a3a;
+    -sga-sidebar-texto: #cfdcd4;
+
+    -fx-font-family: "System";
+    -fx-font-size: 13px;
+    -fx-text-fill: -sga-texto;
+    -fx-background-color: -sga-fondo;
+    -fx-accent: -sga-primario;
+    -fx-focus-color: -sga-primario;
+    -fx-faint-focus-color: #2f6b4f22;
+}
+
+/* ---------- Barra lateral ---------- */
+.sidebar {
+    -fx-background-color: -sga-sidebar;
+    -fx-padding: 20 12 20 12;
+    -fx-spacing: 4;
+    -fx-pref-width: 230;
+}
+
+.sidebar-marca {
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 8 0 8;
+}
+
+.sidebar-submarca {
+    -fx-text-fill: -sga-sidebar-texto;
+    -fx-font-size: 11px;
+    -fx-padding: 0 8 18 8;
+}
+
+.sidebar-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: -sga-sidebar-texto;
+    -fx-alignment: center-left;
+    -fx-padding: 9 12 9 12;
+    -fx-background-radius: 6;
+    -fx-max-width: infinity;
+    -fx-cursor: hand;
+}
+
+.sidebar-item:hover {
+    -fx-background-color: -sga-sidebar-hover;
+    -fx-text-fill: -sga-texto-inverso;
+}
+
+.sidebar-item:selected {
+    -fx-background-color: -sga-primario;
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Barra superior ---------- */
+.barra-superior {
+    -fx-background-color: -sga-superficie;
+    -fx-border-color: transparent transparent -sga-borde transparent;
+    -fx-padding: 12 24 12 24;
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+}
+
+.titulo-seccion {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Contenido ---------- */
+.contenido-central {
+    -fx-padding: 24;
+}
+
+.vista {
+    -fx-spacing: 16;
+}
+
+.encabezado-vista {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.texto-secundario {
+    -fx-text-fill: -sga-texto-secundario;
+}
+
+.tarjeta {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 10;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 10;
+    -fx-padding: 16;
+    -fx-spacing: 6;
+}
+
+.tarjeta-interactiva {
+    -fx-cursor: hand;
+}
+
+.tarjeta-interactiva:hover {
+    -fx-border-color: -sga-primario;
+}
+
+.indicador-valor {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.indicador-etiqueta {
+    -fx-text-fill: -sga-texto-secundario;
+    -fx-font-size: 12px;
+}
+
+.estado-vacio {
+    -fx-alignment: center;
+    -fx-padding: 32;
+    -fx-spacing: 6;
+}
+
+.estado-vacio-titulo {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -sga-texto-secundario;
+}
+
+.barra-filtros, .barra-acciones {
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+/* ---------- Botones ---------- */
+.boton-primario {
+    -fx-background-color: -sga-primario;
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+.boton-primario:hover {
+    -fx-background-color: -sga-primario-hover;
+}
+
+.boton-secundario {
+    -fx-background-color: -sga-superficie;
+    -fx-text-fill: -sga-texto;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 7 14 7 14;
+    -fx-cursor: hand;
+}
+
+.boton-secundario:hover {
+    -fx-background-color: -sga-primario-suave;
+}
+
+.boton-peligro {
+    -fx-background-color: -sga-superficie;
+    -fx-text-fill: -sga-error;
+    -fx-border-color: -sga-error;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 7 14 7 14;
+    -fx-cursor: hand;
+}
+
+.boton-peligro:hover {
+    -fx-background-color: -sga-error-fondo;
+}
+
+.boton-icono {
+    -fx-background-color: transparent;
+    -fx-text-fill: -sga-texto-secundario;
+    -fx-font-size: 15px;
+    -fx-padding: 2 8 2 8;
+    -fx-cursor: hand;
+}
+
+.boton-icono:hover {
+    -fx-text-fill: -sga-texto;
+}
+
+/* ---------- Formularios ---------- */
+.formulario {
+    -fx-hgap: 12;
+    -fx-vgap: 10;
+}
+
+.formulario-etiqueta {
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.formulario-ayuda {
+    -fx-text-fill: -sga-texto-secundario;
+    -fx-font-size: 11px;
+}
+
+.campo-invalido {
+    -fx-border-color: -sga-error;
+    -fx-border-radius: 3;
+}
+
+/* ---------- Inspector (panel lateral derecho) ---------- */
+.inspector {
+    -fx-background-color: -sga-superficie;
+    -fx-border-color: transparent transparent transparent -sga-borde;
+    -fx-padding: 20;
+    -fx-spacing: 14;
+    -fx-pref-width: 360;
+    -fx-min-width: 320;
+}
+
+.inspector-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Notificaciones inline ---------- */
+.notificacion {
+    -fx-padding: 10 16 10 16;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+.notificacion-exito {
+    -fx-background-color: -sga-exito-fondo;
+    -fx-border-color: -sga-exito;
+}
+
+.notificacion-exito .label {
+    -fx-text-fill: -sga-exito;
+}
+
+.notificacion-advertencia {
+    -fx-background-color: -sga-advertencia-fondo;
+    -fx-border-color: -sga-advertencia;
+}
+
+.notificacion-advertencia .label {
+    -fx-text-fill: -sga-advertencia;
+}
+
+.notificacion-error {
+    -fx-background-color: -sga-error-fondo;
+    -fx-border-color: -sga-error;
+}
+
+.notificacion-error .label {
+    -fx-text-fill: -sga-error;
+}
+
+.notificacion-info {
+    -fx-background-color: -sga-info-fondo;
+    -fx-border-color: -sga-info;
+}
+
+.notificacion-info .label {
+    -fx-text-fill: -sga-info;
+}
+
+/* ---------- Badges de estado ---------- */
+.badge {
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 10;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-preparado, .badge-confirmada {
+    -fx-background-color: -sga-exito-fondo;
+    -fx-text-fill: -sga-exito;
+}
+
+.badge-ocupado, .badge-en-curso {
+    -fx-background-color: -sga-info-fondo;
+    -fx-text-fill: -sga-info;
+}
+
+.badge-pendiente-preparacion, .badge-en-preparacion, .badge-pendiente {
+    -fx-background-color: -sga-advertencia-fondo;
+    -fx-text-fill: -sga-advertencia;
+}
+
+.badge-fuera-de-servicio, .badge-cancelada, .badge-no-show {
+    -fx-background-color: -sga-error-fondo;
+    -fx-text-fill: -sga-error;
+}
+
+.badge-finalizada, .badge-neutro {
+    -fx-background-color: -sga-borde;
+    -fx-text-fill: -sga-texto-secundario;
+}
+
+/* ---------- Tablas ---------- */
+.table-view {
+    -fx-background-color: -sga-superficie;
+    -fx-border-color: -sga-borde;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -sga-superficie;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -sga-borde transparent;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -sga-texto-secundario;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: -sga-primario-suave;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: -sga-texto;
+}
+
+/* ---------- Pestañas ---------- */
+.tab-pane .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.tab-pane .tab {
+    -fx-background-color: transparent;
+}
+
+.tab-pane .tab:selected {
+    -fx-border-color: transparent transparent -sga-primario transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
