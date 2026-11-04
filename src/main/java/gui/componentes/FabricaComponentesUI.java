@@ -7,6 +7,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -68,6 +70,22 @@ public final class FabricaComponentesUI {
             boton.setOnAction(e -> accion.run());
         }
         return boton;
+    }
+
+    // ---------- Campos ----------
+
+    public static TextField crearCampoTexto(String sugerencia) {
+        TextField campo = new TextField();
+        campo.setPromptText(sugerencia);
+        return campo;
+    }
+
+    public static TextArea crearAreaTexto(String sugerencia) {
+        TextArea area = new TextArea();
+        area.setPromptText(sugerencia);
+        area.setPrefRowCount(3);
+        area.setWrapText(true);
+        return area;
     }
 
     // ---------- Contenedores ----------

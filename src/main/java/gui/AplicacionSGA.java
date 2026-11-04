@@ -4,6 +4,8 @@ import gui.integracion.ConectorSGAProveedor;
 import gui.navegacion.GestorNavegacion;
 import gui.navegacion.TipoVista;
 import gui.vistas.VistaMenuPrincipal;
+import gui.vistas.VistaRegistroApartamentos;
+import gui.vistas.VistaRegistroHuespedes;
 import gui.vistas.VistaTableroApartamentos;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -41,5 +43,7 @@ public class AplicacionSGA extends Application {
     private void registrarVistas(GestorNavegacion navegacion) {
         navegacion.registrar(TipoVista.MENU_PRINCIPAL, VistaMenuPrincipal::new);
         navegacion.registrar(TipoVista.TABLERO_APARTAMENTOS, VistaTableroApartamentos::new);
+        navegacion.registrar(TipoVista.REGISTRO_APARTAMENTOS, VistaRegistroApartamentos::new);
+        navegacion.registrar(TipoVista.REGISTRO_HUESPEDES, VistaRegistroHuespedes::new);
     }
 }
