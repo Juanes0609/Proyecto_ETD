@@ -259,9 +259,31 @@
 }
 
 /* Foco de teclado visible en cualquier botón */
-/* Anillo de foco de teclado: se dibuja con un efecto para no cambiar el tamaño del botón */
-.button:focused, .toggle-button:focused {
-    -fx-effect: dropshadow(gaussian, #2f6b4f, 3, 1.0, 0, 0);
+/* Foco de teclado (solo al navegar con teclado, :focus-visible). El anillo es una
+   capa de fondo con inset negativo, así el botón no cambia de tamaño. */
+.boton-primario:focus-visible {
+    -fx-background-color: -sga-primario, -sga-tinta;
+    -fx-background-insets: -3, 0;
+    -fx-background-radius: 12, 10;
+}
+
+.boton-secundario:focus-visible, .boton-peligro:focus-visible {
+    -fx-border-color: -sga-primario;
+}
+
+.enlace:focus-visible, .boton-icono:focus-visible, .boton-sutil:focus-visible, .pestana:focus-visible,
+.segmento:focus-visible, .boton-favorito:focus-visible {
+    -fx-background-color: -sga-primario-suave;
+    -fx-background-radius: 10;
+}
+
+.destino-lateral:focus-visible {
+    -fx-background-color: -sga-sidebar-hover;
+}
+
+.tarjeta-suite:focus-visible, .tarjeta-interactiva:focus-visible {
+    -fx-border-color: -sga-primario;
+    -fx-border-width: 2;
 }
 
 /* ---------- Campos de entrada (referencia: label arriba, ayuda abajo) ---------- */

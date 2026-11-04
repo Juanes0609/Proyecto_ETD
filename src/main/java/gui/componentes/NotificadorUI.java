@@ -72,24 +72,34 @@ public class NotificadorUI extends HBox {
                 mostrarExito(mensajeExito);
             }
             return true;
-        } catch (ReservaSolapadaException e) {
-            mostrarError("Reserva solapada: " + e.getMessage());
-        } catch (CapacidadExcedidaException e) {
-            mostrarError("Capacidad excedida: " + e.getMessage());
-        } catch (FechasInvalidasException e) {
-            mostrarError("Fechas inválidas: " + e.getMessage());
-        } catch (TransicionEstadoInvalidaException e) {
-            mostrarError("Cambio de estado no permitido: " + e.getMessage());
-        } catch (EstructuraVaciaException e) {
-            mostrarAdvertencia("Sin elementos: " + e.getMessage());
-        } catch (UnsupportedOperationException e) {
-            mostrarAdvertencia("Funcionalidad aún en construcción por el equipo.");
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            mostrarAdvertencia(e.getMessage());
         } catch (RuntimeException e) {
-            mostrarError("Error inesperado: " + e.getMessage());
+            if (esAdvertencia(e)) {
+                mostrarAdvertencia(mensajeDe(e));
+            } else {
+                mostrarError(mensajeDe(e));
+            }
+            return false;
         }
-        return false;
+    }
+
+    /** Mensaje para el usuario a partir de una excepción del dominio o de validación. */
+    public static String mensajeDe(RuntimeException e) {
+        return switch (e) {
+            case ReservaSolapadaException x -> "Fechas no disponibles: " + x.getMessage();
+            case CapacidadExcedidaException x -> "Capacidad excedida: " + x.getMessage();
+            case FechasInvalidasException x -> "Fechas inválidas: " + x.getMessage();
+            case TransicionEstadoInvalidaException x -> "No se puede hacer este cambio: " + x.getMessage();
+            case EstructuraVaciaException x -> x.getMessage();
+            case UnsupportedOperationException x -> "Esta funcionalidad aún está en construcción por el equipo.";
+            case IllegalArgumentException x -> x.getMessage();
+            case IllegalStateException x -> x.getMessage();
+            default -> "Error inesperado: " + e.getMessage();
+        };
+    }
+
+    private static boolean esAdvertencia(RuntimeException e) {
+        return e instanceof EstructuraVaciaException || e instanceof UnsupportedOperationException
+                || e instanceof IllegalArgumentException || e instanceof IllegalStateException;
     }
 
     public void ocultar() {

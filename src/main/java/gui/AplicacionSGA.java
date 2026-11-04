@@ -1,5 +1,6 @@
 package gui;
 
+import gui.cliente.VentanaCliente;
 import gui.integracion.ConectorSGA;
 import gui.integracion.ConectorSGADemo;
 import gui.integracion.dto.Rol;
@@ -54,6 +55,9 @@ public class AplicacionSGA extends Application {
     }
 
     private Parent crearVentana(ContextoApp contexto, Rol rol) {
+        if (rol == Rol.HUESPED) {
+            return new VentanaCliente(contexto);
+        }
         VentanaPrincipalSGA ventana = new VentanaPrincipalSGA(contexto, rol);
         registrarVistas(ventana.getNavegacion());
         ventana.iniciar();
