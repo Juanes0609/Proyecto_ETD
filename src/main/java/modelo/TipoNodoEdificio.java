@@ -1,4 +1,8 @@
 package modelo;
 
-public class TipoNodoEdificio {
+public enum TipoNodoEdificio {
+    APARTAMENTO,
+    RECEPCION,
+    ESCALERAS,
+    CUARTOLIMPIEZA;
 }
