@@ -8,11 +8,25 @@
 
 /* ---------- Tokens ---------- */
 .root {
+    /* Paleta base (Adobe Color, tríada y cuadrado de #8EBF92):
+       verde salvia #8EBF92 · ciruela #6A4D57 · arena #BFB18E · lavanda #8E9BBF.
+       El salvia es claro (contraste 2:1 con blanco), por eso el texto y los
+       anillos de foco usan una versión oscura del mismo tono. */
+    -sga-salvia: #8ebf92;
+    -sga-salvia-claro: #c6dfc8;
+    -sga-ciruela: #6a4d57;
+    -sga-ciruela-hover: #5a414a;
+    -sga-arena: #bfb18e;
+    -sga-arena-suave: #f4f1e8;
+    -sga-lavanda: #8e9bbf;
+
     /* Marca y acentos */
-    -sga-primario: #2f6b4f;
-    -sga-primario-hover: #275a43;
-    -sga-primario-suave: #e4efe8;
-    /* Acción primaria: tinta oscura, como en las referencias */
+    -sga-primario: #3f7a47;
+    -sga-primario-hover: #346a3c;
+    -sga-primario-suave: #e6f1e7;
+    /* Acción primaria: ciruela (contraste 7.5:1 con texto blanco) */
+    -sga-accion: -sga-ciruela;
+    -sga-accion-hover: -sga-ciruela-hover;
     -sga-tinta: #17211c;
     -sga-tinta-hover: #2a3631;
 
@@ -30,19 +44,21 @@
     -sga-texto-inverso: #ffffff;
 
     /* Estados */
-    -sga-exito: #23704a;
-    -sga-exito-fondo: #e3f2e9;
+    -sga-exito: #2f6b37;
+    -sga-exito-fondo: #e6f1e7;
     -sga-advertencia: #8a5a00;
     -sga-advertencia-fondo: #fcf0d9;
     -sga-error: #b42318;
     -sga-error-fondo: #fdeceb;
-    -sga-info: #2c5a88;
-    -sga-info-fondo: #e7eff8;
+    -sga-info: #34477a;
+    -sga-info-fondo: #e8ebf2;
 
-    /* Sidebar del personal */
-    -sga-sidebar: #18241e;
-    -sga-sidebar-hover: #24332b;
-    -sga-sidebar-texto: #c3d0c8;
+    /* Sidebar del personal: salvia con texto oscuro (7.9:1) */
+    -sga-sidebar: -sga-salvia;
+    -sga-sidebar-hover: #aacfad;
+    -sga-sidebar-activo: -sga-salvia-claro;
+    -sga-sidebar-texto: #2c4630;
+    -sga-sidebar-texto-fuerte: -sga-tinta;
 
     -icono-color: -sga-texto;
     -icono-detalle-relleno: -sga-superficie;
@@ -122,7 +138,7 @@
 }
 
 .marca-logo {
-    -fx-background-color: -sga-tinta;
+    -fx-background-color: -sga-ciruela;
     -fx-background-radius: 10;
 }
 
@@ -142,7 +158,7 @@
 }
 
 .sidebar .marca-nombre {
-    -fx-text-fill: -sga-texto-inverso;
+    -fx-text-fill: -sga-sidebar-texto-fuerte;
 }
 
 .sidebar .marca-lema {
@@ -150,7 +166,7 @@
 }
 
 .sidebar .marca-logo {
-    -fx-background-color: -sga-primario;
+    -fx-background-color: -sga-ciruela;
 }
 
 /* ---------- Botones ---------- */
@@ -159,7 +175,7 @@
 }
 
 .boton-primario {
-    -fx-background-color: -sga-tinta;
+    -fx-background-color: -sga-accion;
     -fx-text-fill: -sga-texto-inverso;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
@@ -169,7 +185,7 @@
 }
 
 .boton-primario:hover {
-    -fx-background-color: -sga-tinta-hover;
+    -fx-background-color: -sga-accion-hover;
 }
 
 /* Feedback inmediato al presionar (apple-design §1) */
@@ -194,7 +210,8 @@
 }
 
 .boton-secundario:hover {
-    -fx-background-color: -sga-superficie-hundida;
+    -fx-background-color: -sga-arena-suave;
+    -fx-border-color: -sga-arena;
 }
 
 .boton-peligro {
@@ -262,7 +279,7 @@
 /* Foco de teclado (solo al navegar con teclado, :focus-visible). El anillo es una
    capa de fondo con inset negativo, así el botón no cambia de tamaño. */
 .boton-primario:focus-visible {
-    -fx-background-color: -sga-primario, -sga-tinta;
+    -fx-background-color: -sga-primario, -sga-accion;
     -fx-background-insets: -3, 0;
     -fx-background-radius: 12, 10;
 }
@@ -415,7 +432,7 @@
 }
 
 .pestana:selected {
-    -icono-color: -sga-tinta;
+    -icono-color: -sga-ciruela;
 }
 
 .pestana .destino-label {
@@ -424,7 +441,7 @@
 }
 
 .pestana:selected .destino-label {
-    -fx-text-fill: -sga-tinta;
+    -fx-text-fill: -sga-ciruela;
     -fx-font-weight: bold;
 }
 
@@ -440,7 +457,7 @@
 }
 
 .pestana:selected .destino-indicador {
-    -fx-background-color: -sga-tinta;
+    -fx-background-color: -sga-ciruela;
 }
 
 /* Sidebar de recepción y administración */
@@ -472,9 +489,9 @@
 }
 
 .destino-lateral:selected {
-    -fx-background-color: -sga-sidebar-hover;
-    -icono-color: -sga-texto-inverso;
-    -icono-detalle-relleno: -sga-sidebar-hover;
+    -fx-background-color: -sga-sidebar-activo;
+    -icono-color: -sga-sidebar-texto-fuerte;
+    -icono-detalle-relleno: -sga-sidebar-activo;
 }
 
 .destino-lateral .destino-label {
@@ -483,7 +500,7 @@
 }
 
 .destino-lateral:selected .destino-label {
-    -fx-text-fill: -sga-texto-inverso;
+    -fx-text-fill: -sga-sidebar-texto-fuerte;
     -fx-font-weight: bold;
 }
 
@@ -499,11 +516,11 @@
 }
 
 .destino-lateral:selected .destino-indicador {
-    -fx-background-color: #7fc79d;
+    -fx-background-color: -sga-ciruela;
 }
 
 .sidebar-pie {
-    -fx-background-color: -sga-sidebar-hover;
+    -fx-background-color: rgba(255, 255, 255, 0.38);
     -fx-background-radius: 12;
     -fx-padding: 12;
     -fx-spacing: 2;
@@ -516,7 +533,7 @@
 }
 
 .sidebar-pie .sidebar-pie-valor {
-    -fx-text-fill: -sga-texto-inverso;
+    -fx-text-fill: -sga-sidebar-texto-fuerte;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
 }
@@ -538,7 +555,7 @@
 }
 
 .avatar {
-    -fx-background-color: -sga-primario-suave;
+    -fx-background-color: -sga-arena;
     -fx-background-radius: 20;
     -fx-min-width: 34;
     -fx-min-height: 34;
@@ -548,7 +565,7 @@
 }
 
 .avatar .label {
-    -fx-text-fill: -sga-primario;
+    -fx-text-fill: -sga-tinta;
     -fx-font-weight: bold;
 }
 
@@ -659,17 +676,17 @@
 }
 
 .suite-foto {
-    -fx-background-color: linear-gradient(to bottom right, #d7e6dc, #b9d2c2);
+    -fx-background-color: linear-gradient(to bottom right, #dcebdd, #b6d6b9);
     -fx-background-radius: 18 18 0 0;
     -icono-color: rgba(23, 33, 28, 0.35);
 }
 
 .suite-foto-b {
-    -fx-background-color: linear-gradient(to bottom right, #e8dfcf, #d4c3a5);
+    -fx-background-color: linear-gradient(to bottom right, #ece6d6, #d2c7aa);
 }
 
 .suite-foto-c {
-    -fx-background-color: linear-gradient(to bottom right, #dbe2ea, #bccbdb);
+    -fx-background-color: linear-gradient(to bottom right, #e1e5ef, #bfc7dc);
 }
 
 .suite-foto-codigo {
@@ -1024,8 +1041,8 @@
 }
 
 .mapa-nodo-servicio {
-    -fx-background-color: -sga-tinta;
-    -fx-border-color: -sga-tinta;
+    -fx-background-color: -sga-ciruela;
+    -fx-border-color: -sga-ciruela;
 }
 
 .mapa-nodo-servicio .label {
@@ -1051,7 +1068,7 @@
 
 /* ---------- Barras de reporte ---------- */
 .barra-dato {
-    -fx-background-color: -sga-primario;
+    -fx-background-color: -sga-salvia;
     -fx-background-radius: 6;
     -fx-min-height: 12;
     -fx-pref-height: 12;
@@ -1072,7 +1089,7 @@
 }
 
 .tab-pane .tab:selected {
-    -fx-border-color: transparent transparent -sga-tinta transparent;
+    -fx-border-color: transparent transparent -sga-ciruela transparent;
     -fx-border-width: 0 0 2 0;
 }
 
