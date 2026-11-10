@@ -84,6 +84,8 @@ public class VistaCatalogos extends VistaBase {
         HBox barra = FabricaComponentesUI.crearBarraFiltros(segmentado, FabricaComponentesUI.crearEspaciador(),
                 buscador, nuevo);
         barra.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        // La tabla ocupa todo el alto disponible: así ninguna fila queda cortada a la mitad.
+        javafx.scene.layout.VBox.setVgrow(cuerpo, javafx.scene.layout.Priority.ALWAYS);
         return new VBox(16, barra, FabricaComponentesUI.crearTextoSecundario(
                 "Cada catálogo se muestra ordenado por su clave (recorrido inorden del árbol de búsqueda). "
                         + "Haz clic en una fila para editarla."), cuerpo);
