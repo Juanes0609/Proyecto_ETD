@@ -39,28 +39,50 @@ public class AplicacionSGA extends Application {
     private Stage escenario;
     private Scene escena;
 
+    /** Tamaño de la ventana de trabajo (personal y huésped). */
+    private static final double ANCHO_APP = 1280;
+    private static final double ALTO_APP = 800;
+    private static final double ANCHO_MIN_APP = 1024;
+    private static final double ALTO_MIN_APP = 680;
+
     @Override
     public void start(Stage escenario) {
         this.escenario = escenario;
-        escena = new Scene(new Region(), 1280, 800);
+        // Sin tamaño fijo: la escena toma el tamaño preferido de su raíz, así el
+        // inicio de sesión mide lo mismo que su tarjeta.
+        escena = new Scene(new Region());
         escena.getStylesheets().add(getClass().getResource(HOJA_ESTILOS).toExternalForm());
 
-        escenario.setMinWidth(1024);
-        escenario.setMinHeight(680);
         escenario.setScene(escena);
         mostrarLogin();
         escenario.show();
     }
 
+    /** La ventana de inicio de sesión se ajusta a la tarjeta y no se redimensiona. */
     private void mostrarLogin() {
         escenario.setTitle(TITULO);
+        escenario.setMinWidth(0);
+        escenario.setMinHeight(0);
+        escenario.setResizable(false);
         cambiarRaiz(new VistaLogin(conector, this::entrar));
+        escenario.sizeToScene();
+        escenario.centerOnScreen();
     }
 
+    /** Al entrar, la misma ventana vuelve al tamaño de trabajo. */
     private void entrar(UsuarioDTO usuario) {
         ContextoApp contexto = new ContextoApp(conector, usuario, this::mostrarLogin);
         escenario.setTitle(TITULO + " — " + usuario.rol().getEtiqueta());
         cambiarRaiz(crearVentana(contexto, usuario.rol()));
+        escenario.setResizable(true);
+        // El tamaño de trabajo es el del contenido; se suma lo que ocupan los bordes del sistema.
+        double bordeX = Math.max(0, escenario.getWidth() - escena.getWidth());
+        double bordeY = Math.max(0, escenario.getHeight() - escena.getHeight());
+        escenario.setWidth(ANCHO_APP + bordeX);
+        escenario.setHeight(ALTO_APP + bordeY);
+        escenario.setMinWidth(ANCHO_MIN_APP + bordeX);
+        escenario.setMinHeight(ALTO_MIN_APP + bordeY);
+        escenario.centerOnScreen();
     }
 
     private Parent crearVentana(ContextoApp contexto, Rol rol) {

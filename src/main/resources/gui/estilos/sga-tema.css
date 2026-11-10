@@ -843,16 +843,15 @@
 }
 
 /* ---------- Inicio de sesión (referencia #3) ---------- */
+/* La ventana de inicio de sesión ES la tarjeta: sin fondo extra, sombra ni radio. */
 .login-fondo {
-    -fx-background-color: -sga-fondo;
+    -fx-background-color: -sga-superficie;
 }
 
 .login-card {
     -fx-background-color: -sga-superficie;
-    -fx-background-radius: 22;
-    -fx-padding: 28 32 28 32;
+    -fx-padding: 32 36 28 36;
     -fx-spacing: 18;
-    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.12), 40, 0, 0, 12);
 }
 
 .login-titulo {

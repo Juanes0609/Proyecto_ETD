@@ -18,7 +18,6 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -35,29 +34,24 @@ import java.util.regex.Pattern;
  * centrada con logo, saludo, correo, contraseña con "ver", acción primaria y
  * enlace para crear cuenta).
  * <p>
+ * La ventana mide lo mismo que la tarjeta (sin fondo extra ni marca repetida:
+ * el logo ya va en el encabezado). Al cambiar de tarjeta la ventana se ajusta.
+ * <p>
  * El rol se <b>detecta</b> a partir del correo: en cuanto se reconoce, aparece la
  * pastilla "Ingresarás como …" y, al entrar, se abre la experiencia de ese rol.
  * "Crear cuenta" registra huéspedes en dos pasos dentro de la misma tarjeta.
  */
-public class VistaLogin extends BorderPane {
+public class VistaLogin extends StackPane {
 
     private static final Pattern CORREO = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private final ConectorSGA conector;
     private final Consumer<UsuarioDTO> alIngresar;
-    private final StackPane contenedorTarjeta = new StackPane();
 
     public VistaLogin(ConectorSGA conector, Consumer<UsuarioDTO> alIngresar) {
         this.conector = conector;
         this.alIngresar = alIngresar;
         getStyleClass().add("login-fondo");
-
-        HBox barra = new HBox(MarcaApp.crear());
-        barra.getStyleClass().add("barra-cliente");
-        setTop(barra);
-
-        contenedorTarjeta.setPadding(new Insets(16, 16, 64, 16));
-        setCenter(contenedorTarjeta);
         mostrarTarjeta(crearTarjetaIngreso());
     }
 
@@ -225,16 +219,23 @@ public class VistaLogin extends BorderPane {
     // ---------- Apoyo visual ----------
 
     private void mostrarTarjeta(VBox tarjeta) {
-        contenedorTarjeta.getChildren().setAll(tarjeta);
+        getChildren().setAll(tarjeta);
         mostrarConFundido(tarjeta);
+        ajustarVentana();
+    }
+
+    /** La ventana toma el alto de la tarjeta activa (ingreso o registro). */
+    private void ajustarVentana() {
+        if (getScene() != null && getScene().getWindow() != null) {
+            applyCss();
+            getScene().getWindow().sizeToScene();
+        }
     }
 
     private static VBox tarjeta(Node... contenido) {
         VBox tarjeta = new VBox(contenido);
         tarjeta.getStyleClass().add("login-card");
-        tarjeta.setMaxWidth(420);
         tarjeta.setPrefWidth(420);
-        tarjeta.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
         return tarjeta;
     }
 
