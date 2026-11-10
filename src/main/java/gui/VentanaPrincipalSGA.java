@@ -30,11 +30,11 @@ import java.util.List;
  * Ventana del personal (recepción y administración), patrón Single-Window:
  * <pre>
  * ┌────────────┬────────────────────────────────────────────────┐
- * │ Marca      │ ← Atrás  Título · descripción     Usuario  Salir│
+ * │ Marca      │ Título · descripción              Usuario  Salir│
  * │ Destinos   ├────────────────────────────────────────────────┤
  * │ (3–4)      │ [Notificación inline]                ┌───────┐ │
  * │            │ Contenido del destino activo         │ Hoja  │ │
- * │ Turno      │                                      └───────┘ │
+ * │ Turno/Datos│                                      └───────┘ │
  * └────────────┴────────────────────────────────────────────────┘
  * </pre>
  * El sidebar solo tiene destinos del rol; el activo se marca con icono relleno,
@@ -82,11 +82,13 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
 
         VBox sidebar = new VBox(MarcaApp.crear(), seccion, destinos.getNodo(), FabricaComponentesUI.crearEspaciador());
         sidebar.getStyleClass().add("sidebar");
-        if (rol == Rol.RECEPCIONISTA) {
-            Node turno = crearTurnoActual();
-            if (turno != null) {
-                sidebar.getChildren().add(turno);
-            }
+        Node pie = switch (rol) {
+            case RECEPCIONISTA -> crearTurnoActual();
+            case ADMINISTRADOR -> crearDatosDePrueba();
+            default -> null;
+        };
+        if (pie != null) {
+            sidebar.getChildren().add(pie);
         }
         return sidebar;
     }
@@ -109,22 +111,60 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
         }
     }
 
-    private HBox crearBarraSuperior() {
-        Button btnAtras = FabricaComponentesUI.crearBotonIcono(Iconos.Icono.ATRAS, "Volver al destino anterior",
-                navegacion::retroceder);
-        btnAtras.disableProperty().bind(navegacion.puedeRetrocederProperty().not());
+    /**
+     * Carga de datos del administrador (requerimiento "Carga de datos"). No es una
+     * acción del día a día, así que vive como tarjeta discreta al pie del sidebar
+     * y pide confirmación inline porque reemplaza los datos actuales.
+     */
+    private Node crearDatosDePrueba() {
+        Label titulo = new Label("Datos de prueba");
+        titulo.getStyleClass().add("sidebar-pie-valor");
+        Label detalle = new Label("Apartamentos, pasillos, huéspedes y reservas del escenario inicial.");
+        detalle.setWrapText(true);
+        Label pregunta = new Label("Se reemplazarán los datos actuales.");
+        pregunta.setWrapText(true);
+        pregunta.getStyleClass().add("sidebar-pie-valor");
 
+        VBox pie = new VBox();
+        pie.getStyleClass().add("sidebar-pie");
+
+        Button cargar = FabricaComponentesUI.crearBotonSecundario("Cargar escenario", null);
+        Button confirmar = FabricaComponentesUI.crearBotonPrimario("Cargar", null);
+        Button cancelar = FabricaComponentesUI.crearEnlace("Cancelar", null);
+        cargar.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(confirmar, Priority.ALWAYS);
+        confirmar.setMaxWidth(Double.MAX_VALUE);
+
+        HBox encabezado = new HBox(10, Iconos.crear(Iconos.Icono.CARPETA, 18), new VBox(2, titulo, detalle));
+        encabezado.setAlignment(Pos.TOP_LEFT);
+        VBox inicial = new VBox(10, encabezado, cargar);
+        HBox botones = new HBox(8, confirmar, cancelar);
+        botones.setAlignment(Pos.CENTER_LEFT);
+        VBox confirmacion = new VBox(10, pregunta, botones);
+
+        cargar.setOnAction(e -> {
+            pie.getChildren().setAll(confirmacion);
+            confirmar.requestFocus();
+        });
+        cancelar.setOnAction(e -> {
+            pie.getChildren().setAll(inicial);
+            cargar.requestFocus();
+        });
+        confirmar.setOnAction(e -> {
+            pie.getChildren().setAll(inicial);
+            cargarEscenarioInicial();
+        });
+        pie.getChildren().setAll(inicial);
+        return pie;
+    }
+
+    private HBox crearBarraSuperior() {
         lblTitulo.getStyleClass().add("titulo-seccion");
         lblDescripcion.getStyleClass().add("texto-secundario");
         VBox titulos = new VBox(0, lblTitulo, lblDescripcion);
 
-        HBox barra = new HBox(btnAtras, titulos, FabricaComponentesUI.crearEspaciador());
+        HBox barra = new HBox(titulos, FabricaComponentesUI.crearEspaciador());
         barra.getStyleClass().add("barra-superior");
-
-        if (rol == Rol.ADMINISTRADOR) {
-            barra.getChildren().add(FabricaComponentesUI.crearBotonSecundario("Cargar escenario inicial",
-                    this::cargarEscenarioInicial));
-        }
         barra.getChildren().addAll(crearUsuario(), FabricaComponentesUI.conIcono(
                 FabricaComponentesUI.crearEnlace("Cerrar sesión", contexto::cerrarSesion), Iconos.Icono.SALIR));
         return barra;
