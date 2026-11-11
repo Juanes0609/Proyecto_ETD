@@ -1,4 +1,4 @@
-package Estructuras;
+package estructuras;
 import java.util.Iterator;
 
 public class ColaPrioridad<T> implements Iterable<T> {

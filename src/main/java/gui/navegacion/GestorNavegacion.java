@@ -1,6 +1,6 @@
 package gui.navegacion;
 
-import Estructuras.Pila;
+import estructuras.Pila;
 import gui.VentanaPrincipalSGA;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;

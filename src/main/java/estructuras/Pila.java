@@ -1,4 +1,4 @@
-package Estructuras;
+package estructuras;
 
 import excepciones.EstructuraVaciaException;
 import java.util.Iterator;

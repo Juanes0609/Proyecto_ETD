@@ -1,6 +1,6 @@
 package gui.cliente;
 
-import Estructuras.Pila;
+import estructuras.Pila;
 import gui.ContenedorVistas;
 import gui.ContextoApp;
 import gui.MarcaApp;

@@ -1,4 +1,4 @@
-package Estructuras;
+package estructuras;
 import java.util.Iterator;
 
 public class Conjunto<T> implements Iterable<T> {

@@ -1,6 +1,6 @@
 package gui.integracion;
 
-import Estructuras.Pila;
+import estructuras.Pila;
 import excepciones.CapacidadExcedidaException;
 import excepciones.EstructuraVaciaException;
 import excepciones.FechasInvalidasException;

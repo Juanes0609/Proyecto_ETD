@@ -1,9 +1,7 @@
-package Estructuras;
-
-import java.util.Comparator;
+package estructuras;
 import java.util.Iterator;
 
-public class ArbolBinarioBusqueda<T extends Comparable<T>> implements Iterable<T> {
+public class Cola<T> implements Iterable<T> {
     @Override
     public Iterator<T> iterator(){
         throw new UnsupportedOperationException("Aun en Construcción");

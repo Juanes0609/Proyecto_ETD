@@ -1,4 +1,4 @@
-package Estructuras;
+package estructuras;
 import modelo.Arista;
 import modelo.Vertice;
 
