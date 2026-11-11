@@ -7,7 +7,7 @@ public class PruebaReservas {
     public static void main(String[] args) {
         Reserva r = new Reserva("R1", LocalDateTime.now(), LocalDateTime.now().plusHours(24),
                 EstadoReserva.PENDIENTE, Canal.PORTAL, null, null, null);
-        ServicioReservas servicio = new ServicioReservas();
+        ServicioReservas servicio = new ServicioReservas(null);
 
         servicio.confirmar(r);
         System.out.println(r.getEstadoReserva());     // CONFIRMADA
