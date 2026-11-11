@@ -1,6 +1,6 @@
 package modelo;
 
-import Estructuras.ListaDoblementeEnlazada;
+import estructuras.ListaDoblementeEnlazada;
 
 import java.util.List;
 

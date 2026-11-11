@@ -1,29 +1,41 @@
 package modelo;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import estructuras.ListaDoblementeEnlazada;
 
-public class Reserva {
+public class Reserva implements Comparable<Reserva> {
     private String codigo;
     private LocalDateTime fechaCreacion;
     private LocalDateTime horaVencimiento;
     private EstadoReserva estadoReserva;
     private Canal canal;
-    private List<Ocupante> listOcupantes;
+    private Huesped titular;
+    private ListaDoblementeEnlazada<Ocupante> listOcupantes;
     private SolicitudExterna  solicitudExterna;
     private Folio folio;
     private Apartamento apartamento;
     private Estancia estancia;
 
 
-    public Reserva(String codigo, LocalDateTime fechaCreacion, LocalDateTime horaVencimiento, EstadoReserva estadoReserva, Canal canal, Apartamento apartamento) {
+    public Reserva(String codigo, LocalDateTime fechaCreacion, LocalDateTime horaVencimiento, EstadoReserva estadoReserva, Canal canal, Apartamento apartamento, Huesped titular, Estancia estancia) {
         this.codigo = codigo;
         this.fechaCreacion = fechaCreacion;
         this.horaVencimiento = horaVencimiento;
         this.estadoReserva = estadoReserva;
         this.canal = canal;
         this.apartamento = apartamento;
+        this.titular = titular;
+        this.estancia = estancia;
+        this.listOcupantes = new ListaDoblementeEnlazada<>();
+        this.folio = new Folio(0, null);
     }
+
+    // Orden natural: por fecha de entrada
+    @Override
+    public int compareTo (Reserva otra) {
+        return  this.estancia.getFechaEntrada().compareTo(otra.estancia.getFechaEntrada());
+    }
+
 
     public String getCodigo() {
         return codigo;
@@ -65,11 +77,11 @@ public class Reserva {
         this.canal = canal;
     }
 
-    public List<Ocupante> getListOcupantes() {
+    public ListaDoblementeEnlazada<Ocupante> getListOcupantes() {
         return listOcupantes;
     }
 
-    public void setListOcupantes(List<Ocupante> listOcupantes) {
+    public void setListOcupantes(ListaDoblementeEnlazada<Ocupante> listOcupantes) {
         this.listOcupantes = listOcupantes;
     }
 
@@ -107,10 +119,9 @@ public class Reserva {
 
     @Override
     public String toString() {
-        return "Reserva{" +
-                "codigo='" + codigo + '\'' +
-                ", fechaCreacion=" + fechaCreacion +
-                ", horaVencimiento=" + horaVencimiento +
-                '}';
+        return "RESERVA: " +
+                ". Codigo: '" + codigo + '\'' +
+                ". Fecha de creacion: " + fechaCreacion +
+                ". Hora de vencimiento" + horaVencimiento;
     }
 }

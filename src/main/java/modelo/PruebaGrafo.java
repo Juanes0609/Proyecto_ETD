@@ -1,7 +1,7 @@
 package modelo;
 
-import Estructuras.Grafo;
-import Estructuras.ListaDoblementeEnlazada;
+import estructuras.Grafo;
+import estructuras.ListaDoblementeEnlazada;
 
 public class PruebaGrafo {
     public static void main(String[] args) {
