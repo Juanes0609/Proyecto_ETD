@@ -1,5 +1,7 @@
 package modelo;
 
+import Estructuras.ListaDoblementeEnlazada;
+
 import java.util.List;
 
 public class Vertice<T> {
@@ -8,11 +10,15 @@ public class Vertice<T> {
     private double distancia;
     private Vertice<T> predecesor;
     private boolean visitado;
-    private List<Arista<T>> listAristas;
+    private ListaDoblementeEnlazada<Arista<T>> listAristas;
 
    public Vertice(T dato, String codigo) {
        this.dato = dato;
         this.codigo = codigo;
+        this.distancia = Double.POSITIVE_INFINITY;
+        this.predecesor = null;
+        this.visitado = false;
+        this.listAristas = new ListaDoblementeEnlazada<>();
    }
 
     public T getDato() {
@@ -55,11 +61,16 @@ public class Vertice<T> {
         this.visitado = visitado;
     }
 
-    public List<Arista<T>> getListAristas() {
+    public ListaDoblementeEnlazada<Arista<T>> getListAristas() {
         return listAristas;
     }
 
-    public void setListAristas(List<Arista<T>> listAristas) {
+    public void setListAristas(ListaDoblementeEnlazada<Arista<T>> listAristas) {
         this.listAristas = listAristas;
+    }
+    public void agregarArista(Arista<T> arista) {
+        if (arista != null) {
+            listAristas.agregarFinal(arista);
+        }
     }
 }

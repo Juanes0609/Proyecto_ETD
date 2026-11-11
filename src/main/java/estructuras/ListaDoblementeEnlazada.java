@@ -1,5 +1,6 @@
 package estructuras;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ListaDoblementeEnlazada<T> implements Iterable<T> {
     private NodoDoble<T> inicio;
@@ -70,8 +71,65 @@ public class ListaDoblementeEnlazada<T> implements Iterable<T> {
         }
         tam--;
     }
+
+    public boolean eliminar(T dato) {
+        NodoDoble<T> actual = inicio;
+
+        while (actual != null) {
+
+            if (actual.getDato() == dato) {
+
+                // Caso 1: el nodo es el primero
+                if (actual == inicio) {
+                    eliminarInicio();
+                }
+                // Caso 2: el nodo es el último
+                else if (actual == fin) {
+                    eliminarFinal();
+                }
+                // Caso 3: el nodo está en medio
+                else {
+                    actual.getAnterior().setSiguiente(
+                            actual.getSiguiente()
+                    );
+
+                    actual.getSiguiente().setAnterior(
+                            actual.getAnterior()
+                    );
+
+                    tam--;
+                }
+
+                return true;
+            }
+
+            actual = actual.getSiguiente();
+        }
+
+        return false;
+    }
     @Override
-    public Iterator<T> iterator(){
-        throw new UnsupportedOperationException("Aun en Construcción");
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+
+            private NodoDoble<T> actual = inicio;
+
+            @Override
+            public boolean hasNext() {
+                return actual != null;
+            }
+
+            @Override
+            public T next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+
+                T dato = actual.getDato();
+                actual = actual.getSiguiente();
+
+                return dato;
+            }
+        };
     }
 }
