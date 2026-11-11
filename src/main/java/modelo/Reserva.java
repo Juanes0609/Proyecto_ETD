@@ -27,7 +27,7 @@ public class Reserva implements Comparable<Reserva> {
         this.titular = titular;
         this.estancia = estancia;
         this.listOcupantes = new ListaDoblementeEnlazada<>();
-        this.folio = new Folio(0, null);
+        this.folio = new Folio(0, this);
     }
 
     // Orden natural: por fecha de entrada
