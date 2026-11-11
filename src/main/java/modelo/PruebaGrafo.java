@@ -10,10 +10,7 @@ public class PruebaGrafo {
         System.out.println("          PRUEBAS DEL GRAFO");
         System.out.println("====================================");
 
-        // ==========================================
-        // 1. PROBAR ELIMINACION DE LA LISTA
-        // ==========================================
-
+        // 1. PROBAR LA LISTA DOBLEMENTE ENLAZADA
         System.out.println("\n1. PRUEBA DE LA LISTA DOBLE");
 
         ListaDoblementeEnlazada<String> lista =
@@ -23,46 +20,30 @@ public class PruebaGrafo {
         lista.agregarFinal("B");
         lista.agregarFinal("C");
 
-        System.out.println(
-                "Eliminar B: " + lista.eliminar("B")
-        );
+        System.out.println("Eliminar B: " + lista.eliminar("B"));
+        System.out.println("Eliminar B otra vez: " + lista.eliminar("B"));
 
-        System.out.println(
-                "Intentar eliminar B otra vez: "
-                        + lista.eliminar("B")
-        );
-
-        System.out.println("Elementos restantes:");
-
+        System.out.print("Elementos restantes: ");
         for (String elemento : lista) {
-            System.out.println(elemento);
+            System.out.print(elemento + " ");
         }
+        System.out.println();
 
-        // ==========================================
-        // 2. CREAR EL GRAFO Y LOS LUGARES
-        // ==========================================
 
+        // 2. CREAR EL GRAFO Y LOS VERTICES
         System.out.println("\n2. CREAR EL GRAFO");
 
         Grafo<NodoEdificio> grafo = new Grafo<>();
 
         NodoEdificio nodoRecepcion = new NodoEdificio(
-                "REC",
-                "Recepcion",
-                TipoNodoEdificio.RECEPCION
-        );
+                "REC", "Recepcion", TipoNodoEdificio.RECEPCION);
 
         NodoEdificio nodoEscaleras = new NodoEdificio(
-                "ESC",
-                "Escaleras",
-                TipoNodoEdificio.ESCALERAS
-        );
+                "ESC", "Escaleras", TipoNodoEdificio.ESCALERAS);
 
         NodoEdificio nodoApartamento = new NodoEdificio(
-                "APT101",
-                "Apartamento 101",
-                TipoNodoEdificio.APARTAMENTO
-        );
+                "APT101", "Apartamento 101",
+                TipoNodoEdificio.APARTAMENTO);
 
         Vertice<NodoEdificio> recepcion =
                 new Vertice<>(nodoRecepcion, "REC");
@@ -77,283 +58,279 @@ public class PruebaGrafo {
         grafo.agregarVertice(escaleras);
         grafo.agregarVertice(apartamento);
 
-        System.out.println("Se agregaron los tres vertices.");
+        System.out.println("Vértices agregados: REC, ESC, APT101");
 
-        // ==========================================
-        // 3. PROBAR BUSQUEDA DE VERTICES
-        // ==========================================
 
+        // 3. PROBAR BUSQUEDA
         System.out.println("\n3. BUSQUEDA DE VERTICES");
 
-        System.out.println(
-                "Buscar REC: "
-                        + (grafo.buscarVertice("REC") == recepcion)
-        );
+        System.out.println("Buscar REC: "
+                + (grafo.buscarVertice("REC") == recepcion));
 
-        System.out.println(
-                "Buscar ESC: "
-                        + (grafo.buscarVertice("ESC") == escaleras)
-        );
+        System.out.println("Buscar ESC: "
+                + (grafo.buscarVertice("ESC") == escaleras));
 
-        System.out.println(
-                "Buscar inexistente: "
-                        + (grafo.buscarVertice("XXX") == null)
-        );
+        System.out.println("Buscar XXX: "
+                + (grafo.buscarVertice("XXX") == null));
 
-        // ==========================================
-        // 4. CREAR Y AGREGAR ARISTAS
-        // ==========================================
 
+        // 4. AGREGAR LAS TRES ARISTAS
         System.out.println("\n4. AGREGAR ARISTAS");
 
         Arista<NodoEdificio> conexion1 =
                 new Arista<>(recepcion, escaleras, 8.0, true);
 
         Arista<NodoEdificio> conexion2 =
-                new Arista<>(recepcion, apartamento, 5.0, true);
+                new Arista<>(recepcion, apartamento, 15.0, true);
+
+        Arista<NodoEdificio> conexion3 =
+                new Arista<>(escaleras, apartamento, 2.0, true);
 
         grafo.agregarArista(conexion1);
         grafo.agregarArista(conexion2);
+        grafo.agregarArista(conexion3);
 
-        System.out.println(
-                "Peso REC-ESC: " + conexion1.getPeso()
-        );
+        System.out.println("REC - ESC: peso " + conexion1.getPeso());
+        System.out.println("REC - APT101: peso " + conexion2.getPeso());
+        System.out.println("ESC - APT101: peso " + conexion3.getPeso());
 
-        System.out.println(
-                "Peso REC-APT101: " + conexion2.getPeso()
-        );
 
-        // ==========================================
-        // 5. VERIFICAR LISTAS DE ADYACENCIA
-        // ==========================================
-
+        // 5. VERIFICAR LAS LISTAS DE ADYACENCIA
         System.out.println("\n5. LISTAS DE ADYACENCIA");
 
-        System.out.println(
-                "REC contiene conexion1: "
-                        + contieneArista(recepcion, conexion1)
-        );
+        System.out.println("REC contiene conexion1: "
+                + contieneArista(recepcion, conexion1));
 
-        System.out.println(
-                "ESC contiene conexion1: "
-                        + contieneArista(escaleras, conexion1)
-        );
+        System.out.println("ESC contiene conexion1: "
+                + contieneArista(escaleras, conexion1));
 
-        System.out.println(
-                "REC contiene conexion2: "
-                        + contieneArista(recepcion, conexion2)
-        );
+        System.out.println("REC contiene conexion2: "
+                + contieneArista(recepcion, conexion2));
 
-        System.out.println(
-                "APT101 contiene conexion2: "
-                        + contieneArista(apartamento, conexion2)
-        );
+        System.out.println("APT101 contiene conexion2: "
+                + contieneArista(apartamento, conexion2));
 
-        // ==========================================
-        // 6. PROBAR ITERADOR DEL GRAFO
-        // ==========================================
+        System.out.println("ESC contiene conexion3: "
+                + contieneArista(escaleras, conexion3));
 
+        System.out.println("APT101 contiene conexion3: "
+                + contieneArista(apartamento, conexion3));
+
+        System.out.println("\nESTADO DE LAS ARISTAS");
+        System.out.println("REC-ESC habilitada: "
+                + conexion1.isHabilitada());
+        System.out.println("REC-APT101 habilitada: "
+                + conexion2.isHabilitada());
+        System.out.println("ESC-APT101 habilitada: "
+                + conexion3.isHabilitada());
+
+
+        // 6. ITERADOR DEL GRAFO
         System.out.println("\n6. ITERADOR DEL GRAFO");
 
         for (NodoEdificio nodo : grafo) {
-            System.out.println(
-                    nodo.getCodigo() + " - " + nodo.getNombre()
-            );
+            System.out.println(nodo.getCodigo()
+                    + " - " + nodo.getNombre());
         }
 
-        // ==========================================
-        // 7. PROBAR BFS ANTES DE ELIMINAR ARISTAS
-        // ==========================================
 
+        // 7. RECORRIDO BFS
         System.out.println("\n7. RECORRIDO BFS DESDE REC");
 
-        ListaDoblementeEnlazada<NodoEdificio> recorrido =
+        ListaDoblementeEnlazada<NodoEdificio> recorridoBFS =
                 grafo.recorridoBFS("REC");
 
-        for (NodoEdificio nodo : recorrido) {
-            System.out.println(
-                    nodo.getCodigo() + " - " + nodo.getNombre()
-            );
-        }
+        imprimirRecorrido(recorridoBFS);
 
-        System.out.println("\n=== PRUEBA DFS ===");
 
-        ListaDoblementeEnlazada<NodoEdificio> recorridoProfundidad =
+        // 8. RECORRIDO DFS
+        System.out.println("\n8. RECORRIDO DFS DESDE REC");
+
+        ListaDoblementeEnlazada<NodoEdificio> recorridoDFS =
                 grafo.recorridoDFS("REC");
 
-        for (NodoEdificio nodo : recorridoProfundidad) {
-            System.out.println(
-                    nodo.getCodigo() + " - " + nodo.getNombre()
-            );
-        }
+        imprimirRecorrido(recorridoDFS);
 
-        System.out.println("\n=== PRUEBAS DIJKSTRA ===");
 
-// Prueba 1: Camino más corto de REC a APT101
+        // 9. DIJKSTRA: CAMINO MAS CORTO
+        System.out.println("\n9. PRUEBAS DIJKSTRA");
+
         ListaDoblementeEnlazada<NodoEdificio> camino =
                 grafo.caminoMasCorto("REC", "APT101");
 
         System.out.println("Camino de REC a APT101:");
+        imprimirRecorrido(camino);
 
-        for (NodoEdificio nodo : camino) {
+        System.out.println("Camino esperado: REC -> ESC -> APT101");
+        System.out.println("Peso esperado: 10 (8 + 2; directo = 15)");
+
+
+        System.out.println("\nPRUEBA DIJKSTRA CON RUTA ALTERNATIVA");
+
+        // Deshabilitamos la conexión entre escaleras y apartamento
+        conexion3.setHabilitada(false);
+
+        System.out.println("Conexion ESC-APT101 deshabilitada: "
+                + !conexion3.isHabilitada());
+
+        System.out.println("Camino alternativo de REC a APT101:");
+
+        ListaDoblementeEnlazada<NodoEdificio> caminoAlternativo =
+                grafo.caminoMasCorto("REC", "APT101");
+
+        for (NodoEdificio nodo : caminoAlternativo) {
             System.out.print(nodo.getCodigo() + " -> ");
         }
-        System.out.println("FIN");
 
-// Prueba 2: El destino es el mismo vértice de inicio
+        System.out.println("FIN");
+        // Restauramos la conexión
+        conexion3.setHabilitada(true);
+
+
+
+        // 10. DIJKSTRA: MISMO ORIGEN Y DESTINO
+        System.out.println("\n10. DIJKSTRA: MISMO VERTICE");
+
         ListaDoblementeEnlazada<NodoEdificio> mismoNodo =
                 grafo.caminoMasCorto("REC", "REC");
 
-        System.out.println("\nCamino de REC a REC:");
+        imprimirRecorrido(mismoNodo);
 
-        for (NodoEdificio nodo : mismoNodo) {
-            System.out.print(nodo.getCodigo() + " -> ");
-        }
-        System.out.println("FIN");
 
-// Prueba 3: El vértice de inicio no existe
-        ListaDoblementeEnlazada<NodoEdificio> inicioInexistente =
-                grafo.caminoMasCorto("XXX", "APT101");
+        // 11. DIJKSTRA: CODIGOS INEXISTENTES
+        System.out.println("\n11. DIJKSTRA: CODIGOS INEXISTENTES");
 
-        System.out.println("\nCamino desde XXX: "
-                + (inicioInexistente.iterator().hasNext()
-                ? "Se encontró un camino"
-                : "No existe camino"));
+        System.out.println("Inicio inexistente, camino vacío: "
+                + !grafo.caminoMasCorto("XXX", "APT101").iterator().hasNext());
 
-// Prueba 4: El destino no existe
-        ListaDoblementeEnlazada<NodoEdificio> destinoInexistente =
-                grafo.caminoMasCorto("REC", "XXX");
+        System.out.println("Destino inexistente, camino vacío: "
+                + !grafo.caminoMasCorto("REC", "XXX").iterator().hasNext());
 
-        System.out.println("Camino hacia XXX: "
-                + (destinoInexistente.iterator().hasNext()
-                ? "Se encontró un camino"
-                : "No existe camino"));
+        // 12. RECORRIDOS DESDE UN VERTICE INEXISTENTE
+        System.out.println("\n12. RECORRIDOS INEXISTENTES");
 
-// Prueba 5: Destino desconectado
-        Vertice<NodoEdificio> aislado = new Vertice<>(
-                new NodoEdificio(
-                        "APT999",
-                        "Apartamento aislado",
-                        TipoNodoEdificio.APARTAMENTO
-                ),
-                "APT999"
-        );
+        System.out.println("BFS vacío: "
+                + !grafo.recorridoBFS("XXX").iterator().hasNext());
+
+        System.out.println("DFS vacío: "
+                + !grafo.recorridoDFS("XXX").iterator().hasNext());
+
+
+        // 13. DESTINO AISLADO
+        System.out.println("\n13. DESTINO AISLADO");
+
+        NodoEdificio nodoAislado = new NodoEdificio(
+                "APT999", "Apartamento aislado",
+                TipoNodoEdificio.APARTAMENTO);
+
+        Vertice<NodoEdificio> aislado =
+                new Vertice<>(nodoAislado, "APT999");
 
         grafo.agregarVertice(aislado);
 
         ListaDoblementeEnlazada<NodoEdificio> sinConexion =
                 grafo.caminoMasCorto("REC", "APT999");
 
-        System.out.println("Camino hacia APT999: "
-                + (sinConexion.iterator().hasNext()
-                ? "Se encontró un camino"
-                : "No existe camino"));
+        System.out.println("Camino hacia APT999 vacío: "
+                + !sinConexion.iterator().hasNext());
 
         grafo.eliminarVertice("APT999");
 
-        // ==========================================
-        // 8. PROBAR BFS CON CODIGO INEXISTENTE
-        // ==========================================
 
-        System.out.println("\n8. BFS DESDE VERTICE INEXISTENTE");
+        System.out.println("\n17. PRUEBA DE ARISTAS DESHABILITADAS");
 
-        ListaDoblementeEnlazada<NodoEdificio> recorridoVacio =
-                grafo.recorridoBFS("XXX");
+// Deshabilitamos las dos conexiones que salen de REC
+        conexion1.setHabilitada(false);
+        conexion2.setHabilitada(false);
 
-        boolean recorridoVacioCorrecto = true;
+        System.out.println("REC-ESC deshabilitada: "
+                + !conexion1.isHabilitada());
 
-        for (NodoEdificio nodo : recorridoVacio) {
-            recorridoVacioCorrecto = false;
-        }
+        System.out.println("REC-APT101 deshabilitada: "
+                + !conexion2.isHabilitada());
 
-        System.out.println(
-                "El recorrido esta vacio: "
-                        + recorridoVacioCorrecto
-        );
+// REC debe ser el único vértice alcanzable desde REC
+        System.out.println("BFS solo alcanza REC: "
+                + (grafo.recorridoBFS("REC").getTam() == 1));
 
-        // ==========================================
-        // 9. ELIMINAR UNA ARISTA DEL GRAFO
-        // ==========================================
+// Dijkstra no debe encontrar camino hacia APT101
+        System.out.println("Dijkstra no encuentra camino: "
+                + !grafo.caminoMasCorto("REC", "APT101").iterator().hasNext());
 
-        System.out.println("\n9. ELIMINAR ARISTA");
+// Restauramos las conexiones para las pruebas siguientes
+        conexion1.setHabilitada(true);
+        conexion2.setHabilitada(true);
 
-        boolean aristaEliminada =
-                grafo.eliminarArista(conexion1);
+        System.out.println("Aristas restauradas: "
+                + (conexion1.isHabilitada() && conexion2.isHabilitada()));
 
-        System.out.println(
-                "Se elimino conexion1: " + aristaEliminada
-        );
 
-        System.out.println(
-                "REC ya no contiene conexion1: "
-                        + !contieneArista(recepcion, conexion1)
-        );
+        // 14. ELIMINAR UNA ARISTA
+        System.out.println("\n14. ELIMINAR ARISTA");
 
-        System.out.println(
-                "ESC ya no contiene conexion1: "
-                        + !contieneArista(escaleras, conexion1)
-        );
+        System.out.println("Eliminar conexion1: "
+                + grafo.eliminarArista(conexion1));
 
-        System.out.println(
-                "Intentar eliminarla otra vez: "
-                        + grafo.eliminarArista(conexion1)
-        );
+        System.out.println("REC ya no contiene conexion1: "
+                + !contieneArista(recepcion, conexion1));
 
-        // ==========================================
-        // 10. ELIMINAR UN VERTICE
-        // ==========================================
+        System.out.println("ESC ya no contiene conexion1: "
+                + !contieneArista(escaleras, conexion1));
 
-        System.out.println("\n10. ELIMINAR VERTICE REC");
+        System.out.println("Eliminarla otra vez: "
+                + grafo.eliminarArista(conexion1));
 
-        boolean verticeEliminado =
-                grafo.eliminarVertice("REC");
 
-        System.out.println(
-                "Se elimino REC: " + verticeEliminado
-        );
+        // 15. ELIMINAR UN VERTICE
+        System.out.println("\n15. ELIMINAR VERTICE REC");
 
-        System.out.println(
-                "REC ya no existe: "
-                        + (grafo.buscarVertice("REC") == null)
-        );
+        System.out.println("Eliminar REC: "
+                + grafo.eliminarVertice("REC"));
 
-        System.out.println(
-                "ESC sigue existiendo: "
-                        + (grafo.buscarVertice("ESC") == escaleras)
-        );
+        System.out.println("REC ya no existe: "
+                + (grafo.buscarVertice("REC") == null));
 
-        System.out.println(
-                "APT101 sigue existiendo: "
-                        + (grafo.buscarVertice("APT101") == apartamento)
-        );
+        System.out.println("ESC sigue existiendo: "
+                + (grafo.buscarVertice("ESC") == escaleras));
 
-        System.out.println(
-                "La conexion2 fue eliminada de APT101: "
-                        + !contieneArista(apartamento, conexion2)
-        );
+        System.out.println("APT101 sigue existiendo: "
+                + (grafo.buscarVertice("APT101") == apartamento));
 
-        // ==========================================
-        // 11. INTENTAR ELIMINAR VERTICE INEXISTENTE
-        // ==========================================
+        System.out.println("conexion2 eliminada de APT101: "
+                + !contieneArista(apartamento, conexion2));
 
-        System.out.println("\n11. ELIMINAR VERTICE INEXISTENTE");
 
-        System.out.println(
-                "Eliminar REC otra vez: "
-                        + grafo.eliminarVertice("REC")
-        );
+        // 16. INTENTAR ELIMINAR UN VERTICE INEXISTENTE
+        System.out.println("\n16. ELIMINAR VERTICE INEXISTENTE");
+
+        System.out.println("Eliminar REC otra vez: "
+                + grafo.eliminarVertice("REC"));
+
 
         System.out.println("\n====================================");
-        System.out.println("         FIN DE LAS PRUEBAS");
+        System.out.println("          FIN DE LAS PRUEBAS");
         System.out.println("====================================");
     }
 
-    // ==========================================
-    // METODO AUXILIAR
-    // Comprueba si un vertice contiene una arista
-    // sin modificar su lista.
-    // ==========================================
 
+    // Imprime los elementos de un recorrido o camino.
+    private static void imprimirRecorrido(
+            ListaDoblementeEnlazada<NodoEdificio> recorrido) {
+
+        if (!recorrido.iterator().hasNext()) {
+            System.out.println("FIN (camino vacío)");
+            return;
+        }
+
+        for (NodoEdificio nodo : recorrido) {
+            System.out.print(nodo.getCodigo() + " -> ");
+        }
+
+        System.out.println("FIN");
+    }
+
+
+    // Comprueba si un vertice contiene una arista concreta.
     private static boolean contieneArista(
             Vertice<NodoEdificio> vertice,
             Arista<NodoEdificio> buscada) {

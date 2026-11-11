@@ -108,6 +108,31 @@ public class ListaDoblementeEnlazada<T> implements Iterable<T> {
 
         return false;
     }
+
+    public NodoDoble<T> getInicio() {
+        return inicio;
+    }
+
+    public void setInicio(NodoDoble<T> inicio) {
+        this.inicio = inicio;
+    }
+
+    public NodoDoble<T> getFin() {
+        return fin;
+    }
+
+    public void setFin(NodoDoble<T> fin) {
+        this.fin = fin;
+    }
+
+    public int getTam() {
+        return tam;
+    }
+
+    public void setTam(int tam) {
+        this.tam = tam;
+    }
+
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {

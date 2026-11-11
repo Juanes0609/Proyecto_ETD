@@ -2,6 +2,7 @@ package estructuras;
 import modelo.Arista;
 import modelo.Vertice;
 
+
 import java.util.Iterator;
 
 public class Grafo<T> implements Iterable<T> {
@@ -358,6 +359,21 @@ public class Grafo<T> implements Iterable<T> {
         return camino;
     }
 
+    public ListaDoblementeEnlazada<Arista<T>> getAristas() {
+        return aristas;
+    }
+
+    public void setAristas(ListaDoblementeEnlazada<Arista<T>> aristas) {
+        this.aristas = aristas;
+    }
+
+    public ListaDoblementeEnlazada<Vertice<T>> getVertices() {
+        return vertices;
+    }
+
+    public void setVertices(ListaDoblementeEnlazada<Vertice<T>> vertices) {
+        this.vertices = vertices;
+    }
 
     @Override
     public Iterator<T> iterator() {

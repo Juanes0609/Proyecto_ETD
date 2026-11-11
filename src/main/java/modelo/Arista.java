@@ -10,7 +10,7 @@ public class Arista<T> {
         this.origen = origen;
         this.destino = destino;
         this.peso = peso;
-        this.habilitada = false;
+        this.habilitada = habilitada;
     }
 
     public Vertice<T> getOrigen() {
