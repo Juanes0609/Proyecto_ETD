@@ -76,6 +76,21 @@ public class ServicioReservas {
         return reserva;
     }
 
+    // Solo para reservas PENDIENTES del portal: paga el 30 % y la confirma
+    public void pagarAnticipo(Reserva reserva) {
+        if (reserva.getCanal() != Canal.PORTAL
+                || reserva.getEstadoReserva() != EstadoReserva.PENDIENTE) {
+            throw new TransicionEstadoInvalidaException(
+                    "El anticipo solo aplica a reservas PENDIENTES del portal");
+        }
+        double total = facturacion.liquidar(reserva.getEstancia(), reserva.getListOcupantes());
+        double anticipo = facturacion.calcularAnticipo(total);
+        if (anticipo > 0) {
+            reserva.getFolio().registrarPago("Anticipo 30%", anticipo);
+        }
+        confirmar(reserva);
+    }
+
     public void cambiarEstado(Reserva reserva, EstadoReserva destino) {
         EstadoReserva actual = reserva.getEstadoReserva();
         if (!actual.puedeTransicionarA(destino)) {
