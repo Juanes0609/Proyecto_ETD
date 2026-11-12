@@ -21,6 +21,27 @@ public class GestorMapaEdificio {
 
         grafo.agregarVertice(vertice);
     }
+    public void agregarApartamento(Apartamento apartamento) {
+        if (apartamento == null) {
+            throw new IllegalArgumentException(
+                    "El apartamento no puede ser null"
+            );
+        }
+
+        NodoEdificio nodo = apartamento.getNodoEdificio();
+
+        if (nodo == null) {
+            throw new IllegalArgumentException(
+                    "El apartamento no tiene un nodo de edificio"
+            );
+        }
+
+        if (grafo.buscarVertice(nodo.getCodigo()) != null) {
+            return;
+        }
+
+        agregarUbicacion(nodo);
+    }
 
     public void conectarUbicaciones(
             String codigoOrigen,

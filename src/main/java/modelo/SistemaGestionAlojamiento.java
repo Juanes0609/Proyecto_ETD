@@ -46,7 +46,11 @@ public class SistemaGestionAlojamiento {
     }
 
     public ListaDoblementeEnlazada<Huesped> listarHuespedes() {
-        return huespedes.recorridoInOrden();
+        ListaDoblementeEnlazada<Huesped> lista = new ListaDoblementeEnlazada<>();
+
+        huespedes.recorridoInOrden(huesped -> lista.agregarFinal(huesped));
+
+        return lista;
     }
 
     public void registrarApartamento(Apartamento apartamento) {
@@ -83,7 +87,11 @@ public class SistemaGestionAlojamiento {
     }
 
     public ListaDoblementeEnlazada<Apartamento> listarApartamentos() {
-        return apartamentos.recorridoInOrden();
+        ListaDoblementeEnlazada<Apartamento> lista = new ListaDoblementeEnlazada<>();
+
+        apartamentos.recorridoInOrden(apartamento -> lista.agregarFinal(apartamento));
+
+        return lista;
     }
 
     public ListaDoblementeEnlazada<Apartamento> buscarDisponibles(

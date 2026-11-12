@@ -42,6 +42,8 @@ public class Apartamento implements Comparable<Apartamento> {
         this.tarifaAlta = 0;
         this.reservas = new ListaDoblementeEnlazada<>();
         this.reservasPorFecha = new ArbolBinarioBusqueda<>();
+        this.nodoEdificio = new NodoEdificio(this.codigo, this.nombre, TipoNodoEdificio.APARTAMENTO);
+        this.nodoEdificio.setApartamento(this);
     }
 
     public String getCodigo() {
@@ -190,13 +192,24 @@ public class Apartamento implements Comparable<Apartamento> {
 
     /** Detecta recursivamente, en el árbol por fecha, si se cruza alguna reserva activa. */
     public boolean tieneSolapamiento(Estancia estancia) {
-        if (estancia == null) throw new IllegalArgumentException("La estancia es obligatoria");
-        return reservasPorFecha.existeSi(existente -> {
-            if (existente.getEstadoReserva() == null || !existente.getEstadoReserva().esActiva()) return false;
-            Estancia otra = existente.getEstancia();
-            return estancia.getFechaEntrada().isBefore(otra.getFechaSalida())
+        if (estancia == null) {
+            throw new IllegalArgumentException("La estancia es obligatoria");
+        }
+
+        Reserva existente = reservasPorFecha.existeSi(reserva -> {
+            if (reserva.getEstadoReserva() == null
+                    || !reserva.getEstadoReserva().esActiva()) {
+                return false;
+            }
+
+            Estancia otra = reserva.getEstancia();
+
+            return otra != null
+                    && estancia.getFechaEntrada().isBefore(otra.getFechaSalida())
                     && estancia.getFechaSalida().isAfter(otra.getFechaEntrada());
         });
+
+        return existente != null;
     }
 
     @Override
