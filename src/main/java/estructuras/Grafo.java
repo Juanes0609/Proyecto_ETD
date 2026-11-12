@@ -173,15 +173,13 @@ public class Grafo<T> implements Iterable<T> {
                     continue;
                 }
 
-                Vertice<T> vecino;
-
-                if (arista.getOrigen() == actual) {
-                    vecino = arista.getDestino();
-                } else if (arista.getDestino() == actual) {
-                    vecino = arista.getOrigen();
-                } else {
+                // CORREGIDO: solo se puede recorrer en dirección
+                // origen -> destino, nunca al revés.
+                if (arista.getOrigen() != actual) {
                     continue;
                 }
+
+                Vertice<T> vecino = arista.getDestino();
 
                 if (!vecino.isVisitado()) {
                     vecino.setVisitado(true);
@@ -240,15 +238,13 @@ public class Grafo<T> implements Iterable<T> {
                 continue;
             }
 
-            Vertice<T> vecino;
-
-            if (arista.getOrigen() == actual) {
-                vecino = arista.getDestino();
-            } else if (arista.getDestino() == actual) {
-                vecino = arista.getOrigen();
-            } else {
+            // CORREGIDO: solo se puede recorrer en dirección
+            // origen -> destino, nunca al revés.
+            if (arista.getOrigen() != actual) {
                 continue;
             }
+
+            Vertice<T> vecino = arista.getDestino();
 
             // Continuar solo si el vecino no ha sido visitado
             if (!vecino.isVisitado()) {
@@ -313,15 +309,12 @@ public class Grafo<T> implements Iterable<T> {
                     continue;
                 }
 
-                Vertice<T> vecino;
 
-                if (arista.getOrigen() == actual) {
-                    vecino = arista.getDestino();
-                } else if (arista.getDestino() == actual) {
-                    vecino = arista.getOrigen();
-                } else {
+                if (arista.getOrigen() != actual) {
                     continue;
                 }
+
+                Vertice<T> vecino = arista.getDestino();
 
                 if (vecino.isVisitado()) {
                     continue;

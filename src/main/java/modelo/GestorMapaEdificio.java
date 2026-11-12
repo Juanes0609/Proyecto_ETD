@@ -16,6 +16,10 @@ public class GestorMapaEdificio {
             );
         }
 
+        if (grafo.buscarVertice(nodo.getCodigo()) != null) {
+            return;
+        }
+
         Vertice<NodoEdificio> vertice =
                 new Vertice<>(nodo, nodo.getCodigo());
 
@@ -41,6 +45,17 @@ public class GestorMapaEdificio {
         }
 
         agregarUbicacion(nodo);
+    }
+    public void cargarApartamentos(SistemaGestionAlojamiento sistema) {
+        if (sistema == null) {
+            throw new IllegalArgumentException(
+                    "El sistema de gestión es obligatorio"
+            );
+        }
+
+        for (Apartamento apartamento : sistema.listarApartamentos()) {
+            agregarApartamento(apartamento);
+        }
     }
 
     public void conectarUbicaciones(
