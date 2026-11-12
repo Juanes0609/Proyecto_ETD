@@ -1,5 +1,6 @@
 package servicio;
 
+import excepciones.ReservaSolapadaException;
 import excepciones.TransicionEstadoInvalidaException;
 import excepciones.CapacidadExcedidaException;
 import excepciones.FechasInvalidasException;
@@ -27,6 +28,11 @@ public class ServicioReservas {
                                 LocalDate entrada, LocalDate salida,
                                 Iterable<Ocupante> ocupantes, LocalDateTime ahora) {
 
+        // Validaciones básicas antes de consultar las entidades.
+        if (canal == null || apartamento == null || titular == null || ahora == null) {
+            throw new IllegalArgumentException("Canal, apartamento, titular y fecha actual son obligatorios");
+        }
+
         // 1. Fechas: el constructor de Estancia valida que la salida sea posterior a la entrada
         Estancia estancia = new Estancia(entrada, salida, null);
         if (entrada.isBefore(ahora.toLocalDate())) {
@@ -46,7 +52,11 @@ public class ServicioReservas {
                     + apartamento.getCapacidadMaxima() + " personas y se pidieron " + cantidad);
         }
 
-        // 3. Solapamiento: PENDIENTE, se conecta cuando exista el árbol de reservas del apartamento
+        // 3. Evitar doble reserva del mismo apartamento en noches compartidas.
+        if (apartamento.tieneSolapamiento(estancia)) {
+            throw new ReservaSolapadaException("El apartamento " + apartamento.getCodigo()
+                    + " ya tiene una reserva activa en ese rango de fechas");
+        }
 
         // 4. Estado inicial y vencimiento según el canal
         EstadoReserva estadoInicial;
@@ -65,8 +75,11 @@ public class ServicioReservas {
                 estadoInicial, canal, apartamento, titular, estancia);
         estancia.setReserva(reserva);
         for (Ocupante o : ocupantes) {
+            if (o == null) throw new IllegalArgumentException("La lista de ocupantes no puede contener null");
             reserva.getListOcupantes().agregarFinal(o);
         }
+        apartamento.registrarReserva(reserva);
+        titular.agregarReserva(reserva);
 
         // 6. Cargo inicial en el folio: el valor total de la estancia
         double total = facturacion.liquidar(estancia, reserva.getListOcupantes());
@@ -106,6 +119,7 @@ public class ServicioReservas {
 
     public void cancelar(Reserva reserva) {
         cambiarEstado(reserva, EstadoReserva.CANCELADA);
+        reserva.getApartamento().retirarReservaActiva(reserva);
     }
 
     public void iniciarEstancia(Reserva reserva) {
@@ -118,5 +132,6 @@ public class ServicioReservas {
 
     public void marcarNoShow(Reserva reserva) {
         cambiarEstado(reserva, EstadoReserva.NOSHOW);
+        reserva.getApartamento().retirarReservaActiva(reserva);
     }
 }

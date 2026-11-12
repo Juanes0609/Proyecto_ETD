@@ -1,50 +1,49 @@
 package modelo;
 
+import estructuras.Conjunto;
+import estructuras.ListaDoblementeEnlazada;
+
 import java.time.LocalDate;
 import java.util.List;
 
-public class Huesped extends Persona {
+public class Huesped extends Persona implements Comparable<Huesped> {
     private LocalDate fechaNacimiento;
     private String correo;
     private String fotografia;
-    private List<Reserva> listReservas;
+    private final ListaDoblementeEnlazada<Reserva> listReservas;
+    private final Conjunto<Apartamento> favoritos;
 
-    public Huesped(String nombre, String documento, String telefono, LocalDate fechaNacimiento, String correo, String fotografia) {
+    public Huesped(String nombre, String documento, String telefono,
+                   LocalDate fechaNacimiento, String correo, String fotografia) {
         super(nombre, documento, telefono);
         this.fechaNacimiento = fechaNacimiento;
         this.correo = correo;
         this.fotografia = fotografia;
+        this.listReservas = new ListaDoblementeEnlazada<>();
+        this.favoritos = new Conjunto<>();
     }
 
-    public LocalDate getFechaNacimiento() {
-        return fechaNacimiento;
+    @Override
+    public int compareTo(Huesped otro) {
+        if (otro == null) throw new NullPointerException("El huésped a comparar no puede ser null");
+        return getDocumento().compareToIgnoreCase(otro.getDocumento());
     }
 
-    public void setFechaNacimiento(LocalDate fechaNacimiento) {
-        this.fechaNacimiento = fechaNacimiento;
+    public void agregarReserva(Reserva reserva) {
+        if (reserva != null && !listReservas.contiene(reserva)) listReservas.agregarFinal(reserva);
     }
 
-    public String getCorreo() {
-        return correo;
-    }
+    public boolean agregarFavorito(Apartamento apartamento) { return favoritos.agregar(apartamento); }
+    public boolean quitarFavorito(Apartamento apartamento) { return favoritos.eliminar(apartamento); }
+    public boolean esFavorito(Apartamento apartamento) { return favoritos.contiene(apartamento); }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
-    }
-
-    public String getFotografia() {
-        return fotografia;
-    }
-
-    public void setFotografia(String fotografia) {
-        this.fotografia = fotografia;
-    }
-
-    public List<Reserva> getListReservas() {
-        return listReservas;
-    }
-
-    public void setListReservas(List<Reserva> listReservas) {
-        this.listReservas = listReservas;
-    }
+    public LocalDate getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+    public String getCorreo() { return correo; }
+    public void setCorreo(String correo) { this.correo = correo; }
+    public String getFotografia() { return fotografia; }
+    public void setFotografia(String fotografia) { this.fotografia = fotografia; }
+    public ListaDoblementeEnlazada<Reserva> getListReservas() { return listReservas; }
+    public ListaDoblementeEnlazada<Reserva> getHistorialEstancias() { return listReservas; }
+    public Conjunto<Apartamento> getFavoritos() { return favoritos; }
 }

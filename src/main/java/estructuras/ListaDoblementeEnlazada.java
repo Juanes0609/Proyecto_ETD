@@ -109,6 +109,32 @@ public class ListaDoblementeEnlazada<T> implements Iterable<T> {
         return false;
     }
 
+    public int size() { return tam; }
+
+    public boolean estaVacio() { return tam == 0; }
+
+    public boolean isEmpty() { return estaVacio(); }
+
+    public boolean contiene(T dato) {
+        for (T actual : this) {
+            if (actual == null ? dato == null : actual.equals(dato)) return true;
+        }
+        return false;
+    }
+
+    public T obtener(int indice) {
+        if (indice < 0 || indice >= tam) throw new IndexOutOfBoundsException("Índice: " + indice);
+        NodoDoble<T> actual;
+        if (indice < tam / 2) {
+            actual = inicio;
+            for (int i = 0; i < indice; i++) actual = actual.getSiguiente();
+        } else {
+            actual = fin;
+            for (int i = tam - 1; i > indice; i--) actual = actual.getAnterior();
+        }
+        return actual.getDato();
+    }
+
     public NodoDoble<T> getInicio() {
         return inicio;
     }

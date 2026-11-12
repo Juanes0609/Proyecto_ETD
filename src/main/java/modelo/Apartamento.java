@@ -1,10 +1,13 @@
 package modelo;
 
+import estructuras.ArbolBinarioBusqueda;
+import estructuras.ListaDoblementeEnlazada;
 import gui.integracion.ConectorSGADemo;
 
 import java.util.List;
+import java.util.Objects;
 
-public class Apartamento {
+public class Apartamento implements Comparable<Apartamento> {
     private String codigo;
     private String nombre;
     private String bloque;
@@ -17,6 +20,11 @@ public class Apartamento {
     private NodoEdificio nodoEdificio;
     private Reserva reserva;
     private List<OrdenPreparacion> listOrdenesPreparacion;
+    private double tarifaBaja;
+    private double tarifaMedia;
+    private double tarifaAlta;
+    private final ListaDoblementeEnlazada<Reserva> reservas;
+    private final ArbolBinarioBusqueda<Reserva> reservasPorFecha;
 
 
     public Apartamento(String codigo, String nombre, String bloque, int piso, int numeroDormitorios, int capacidadMaxima, EstadoOperativo estadoOperativo, String caracteristicas, String motivoFueraServicio) {
@@ -29,6 +37,11 @@ public class Apartamento {
         this.estadoOperativo = estadoOperativo;
         this.caracteristicas = caracteristicas;
         this.motivoFueraServicio = motivoFueraServicio;
+        this.tarifaBaja = 0;
+        this.tarifaMedia = 0;
+        this.tarifaAlta = 0;
+        this.reservas = new ListaDoblementeEnlazada<>();
+        this.reservasPorFecha = new ArbolBinarioBusqueda<>();
     }
 
     public String getCodigo() {
@@ -125,6 +138,79 @@ public class Apartamento {
 
     public void setListOrdenesPreparacion(List<OrdenPreparacion> listOrdenesPreparacion) {
         this.listOrdenesPreparacion = listOrdenesPreparacion;
+    }
+
+    @Override
+    public int compareTo(Apartamento otro) {
+        if (otro == null) throw new NullPointerException("El apartamento a comparar no puede ser null");
+        return codigo.compareToIgnoreCase(otro.codigo);
+    }
+
+    public void actualizarTarifas(double baja, double media, double alta) {
+        if (baja < 0 || media < 0 || alta < 0) {
+            throw new IllegalArgumentException("Las tarifas no pueden ser negativas");
+        }
+        this.tarifaBaja = baja;
+        this.tarifaMedia = media;
+        this.tarifaAlta = alta;
+    }
+
+    public double getTarifaBaja() { return tarifaBaja; }
+    public void setTarifaBaja(double tarifaBaja) {
+        if (tarifaBaja < 0) throw new IllegalArgumentException("La tarifa no puede ser negativa");
+        this.tarifaBaja = tarifaBaja;
+    }
+    public double getTarifaMedia() { return tarifaMedia; }
+    public void setTarifaMedia(double tarifaMedia) {
+        if (tarifaMedia < 0) throw new IllegalArgumentException("La tarifa no puede ser negativa");
+        this.tarifaMedia = tarifaMedia;
+    }
+    public double getTarifaAlta() { return tarifaAlta; }
+    public void setTarifaAlta(double tarifaAlta) {
+        if (tarifaAlta < 0) throw new IllegalArgumentException("La tarifa no puede ser negativa");
+        this.tarifaAlta = tarifaAlta;
+    }
+
+    /** Registra la reserva en el historial del apartamento. */
+    public void registrarReserva(Reserva reserva) {
+        if (reserva == null) return;
+        if (!reservas.contiene(reserva)) reservas.agregarFinal(reserva);
+        if (reserva.getEstadoReserva() != null && reserva.getEstadoReserva().esActiva()) {
+            reservasPorFecha.insertar(reserva);
+        }
+    }
+
+    public void retirarReservaActiva(Reserva reserva) {
+        if (reserva != null) reservasPorFecha.eliminar(reserva);
+    }
+
+    public ListaDoblementeEnlazada<Reserva> getReservas() { return reservas; }
+    public ArbolBinarioBusqueda<Reserva> getReservasPorFecha() { return reservasPorFecha; }
+    public int getCantidadReservas() { return reservas.getTam(); }
+
+    /** Detecta recursivamente, en el árbol por fecha, si se cruza alguna reserva activa. */
+    public boolean tieneSolapamiento(Estancia estancia) {
+        if (estancia == null) throw new IllegalArgumentException("La estancia es obligatoria");
+        return reservasPorFecha.existeSi(existente -> {
+            if (existente.getEstadoReserva() == null || !existente.getEstadoReserva().esActiva()) return false;
+            Estancia otra = existente.getEstancia();
+            return estancia.getFechaEntrada().isBefore(otra.getFechaSalida())
+                    && estancia.getFechaSalida().isAfter(otra.getFechaEntrada());
+        });
+    }
+
+    @Override
+    public boolean equals(Object objeto) {
+        if (this == objeto) return true;
+        if (!(objeto instanceof Apartamento)) return false;
+        Apartamento otro = (Apartamento) objeto;
+        return codigo != null && otro.codigo != null
+                && codigo.equalsIgnoreCase(otro.codigo);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(codigo == null ? null : codigo.toUpperCase());
     }
 
     @Override
