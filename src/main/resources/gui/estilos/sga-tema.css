@@ -1254,24 +1254,23 @@
     -fx-background-color: transparent;
 }
 
-.scroll-bar {
-    -fx-background-color: transparent;
-}
-
-.scroll-bar .thumb {
-    -fx-background-color: rgba(23, 33, 28, 0.22);
-    -fx-background-radius: 6;
-}
-
-.scroll-bar .increment-button, .scroll-bar .decrement-button {
-    -fx-padding: 0;
-    -fx-pref-height: 0;
+/* Sin barras de desplazamiento visibles: se desplaza con rueda o trackpad. */
+.scroll-bar:vertical {
     -fx-pref-width: 0;
+    -fx-max-width: 0;
+    -fx-opacity: 0;
+    -fx-padding: 0;
 }
 
-.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
-    -fx-shape: "";
+.scroll-bar:horizontal {
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-opacity: 0;
     -fx-padding: 0;
+}
+
+.scroll-pane > .corner, .virtual-flow > .corner {
+    -fx-background-color: transparent;
 }
 
 .split-pane {
