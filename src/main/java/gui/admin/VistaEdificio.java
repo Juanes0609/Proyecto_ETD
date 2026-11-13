@@ -111,10 +111,16 @@ public class VistaEdificio extends VistaBase {
         recorridoCompleto.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
         // Activo, al pasar el ratón el ✓ se vuelve ✕: el siguiente clic quita el recorrido del mapa.
         // Justo tras activarlo el ratón sigue encima: el ✕ aparece solo después de salir y volver.
+        // Inactivo, al pasar el ratón se ve la cola sin hacer clic y el botón dice qué hará el clic.
         recorridoCompleto.hoverProperty().addListener((o, a, b) -> {
             if (!b) {
                 cerrarConHover = true;
+                menuRecorrido.hide();
+            } else if (!recorridoMostrado) {
+                List<OrdenPreparacionDTO> cola = colaActual();
+                mostrarResumen(cola, rutaDeCola(cola));
             }
+            actualizarTextoRecorrido();
             actualizarIconoRecorrido();
         });
         menuRecorrido.setAutoHide(true);
@@ -274,18 +280,23 @@ public class VistaEdificio extends VistaBase {
             return;
         }
         List<OrdenPreparacionDTO> cola = colaActual();
-        RutaDTO ruta = null;
-        if (!cola.isEmpty()) {
-            try {
-                ruta = conector().rutaRecorridoPreparacion();
-            } catch (RuntimeException e) {
-                ruta = null;
-            }
-        }
+        RutaDTO ruta = rutaDeCola(cola);
         if (ruta != null) {
             dibujarRecorrido(ruta, cola);
         }
         mostrarResumen(cola, ruta);
+    }
+
+    /** Recorrido de toda la cola, o {@code null} si está vacía o no hay camino con los pasillos abiertos. */
+    private RutaDTO rutaDeCola(List<OrdenPreparacionDTO> cola) {
+        if (cola.isEmpty()) {
+            return null;
+        }
+        try {
+            return conector().rutaRecorridoPreparacion();
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     /** Resumen flotante bajo el botón; sin acciones, se cierra al hacer clic fuera. */
@@ -361,7 +372,14 @@ public class VistaEdificio extends VistaBase {
         recorridoCompleto.setAccessibleText(mostrado ? "Quitar el recorrido por despachar del mapa"
                 : "Mostrar el recorrido por despachar en el mapa");
         recorridoCompleto.setTooltip(mostrado ? new Tooltip("Quitar del mapa") : null);
+        actualizarTextoRecorrido();
         actualizarIconoRecorrido();
+    }
+
+    /** «Ver en el mapa» solo mientras el ratón está encima del botón inactivo. */
+    private void actualizarTextoRecorrido() {
+        recorridoCompleto.setText(!recorridoMostrado && recorridoCompleto.isHover()
+                ? "Ver en el mapa" : "Por despachar");
     }
 
     /** Inactivo: solo texto. Activo: ✓, que pasa a ✕ con el ratón encima. */
