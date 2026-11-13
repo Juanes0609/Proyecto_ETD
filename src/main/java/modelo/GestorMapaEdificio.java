@@ -88,6 +88,15 @@ public class GestorMapaEdificio {
 
         grafo.agregarArista(arista);
     }
+    /**
+     * Un pasillo real se recorre en los dos sentidos: crea la arista de ida
+     * y la de vuelta con el mismo peso.
+     */
+    public void conectarPasillo(String codigoA, String codigoB, double distancia) {
+        conectarUbicaciones(codigoA, codigoB, distancia);
+        conectarUbicaciones(codigoB, codigoA, distancia);
+    }
+
     public int contarUbicaciones() {
         return grafo.getVertices().getTam();
     }
@@ -129,29 +138,45 @@ public class GestorMapaEdificio {
         return inalcanzables;
     }
     /**
-     * 1. Cerrar un pasillo desde el gestor, sin tocar la arista a mano.
-     * Esto es lo que usa el Administrador para simular "se cerró un pasillo".
+     * Cierra el pasillo entre dos ubicaciones en AMBOS sentidos
+     * (así el administrador no deja abierto el regreso por error).
+     *
+     * @return true si existía al menos una arista entre las dos ubicaciones
      */
-    public boolean cerrarPasillo(String codigoOrigen, String codigoDestino) {
+    public boolean cerrarPasillo(String codigoA, String codigoB) {
+        return cambiarEstadoPasillo(codigoA, codigoB, false);
+    }
+
+    public boolean abrirPasillo(String codigoA, String codigoB) {
+        return cambiarEstadoPasillo(codigoA, codigoB, true);
+    }
+
+    /** true si el pasillo A-B existe y está habilitado en algún sentido. */
+    public boolean pasilloAbierto(String codigoA, String codigoB) {
         for (Arista<NodoEdificio> arista : grafo.getAristas()) {
-            if (arista.getOrigen().getCodigo().equals(codigoOrigen)
-                    && arista.getDestino().getCodigo().equals(codigoDestino)) {
-                arista.setHabilitada(false);
+            if (conecta(arista, codigoA, codigoB) && arista.isHabilitada()) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean abrirPasillo(String codigoOrigen, String codigoDestino) {
+    private boolean cambiarEstadoPasillo(String codigoA, String codigoB, boolean habilitada) {
+        boolean encontrado = false;
         for (Arista<NodoEdificio> arista : grafo.getAristas()) {
-            if (arista.getOrigen().getCodigo().equals(codigoOrigen)
-                    && arista.getDestino().getCodigo().equals(codigoDestino)) {
-                arista.setHabilitada(true);
-                return true;
+            if (conecta(arista, codigoA, codigoB)) {
+                arista.setHabilitada(habilitada);
+                encontrado = true;
             }
         }
-        return false;
+        return encontrado;
+    }
+
+    private boolean conecta(Arista<NodoEdificio> arista, String codigoA, String codigoB) {
+        String origen = arista.getOrigen().getCodigo();
+        String destino = arista.getDestino().getCodigo();
+        return (origen.equals(codigoA) && destino.equals(codigoB))
+                || (origen.equals(codigoB) && destino.equals(codigoA));
     }
 
     /**
@@ -187,6 +212,52 @@ public class GestorMapaEdificio {
         }
 
         return ruta;
+    }
+
+    /** Ruta más corta (Dijkstra) entre dos ubicaciones; vacía si no hay camino. */
+    public ListaDoblementeEnlazada<NodoEdificio> rutaMasCorta(
+            String codigoOrigen, String codigoDestino) {
+        return grafo.caminoMasCorto(codigoOrigen, codigoDestino);
+    }
+
+    /**
+     * Suma de los pesos (metros) de una ruta ya calculada, tomando en cada
+     * tramo el pasillo habilitado más corto entre los dos nodos.
+     */
+    public double distanciaDeRuta(ListaDoblementeEnlazada<NodoEdificio> ruta) {
+        double total = 0;
+        NodoEdificio anterior = null;
+        for (NodoEdificio nodo : ruta) {
+            if (anterior != null) {
+                total += pesoDelTramo(anterior.getCodigo(), nodo.getCodigo());
+            }
+            anterior = nodo;
+        }
+        return total;
+    }
+
+    private double pesoDelTramo(String desde, String hasta) {
+        double mejor = Double.POSITIVE_INFINITY;
+        for (Arista<NodoEdificio> arista : grafo.getAristas()) {
+            if (arista.isHabilitada()
+                    && arista.getOrigen().getCodigo().equals(desde)
+                    && arista.getDestino().getCodigo().equals(hasta)
+                    && arista.getPeso() < mejor) {
+                mejor = arista.getPeso();
+            }
+        }
+        return mejor == Double.POSITIVE_INFINITY ? 0 : mejor;
+    }
+
+    /** Cantidad de pasillos (aristas) cerrados en este momento. */
+    public int contarPasillosCerrados() {
+        int cerrados = 0;
+        for (Arista<NodoEdificio> arista : grafo.getAristas()) {
+            if (!arista.isHabilitada()) {
+                cerrados++;
+            }
+        }
+        return cerrados;
     }
 
     /**

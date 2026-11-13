@@ -7,6 +7,8 @@ public class OrdenPreparacion {
     private LocalDateTime fechaCreacion;
     private LocalDateTime horaLlegadaEstimada;
     private int prioridad;
+    private LocalDateTime horaInicioPreparacion;
+    private LocalDateTime horaFinPreparacion;
 
     public OrdenPreparacion(String codigo, LocalDateTime fechaCreacion, LocalDateTime horaLlegadaEstimada, int prioridad) {
         this.codigo = codigo;
@@ -45,5 +47,29 @@ public class OrdenPreparacion {
 
     public void setPrioridad(int prioridad) {
         this.prioridad = prioridad;
+    }
+
+    public LocalDateTime getHoraInicioPreparacion() {
+        return horaInicioPreparacion;
+    }
+
+    public void setHoraInicioPreparacion(LocalDateTime horaInicioPreparacion) {
+        this.horaInicioPreparacion = horaInicioPreparacion;
+    }
+
+    public LocalDateTime getHoraFinPreparacion() {
+        return horaFinPreparacion;
+    }
+
+    public void setHoraFinPreparacion(LocalDateTime horaFinPreparacion) {
+        this.horaFinPreparacion = horaFinPreparacion;
+    }
+
+    /** Minutos entre que se despachó la orden y quedó preparada; -1 si aún no termina. */
+    public long minutosDePreparacion() {
+        if (horaInicioPreparacion == null || horaFinPreparacion == null) {
+            return -1;
+        }
+        return java.time.Duration.between(horaInicioPreparacion, horaFinPreparacion).toMinutes();
     }
 }

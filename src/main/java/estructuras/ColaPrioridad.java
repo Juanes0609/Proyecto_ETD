@@ -1,4 +1,6 @@
 package estructuras;
+import excepciones.EstructuraVaciaException;
+
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -64,7 +66,7 @@ public class ColaPrioridad<T> implements Iterable<T> {
     // Consultar el elemento de mayor prioridad sin retirarlo
     public T consultarPrioridad() {
         if (estaVacia()) {
-            throw new NoSuchElementException(
+            throw new EstructuraVaciaException(
                     "La cola de prioridad está vacía"
             );
         }

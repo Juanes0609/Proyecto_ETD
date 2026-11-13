@@ -1,5 +1,7 @@
 package estructuras;
 
+import excepciones.EstructuraVaciaException;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -45,7 +47,7 @@ public class ListaCircular<T> implements Iterable<T> {
     // Consultar el primer elemento
     public T getInicio() {
         if (estaVacia()) {
-            throw new NoSuchElementException(
+            throw new EstructuraVaciaException(
                     "La lista circular está vacía"
             );
         }
@@ -56,7 +58,7 @@ public class ListaCircular<T> implements Iterable<T> {
     // Consultar quién tiene el turno actual
     public T getActual() {
         if (estaVacia()) {
-            throw new NoSuchElementException(
+            throw new EstructuraVaciaException(
                     "No hay recepcionistas registrados"
             );
         }
@@ -67,7 +69,7 @@ public class ListaCircular<T> implements Iterable<T> {
     // Pasar al siguiente turno
     public void avanzarTurno() {
         if (estaVacia()) {
-            throw new NoSuchElementException(
+            throw new EstructuraVaciaException(
                     "No hay recepcionistas registrados"
             );
         }
@@ -78,7 +80,7 @@ public class ListaCircular<T> implements Iterable<T> {
     // Volver al primer elemento
     public void reiniciarTurno() {
         if (estaVacia()) {
-            throw new NoSuchElementException(
+            throw new EstructuraVaciaException(
                     "No hay recepcionistas registrados"
             );
         }

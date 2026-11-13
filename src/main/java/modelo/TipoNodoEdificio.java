@@ -4,5 +4,6 @@ public enum TipoNodoEdificio {
     APARTAMENTO,
     RECEPCION,
     ESCALERAS,
-    CUARTOLIMPIEZA;
+    CUARTOLIMPIEZA,
+    PASILLO;
 }

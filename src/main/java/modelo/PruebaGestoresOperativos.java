@@ -15,6 +15,12 @@ public class PruebaGestoresOperativos {
         probarPreparacionDespachar();
         probarCanalExternoFIFO();
         probarCanalExternoConflicto();
+        probarCanalExternoColaVacia();
+        probarPreparacionTransiciones();
+        probarPreparacionPromedio();
+        probarCerrarPasilloAmbosSentidos();
+        probarListaCircularVacia();
+        probarEstadisticas();
         probarTurnosRotacion();
         probarTurnosVuelveAlInicio();
         probarMapaInalcanzables();
@@ -97,69 +103,81 @@ public class PruebaGestoresOperativos {
 
     // ============ CANAL EXTERNO ============
 
-    private static Reserva crearReservaExterna(String codigo,
-                                               Apartamento apartamento,
-                                               LocalDate entrada,
-                                               LocalDate salida) {
-        Estancia estancia = new Estancia(entrada, salida, null);
-        Huesped huesped = new Huesped(
-                "Test", "123", "test@test.com",
-                LocalDate.of(2000, 1, 1), "123", null);
-
-        return new Reserva(
-                codigo,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusHours(24),
-                EstadoReserva.CONFIRMADA, // AHORA SÍ ACTIVA
-                Canal.EXTERNA,
-                apartamento,
-                huesped,
-                estancia
-        );
+    private static SolicitudExterna solicitud(String codigo, String apartamento,
+                                              LocalDate entrada, LocalDate salida) {
+        return new SolicitudExterna(codigo, LocalDateTime.now(),
+                entrada, salida, 2, apartamento);
     }
 
     private static void probarCanalExternoFIFO() {
-        GestorCanalExterno gestor = new GestorCanalExterno();
-        Apartamento a101 = crearApartamento("A101");
+        SistemaGestionAlojamiento sistema = new SistemaGestionAlojamiento();
+        sistema.registrarApartamento(crearApartamento("A101"));
+        GestorCanalExterno gestor = new GestorCanalExterno(sistema);
 
-        Reserva r1 = crearReservaExterna("R1", a101,
+        SolicitudExterna s1 = solicitud("S1", "A101",
                 LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 3));
-        Reserva r2 = crearReservaExterna("R2", a101,
+        SolicitudExterna s2 = solicitud("S2", "A101",
                 LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 12));
 
-        gestor.recibirSolicitud(r1);
-        gestor.recibirSolicitud(r2);
+        gestor.recibirSolicitud(s1);
+        gestor.recibirSolicitud(s2);
 
         // La primera que entró debe procesarse primero
-        gestor.procesarSiguiente();
+        ConflictoCanal conflicto = gestor.procesarSiguiente();
 
         verificar(
-                gestor.getAceptadas().getTam() == 1
-                        && gestor.getAceptadas().getInicio().getDato() == r1,
+                conflicto == null
+                        && gestor.getAceptadas().getTam() == 1
+                        && s1.getReserva() != null
+                        && s2.getReserva() == null
+                        && gestor.cantidadPendientes() == 1,
                 "Canal externo: procesa en orden de llegada FIFO"
         );
     }
 
     private static void probarCanalExternoConflicto() {
-        GestorCanalExterno gestor = new GestorCanalExterno();
+        SistemaGestionAlojamiento sistema = new SistemaGestionAlojamiento();
         Apartamento a101 = crearApartamento("A101");
+        sistema.registrarApartamento(a101);
+        GestorCanalExterno gestor = new GestorCanalExterno(sistema);
 
-        // Primera reserva: 1 al 5 de diciembre
-        Reserva r1 = crearReservaExterna("R1", a101,
-                LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 5));
-        gestor.recibirSolicitud(r1);
+        // Primera solicitud: 1 al 5 de diciembre (se acepta)
+        gestor.recibirSolicitud(solicitud("S1", "A101",
+                LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 5)));
         gestor.procesarSiguiente();
 
-        // Segunda reserva: choca, 3 al 7 de diciembre
-        Reserva r2 = crearReservaExterna("R2", a101,
+        // Segunda solicitud: 3 al 7 de diciembre, comparte noches (conflicto)
+        SolicitudExterna s2 = solicitud("S2", "A101",
                 LocalDate.of(2026, 12, 3), LocalDate.of(2026, 12, 7));
-        gestor.recibirSolicitud(r2);
-        boolean aceptada = gestor.procesarSiguiente();
+        gestor.recibirSolicitud(s2);
+        ConflictoCanal conflicto = gestor.procesarSiguiente();
 
         verificar(
-                !aceptada && gestor.getConflictos().getTam() == 1,
-                "Canal externo: detecta conflicto con reserva vigente"
+                conflicto != null
+                        && gestor.getConflictos().getTam() == 1
+                        && s2.getConflictoCanal() == conflicto
+                        && a101.getCantidadReservas() == 1,
+                "Canal externo: detecta conflicto con reserva vigente y lo registra"
         );
+
+        // Salida el 5 y entrada el 5: no comparten noche, NO es conflicto
+        gestor.recibirSolicitud(solicitud("S3", "A101",
+                LocalDate.of(2026, 12, 5), LocalDate.of(2026, 12, 8)));
+        verificar(
+                gestor.procesarSiguiente() == null,
+                "Canal externo: la noche de salida no choca con la siguiente entrada"
+        );
+    }
+
+    private static void probarCanalExternoColaVacia() {
+        GestorCanalExterno gestor = new GestorCanalExterno(new SistemaGestionAlojamiento());
+        boolean lanzo = false;
+        try {
+            gestor.procesarSiguiente();
+        } catch (excepciones.EstructuraVaciaException e) {
+            lanzo = true;
+        }
+        verificar(lanzo, "Canal externo: cola vacía lanza EstructuraVaciaException");
     }
 
     // ============ TURNOS ============
@@ -315,5 +333,161 @@ public class PruebaGestoresOperativos {
                 gestor.agruparPorBloque().getTam() == 2,
                 "Mapa: agrupa apartamentos por bloque, A y B"
         );
+    }
+
+    // ============ NUEVAS PRUEBAS ============
+
+    private static void probarPreparacionTransiciones() {
+        SistemaGestionAlojamiento sistema = new SistemaGestionAlojamiento();
+        Apartamento a101 = crearApartamento("A101");
+        sistema.registrarApartamento(a101);
+        GestorPreparacion gestor = new GestorPreparacion(sistema);
+
+        OrdenPreparacion orden = gestor.encolar(a101, false, null);
+
+        boolean duplicada = false;
+        try {
+            gestor.encolar(a101, false, null);
+        } catch (excepciones.TransicionEstadoInvalidaException e) {
+            duplicada = true;
+        }
+        verificar(duplicada, "Preparación: no se encola dos veces el mismo apartamento");
+
+        boolean sinDespachar = false;
+        try {
+            gestor.marcarPreparado(orden); // aún está Pendiente, no En preparación
+        } catch (excepciones.TransicionEstadoInvalidaException e) {
+            sinDespachar = true;
+        }
+        verificar(sinDespachar, "Preparación: no se puede terminar sin pasar por En preparación");
+
+        Apartamento fuera = crearApartamento("A102");
+        fuera.setEstadoOperativo(EstadoOperativo.FUERASERVICIO);
+        boolean rechazado = false;
+        try {
+            gestor.encolar(fuera, false, null);
+        } catch (excepciones.TransicionEstadoInvalidaException e) {
+            rechazado = true;
+        }
+        verificar(rechazado, "Preparación: un apartamento fuera de servicio no se encola");
+
+        gestor.despacharSiguiente();
+        boolean vacia = false;
+        try {
+            gestor.despacharSiguiente();
+        } catch (excepciones.EstructuraVaciaException e) {
+            vacia = true;
+        }
+        verificar(vacia, "Preparación: despachar con cola vacía lanza EstructuraVaciaException");
+    }
+
+    private static void probarPreparacionPromedio() {
+        SistemaGestionAlojamiento sistema = new SistemaGestionAlojamiento();
+        Apartamento a101 = crearApartamento("A101");
+        sistema.registrarApartamento(a101);
+        GestorPreparacion gestor = new GestorPreparacion(sistema);
+
+        gestor.encolar(a101, true, LocalDateTime.of(2026, 11, 12, 14, 0));
+        OrdenPreparacion orden = gestor.despacharSiguiente();
+        orden.setHoraInicioPreparacion(LocalDateTime.of(2026, 11, 12, 9, 0));
+        gestor.marcarPreparado(orden);
+        orden.setHoraFinPreparacion(LocalDateTime.of(2026, 11, 12, 9, 40));
+
+        verificar(
+                gestor.minutosPromedioPreparacion() == 40.0
+                        && gestor.listarTerminadas().getTam() == 1,
+                "Preparación: calcula el tiempo promedio de preparación"
+        );
+    }
+
+    private static void probarCerrarPasilloAmbosSentidos() {
+        GestorMapaEdificio gestor = new GestorMapaEdificio();
+        gestor.agregarUbicacion(new NodoEdificio("REC-01", "Recepción", TipoNodoEdificio.RECEPCION));
+        gestor.agregarUbicacion(new NodoEdificio("A101", "Apartamento 101", TipoNodoEdificio.APARTAMENTO));
+        gestor.conectarPasillo("REC-01", "A101", 7);
+
+        verificar(gestor.contarPasillos() == 2, "Mapa: un pasillo crea ida y vuelta");
+
+        gestor.cerrarPasillo("REC-01", "A101"); // un solo llamado cierra los dos sentidos
+
+        verificar(
+                gestor.rutaMasCorta("REC-01", "A101").getTam() == 0
+                        && gestor.rutaMasCorta("A101", "REC-01").getTam() == 0
+                        && gestor.contarPasillosCerrados() == 2
+                        && !gestor.pasilloAbierto("REC-01", "A101"),
+                "Mapa: cerrar un pasillo lo cierra en ambos sentidos"
+        );
+
+        gestor.abrirPasillo("A101", "REC-01");
+        verificar(
+                gestor.distanciaDeRuta(gestor.rutaMasCorta("A101", "REC-01")) == 7.0,
+                "Mapa: calcula la distancia total de la ruta"
+        );
+    }
+
+    private static void probarListaCircularVacia() {
+        GestorTurnos gestor = new GestorTurnos();
+        boolean lanzo = false;
+        try {
+            gestor.turnoActual();
+        } catch (excepciones.EstructuraVaciaException e) {
+            lanzo = true;
+        }
+        verificar(lanzo, "Turnos: sin recepcionistas lanza EstructuraVaciaException");
+    }
+
+    private static void probarEstadisticas() {
+        SistemaGestionAlojamiento sistema = new SistemaGestionAlojamiento();
+        Apartamento a101 = crearApartamento("A101");
+        sistema.registrarApartamento(a101);
+
+        GestorMapaEdificio mapa = new GestorMapaEdificio();
+        mapa.agregarUbicacion(new NodoEdificio("REC-01", "Recepción", TipoNodoEdificio.RECEPCION));
+        mapa.cargarApartamentos(sistema);
+        mapa.conectarPasillo("REC-01", "A101", 5);
+
+        GestorPreparacion preparacion = new GestorPreparacion(sistema);
+        GestorCanalExterno canal = new GestorCanalExterno(sistema);
+
+        canal.recibirSolicitud(solicitud("S1", "A101",
+                LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 4)));   // 3 noches, se acepta
+        canal.recibirSolicitud(solicitud("S2", "A101",
+                LocalDate.of(2026, 12, 2), LocalDate.of(2026, 12, 5)));   // choca
+        canal.procesarTodas();
+
+        Temporada alta = new Temporada(LocalDate.of(2026, 12, 1),
+                LocalDate.of(2026, 12, 31), TipoTemporada.ALTA);
+        ListaDoblementeEnlazada<Temporada> temporadas = new ListaDoblementeEnlazada<>();
+        temporadas.agregarFinal(alta);
+
+        GestorEstadisticas estadisticas = new GestorEstadisticas(sistema, preparacion, canal, mapa);
+        ReporteEstadisticas r = estadisticas.generar(
+                LocalDate.of(2026, 12, 1), LocalDate.of(2027, 1, 1), temporadas, "REC-01");
+
+        verificar(
+                ReporteEstadisticas.valorDe(r.getReservasPorCanal(), "EXTERNA") == 1
+                        && r.getConflictosDeCanal() == 1,
+                "Estadísticas: reservas por canal y conflictos de canal"
+        );
+        verificar(
+                ReporteEstadisticas.valorDe(r.getOcupacionPorApartamento(), "A101") == 3
+                        && ReporteEstadisticas.valorDe(r.getOcupacionPorTemporada(), "ALTA") == 3
+                        && ReporteEstadisticas.valorDe(r.getOcupacionPorTemporada(), "BAJA") == 0,
+                "Estadísticas: ocupación por apartamento y por temporada"
+        );
+        verificar(
+                r.getUbicaciones() == 2 && r.getPasillos() == 2
+                        && r.getAlcanzablesPorBFS() == 2 && r.getVisitadosPorDFS() == 2
+                        && r.getInalcanzables() == 0,
+                "Estadísticas: recorridos BFS y DFS del grafo"
+        );
+
+        Estancia e = new Estancia(LocalDate.of(2026, 3, 10), LocalDate.of(2026, 3, 12), null);
+        int noches = 0;
+        for (LocalDate noche : e) {
+            noches++;
+        }
+        verificar(noches == 2 && e.cantidadNoches() == 2,
+                "Estancia: for-each recorre las noches a cobrar (10 al 12 son 2)");
     }
 }

@@ -1,10 +1,13 @@
 package modelo;
 
 import java.time.LocalDate;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+
 import excepciones.FechasInvalidasException;
 
-public class Estancia {
+public class Estancia implements Iterable<LocalDate> {
     private LocalDate fechaEntrada;
     private LocalDate fechaSalida;
     private Reserva reserva;
@@ -52,5 +55,33 @@ public class Estancia {
 
     public void setListDetalleNoche(List<DetalleNoche> listDetalleNoche) {
         this.listDetalleNoche = listDetalleNoche;
+    }
+
+    /** Cantidad de noches a cobrar: la noche de salida no cuenta. */
+    public long cantidadNoches() {
+        return java.time.temporal.ChronoUnit.DAYS.between(fechaEntrada, fechaSalida);
+    }
+
+    /** Permite {@code for (LocalDate noche : estancia)}: recorre las noches a cobrar. */
+    @Override
+    public Iterator<LocalDate> iterator() {
+        return new Iterator<LocalDate>() {
+            private LocalDate siguiente = fechaEntrada;
+
+            @Override
+            public boolean hasNext() {
+                return siguiente.isBefore(fechaSalida);
+            }
+
+            @Override
+            public LocalDate next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                LocalDate noche = siguiente;
+                siguiente = siguiente.plusDays(1);
+                return noche;
+            }
+        };
     }
 }

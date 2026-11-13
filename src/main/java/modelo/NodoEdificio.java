@@ -5,6 +5,8 @@ public class NodoEdificio {
     private String nombre;
     private Apartamento apartamento;
     private TipoNodoEdificio tipoNodoEdificio;
+    private double x;
+    private double y;
 
 
     public NodoEdificio(String codigo, String nombre, TipoNodoEdificio tipoNodoEdificio) {
@@ -43,5 +45,19 @@ public class NodoEdificio {
 
     public void setTipoNodoEdificio(TipoNodoEdificio tipoNodoEdificio) {
         this.tipoNodoEdificio = tipoNodoEdificio;
+    }
+
+    /** Posición en el plano del mapa (la usa la visualización gráfica). */
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setPosicion(double x, double y) {
+        this.x = x;
+        this.y = y;
     }
 }

@@ -1,4 +1,6 @@
 package estructuras;
+import excepciones.EstructuraVaciaException;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -33,7 +35,7 @@ public class Cola<T> implements Iterable<T> {
     public T desencolar() {
 
         if (estaVacia()) {
-            throw new NoSuchElementException(
+            throw new EstructuraVaciaException(
                     "No se puede desencolar una cola vacia"
             );
         }
@@ -54,7 +56,7 @@ public class Cola<T> implements Iterable<T> {
     public T consultarFrente() {
 
         if (estaVacia()) {
-            throw new NoSuchElementException(
+            throw new EstructuraVaciaException(
                     "La cola esta vacia"
             );
         }

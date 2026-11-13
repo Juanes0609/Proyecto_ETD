@@ -19,7 +19,7 @@ public class Apartamento implements Comparable<Apartamento> {
     private EstadoOperativo estadoOperativo;
     private NodoEdificio nodoEdificio;
     private Reserva reserva;
-    private List<OrdenPreparacion> listOrdenesPreparacion;
+    private ListaDoblementeEnlazada<OrdenPreparacion> listOrdenesPreparacion;
     private double tarifaBaja;
     private double tarifaMedia;
     private double tarifaAlta;
@@ -41,6 +41,7 @@ public class Apartamento implements Comparable<Apartamento> {
         this.tarifaMedia = 0;
         this.tarifaAlta = 0;
         this.reservas = new ListaDoblementeEnlazada<>();
+        this.listOrdenesPreparacion = new ListaDoblementeEnlazada<>();
         this.reservasPorFecha = new ArbolBinarioBusqueda<>();
         this.nodoEdificio = new NodoEdificio(this.codigo, this.nombre, TipoNodoEdificio.APARTAMENTO);
         this.nodoEdificio.setApartamento(this);
@@ -134,11 +135,11 @@ public class Apartamento implements Comparable<Apartamento> {
         this.reserva = reserva;
     }
 
-    public List<OrdenPreparacion> getListOrdenesPreparacion() {
+    public ListaDoblementeEnlazada<OrdenPreparacion> getListOrdenesPreparacion() {
         return listOrdenesPreparacion;
     }
 
-    public void setListOrdenesPreparacion(List<OrdenPreparacion> listOrdenesPreparacion) {
+    public void setListOrdenesPreparacion(ListaDoblementeEnlazada<OrdenPreparacion> listOrdenesPreparacion) {
         this.listOrdenesPreparacion = listOrdenesPreparacion;
     }
 

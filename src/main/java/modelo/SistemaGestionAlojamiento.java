@@ -14,10 +14,28 @@ public class SistemaGestionAlojamiento {
     private final ArbolBinarioBusqueda<Huesped> huespedes;
     private final ArbolBinarioBusqueda<Apartamento> apartamentos;
 
+    // Gestores operativos (grafo, colas y lista circular)
+    private final GestorMapaEdificio mapa;
+    private final GestorPreparacion preparacion;
+    private final GestorCanalExterno canalExterno;
+    private final GestorTurnos turnos;
+    private final GestorEstadisticas estadisticas;
+
     public SistemaGestionAlojamiento() {
         huespedes = new ArbolBinarioBusqueda<>();
         apartamentos = new ArbolBinarioBusqueda<>();
+        mapa = new GestorMapaEdificio();
+        preparacion = new GestorPreparacion(this);
+        canalExterno = new GestorCanalExterno(this);
+        turnos = new GestorTurnos();
+        estadisticas = new GestorEstadisticas(this, preparacion, canalExterno, mapa);
     }
+
+    public GestorMapaEdificio getMapa() { return mapa; }
+    public GestorPreparacion getPreparacion() { return preparacion; }
+    public GestorCanalExterno getCanalExterno() { return canalExterno; }
+    public GestorTurnos getTurnos() { return turnos; }
+    public GestorEstadisticas getEstadisticas() { return estadisticas; }
 
     public void registrarHuesped(Huesped huesped) {
         if (huesped == null) throw new IllegalArgumentException("El huésped es obligatorio");
