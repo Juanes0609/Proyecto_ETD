@@ -30,7 +30,7 @@ import java.util.List;
  * Ventana del personal (recepción y administración), patrón Single-Window:
  * <pre>
  * ┌────────────┬────────────────────────────────────────────────┐
- * │ Marca      │ Título                            Usuario  Salir│
+ * │ Marca      │ Título · descripción              Usuario  Salir│
  * │ Destinos   ├────────────────────────────────────────────────┤
  * │ (3–4)      │ [Notificación inline]                ┌───────┐ │
  * │            │ Contenido del destino activo         │ Hoja  │ │
@@ -50,6 +50,7 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
     private final BarraNavegacion<TipoVista> destinos;
 
     private final Label lblTitulo = new Label();
+    private final Label lblDescripcion = new Label();
     private final StackPane contenedorVista = new StackPane();
 
     public VentanaPrincipalSGA(ContextoApp contexto, Rol rol) {
@@ -118,6 +119,8 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
     private Node crearDatosDePrueba() {
         Label titulo = new Label("Datos de prueba");
         titulo.getStyleClass().add("sidebar-pie-valor");
+        Label detalle = new Label("Apartamentos, pasillos, huéspedes y reservas del escenario inicial.");
+        detalle.setWrapText(true);
         Label pregunta = new Label("Se reemplazarán los datos actuales.");
         pregunta.setWrapText(true);
         pregunta.getStyleClass().add("sidebar-pie-valor");
@@ -132,7 +135,7 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
         HBox.setHgrow(confirmar, Priority.ALWAYS);
         confirmar.setMaxWidth(Double.MAX_VALUE);
 
-        HBox encabezado = new HBox(10, Iconos.crear(Iconos.Icono.CARPETA, 18), new VBox(2, titulo));
+        HBox encabezado = new HBox(10, Iconos.crear(Iconos.Icono.CARPETA, 18), new VBox(2, titulo, detalle));
         encabezado.setAlignment(Pos.TOP_LEFT);
         VBox inicial = new VBox(10, encabezado, cargar);
         HBox botones = new HBox(8, confirmar, cancelar);
@@ -157,7 +160,8 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
 
     private HBox crearBarraSuperior() {
         lblTitulo.getStyleClass().add("titulo-seccion");
-        VBox titulos = new VBox(0, lblTitulo);
+        lblDescripcion.getStyleClass().add("texto-secundario");
+        VBox titulos = new VBox(0, lblTitulo, lblDescripcion);
 
         HBox barra = new HBox(titulos, FabricaComponentesUI.crearEspaciador());
         barra.getStyleClass().add("barra-superior");
@@ -200,6 +204,7 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
         ocultarHoja();
         notificador.ocultar();
         lblTitulo.setText(tipo.getTitulo());
+        lblDescripcion.setText(tipo.getDescripcion());
         destinos.marcar(tipo);
 
         Node contenido = vista != null

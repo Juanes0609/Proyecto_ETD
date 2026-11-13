@@ -240,7 +240,7 @@ public class VistaCatalogos extends VistaBase {
                 .conValidacion("Documento", c -> documento.getText().trim().matches("\\d{5,12}")
                         ? null : "Usa solo números (entre 5 y 12 dígitos).")
                 .agregarCampo("Nombre completo", nombre, null)
-                .agregarCampo("Turno", turno, null);
+                .agregarCampo("Turno", turno, "Los turnos rotan entre los recepcionistas registrados.");
         Button guardar = FabricaComponentesUI.crearBotonPrimario("Guardar empleado", () -> {
             if (f.validar()) {
                 EmpleadoDTO dto = new EmpleadoDTO(documento.getText().trim(), nombre.getText().trim(), turno.getValue());

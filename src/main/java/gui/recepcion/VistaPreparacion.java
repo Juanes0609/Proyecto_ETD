@@ -38,7 +38,8 @@ public class VistaPreparacion extends VistaBase {
 
     @Override
     protected Node construir() {
-        VBox cola = FabricaComponentesUI.crearTarjeta(new HBox(FabricaComponentesUI.crearEncabezado("En espera", null),
+        VBox cola = FabricaComponentesUI.crearTarjeta(new HBox(FabricaComponentesUI.crearEncabezado("En espera",
+                "Primero las llegadas de hoy; luego por hora de llegada y orden de ingreso."),
                 FabricaComponentesUI.crearEspaciador(), despachar), listaCola);
         cola.setSpacing(14);
         VBox enCurso = FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("En preparación",
@@ -47,7 +48,8 @@ public class VistaPreparacion extends VistaBase {
         VBox izquierda = new VBox(18, cola, enCurso);
         HBox.setHgrow(izquierda, Priority.ALWAYS);
 
-        VBox tarjetaRuta = FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Ruta más corta", null), ruta);
+        VBox tarjetaRuta = FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Ruta más corta",
+                "Desde el cuarto de aseo, por los pasillos abiertos."), ruta);
         tarjetaRuta.setSpacing(14);
         tarjetaRuta.setPrefWidth(360);
         tarjetaRuta.setMinWidth(320);
