@@ -185,9 +185,11 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
 
     private StackPane crearAreaCentral() {
         VBox.setVgrow(contenedorVista, Priority.ALWAYS);
-        VBox area = new VBox(12, notificador, contenedorVista);
+        VBox area = new VBox(contenedorVista);
         area.getStyleClass().add("contenido-central");
-        return new StackPane(area, hoja);
+        StackPane central = new StackPane(area, hoja);
+        notificador.colocarEn(central); // burbuja flotante encima de todo, abajo al centro
+        return central;
     }
 
     private void cargarEscenarioInicial() {

@@ -59,7 +59,7 @@ public class VistaEdificio extends VistaBase {
     private List<ConexionDTO> conexiones = List.of();
     private Set<String> inalcanzables = new HashSet<>();
     private Map<String, String> estados = new HashMap<>();
-    private final ComboBox<String> destinoRuta = FabricaComponentesUI.crearDesplegable("Ruta desde el aseo hasta…");
+    private final ComboBox<String> destinoRuta = FabricaComponentesUI.crearDesplegable("Elige un aparta-suite");
     private final Button recorridoCompleto = FabricaComponentesUI.crearBotonSecundario(
             "Recorrido de la cola", this::mostrarRecorridoCompleto);
     private final VBox panelRuta = new VBox(8);

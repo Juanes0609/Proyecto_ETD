@@ -89,9 +89,11 @@ public class VentanaCliente extends BorderPane implements ContenedorVistas {
 
     private StackPane crearCentro() {
         VBox.setVgrow(contenedorVista, Priority.ALWAYS);
-        VBox area = new VBox(12, notificador, contenedorVista);
+        VBox area = new VBox(contenedorVista);
         area.setPadding(new Insets(4, 32, 0, 32));
-        return new StackPane(area, hoja);
+        StackPane central = new StackPane(area, hoja);
+        notificador.colocarEn(central); // flota justo encima de la barra de pestañas
+        return central;
     }
 
     // ---------- Navegación ----------

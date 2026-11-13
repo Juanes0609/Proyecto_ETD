@@ -845,53 +845,61 @@
     -fx-font-weight: bold;
 }
 
-/* ---------- Notificaciones inline ---------- */
+/* ---------- Notificaciones flotantes ----------
+   Burbuja blanca como la barra de pestañas del huésped. El tipo se indica con
+   el círculo del icono (color + icono), el texto queda neutro y legible. */
 .notificacion {
-    -fx-padding: 10 12 10 16;
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 22;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 22;
+    -fx-padding: 8 8 8 8;
     -fx-spacing: 10;
-    -fx-alignment: center-left;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.16), 26, 0, 0, 8);
 }
 
-.notificacion-exito {
+.notificacion-texto {
+    -fx-text-fill: -sga-texto;
+    -fx-font-size: 13px;
+    -fx-padding: 0 2 0 0;
+}
+
+.notificacion-icono {
+    -fx-background-radius: 14;
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+    -fx-max-width: 28;
+    -fx-max-height: 28;
+}
+
+.notificacion .notificacion-cerrar {
+    -fx-padding: 5;
+    -icono-color: -sga-texto-terciario;
+}
+
+.notificacion-exito .notificacion-icono {
     -fx-background-color: -sga-exito-fondo;
-    -fx-border-color: -sga-exito;
     -icono-color: -sga-exito;
 }
 
-.notificacion-exito .label {
-    -fx-text-fill: -sga-exito;
-}
-
-.notificacion-advertencia {
+.notificacion-advertencia .notificacion-icono {
     -fx-background-color: -sga-advertencia-fondo;
-    -fx-border-color: -sga-advertencia;
     -icono-color: -sga-advertencia;
 }
 
-.notificacion-advertencia .label {
-    -fx-text-fill: -sga-advertencia;
-}
-
-.notificacion-error {
+.notificacion-error .notificacion-icono {
     -fx-background-color: -sga-error-fondo;
-    -fx-border-color: -sga-error;
     -icono-color: -sga-error;
 }
 
-.notificacion-error .label {
-    -fx-text-fill: -sga-error;
-}
-
-.notificacion-info {
+.notificacion-info .notificacion-icono {
     -fx-background-color: -sga-info-fondo;
-    -fx-border-color: -sga-info;
     -icono-color: -sga-info;
 }
 
-.notificacion-info .label {
-    -fx-text-fill: -sga-info;
+/* Un error además lleva un borde rojo suave, para que no pase desapercibido */
+.notificacion-error {
+    -fx-border-color: #f1c4c0;
 }
 
 /* ---------- Badges de estado (texto + color, nunca solo color) ---------- */
