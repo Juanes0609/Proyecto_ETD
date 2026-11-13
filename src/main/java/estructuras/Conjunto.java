@@ -1,51 +1,39 @@
 package estructuras;
 import java.util.Iterator;
 
+/** Conjunto genérico (sin repetidos, según equals) apoyado en la lista doblemente enlazada propia. */
 public class Conjunto<T> implements Iterable<T> {
 
-    private final ListaDoblementeEnlazada<T> elementos;
+    private final ListaDoblementeEnlazada<T> elementos = new ListaDoblementeEnlazada<>();
 
-    public Conjunto() {
-        elementos = new ListaDoblementeEnlazada<>();
-    }
-
-    /** Agrega el elemento si todavía no existe. @return true si se agregó. */
+    /** @return true si se agregó; false si ya estaba. */
     public boolean agregar(T elemento) {
-        if (contiene(elemento)) return false;
-        elementos.agregarFinal(elemento);
+        if (elemento == null || elementos.contiene(elemento)) return false;
+        elementos.agregarAlFinal(elemento);
         return true;
     }
 
-    public boolean add(T elemento) { return agregar(elemento); }
+    public boolean eliminar(T elemento) { return elementos.eliminar(elemento); }
+    public boolean contiene(T elemento) { return elementos.contiene(elemento); }
+    public int tamanio() { return elementos.tamanio(); }
+    public boolean estaVacio() { return elementos.estaVacia(); }
 
-    public boolean contiene(T elemento) {
-        for (T actual : elementos) {
-            if (actual == null ? elemento == null : actual.equals(elemento)) return true;
-        }
-        return false;
+    public Conjunto<T> union(Conjunto<T> otro) {
+        Conjunto<T> r = new Conjunto<>();
+        for (T t : this) r.agregar(t);
+        for (T t : otro) r.agregar(t);
+        return r;
     }
 
-    public boolean contains(T elemento) { return contiene(elemento); }
-
-    public boolean eliminar(T elemento) {
-        for (T actual : elementos) {
-            if (actual == null ? elemento == null : actual.equals(elemento)) {
-                return elementos.eliminar(actual);
-            }
-        }
-        return false;
-    }
-
-    public boolean remove(T elemento) { return eliminar(elemento); }
-    public int size() { return elementos.getTam(); }
-    public int getTam() { return size(); }
-    public boolean estaVacio() { return size() == 0; }
-    public void limpiar() {
-        while (!elementos.estaVacio()) elementos.eliminarInicio();
+    public Conjunto<T> interseccion(Conjunto<T> otro) {
+        Conjunto<T> r = new Conjunto<>();
+        for (T t : this) if (otro.contiene(t)) r.agregar(t);
+        return r;
     }
 
     @Override
-    public Iterator<T> iterator(){
-        throw new UnsupportedOperationException("Aun en Construcción");
-    }
+    public Iterator<T> iterator() { return elementos.iterator(); }
+
+    @Override
+    public String toString() { return elementos.toString(); }
 }

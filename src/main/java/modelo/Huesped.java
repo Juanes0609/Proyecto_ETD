@@ -16,6 +16,10 @@ public class Huesped extends Persona implements Comparable<Huesped> {
     public Huesped(String nombre, String documento, String telefono,
                    LocalDate fechaNacimiento, String correo, String fotografia) {
         super(nombre, documento, telefono);
+        if (documento == null || documento.isBlank())
+            throw new IllegalArgumentException("El documento es obligatorio");
+        if (nombre == null || nombre.isBlank())
+            throw new IllegalArgumentException("El nombre es obligatorio");
         this.fechaNacimiento = fechaNacimiento;
         this.correo = correo;
         this.fotografia = fotografia;
@@ -32,6 +36,7 @@ public class Huesped extends Persona implements Comparable<Huesped> {
     public void agregarReserva(Reserva reserva) {
         if (reserva != null && !listReservas.contiene(reserva)) listReservas.agregarFinal(reserva);
     }
+
 
     public boolean agregarFavorito(Apartamento apartamento) { return favoritos.agregar(apartamento); }
     public boolean quitarFavorito(Apartamento apartamento) { return favoritos.eliminar(apartamento); }

@@ -3,6 +3,7 @@ package servicio;
 
 import estructuras.ArbolBinarioBusqueda;
 import estructuras.NodoArbol;
+import modelo.Apartamento;
 import modelo.Huesped;
 
 public class ServicioHuespedes {
@@ -114,4 +115,26 @@ public class ServicioHuespedes {
         huespedes.eliminar(huesped);
         return true;
     }
+
+    public boolean quitarFavorito(String documento, Apartamento apartamento) {
+        Huesped huesped = buscarPorDocumento(documento);
+
+        if (huesped == null || apartamento == null) {
+            return false;
+        }
+
+        return huesped.quitarFavorito(apartamento);
+    }
+
+    // Consultar si un apartamento es favorito.
+    public boolean esFavorito(String documento, Apartamento apartamento) {
+        Huesped huesped = buscarPorDocumento(documento);
+
+        if (huesped == null || apartamento == null) {
+            return false;
+        }
+
+        return huesped.esFavorito(apartamento);
+    }
+
 }
