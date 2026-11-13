@@ -3,11 +3,16 @@ package gui.admin;
 import gui.VentanaPrincipalSGA;
 import gui.componentes.FabricaComponentesUI;
 import gui.componentes.Iconos;
+import gui.integracion.dto.ApartaSuiteDTO;
 import gui.integracion.dto.ConexionDTO;
 import gui.integracion.dto.NodoEdificioDTO;
+import gui.integracion.dto.RutaDTO;
 import gui.navegacion.VistaBase;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -19,7 +24,9 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
+import javafx.util.Duration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,12 +37,17 @@ import java.util.Set;
  * Análisis del grafo del edificio: dibuja nodos y pasillos, permite cerrar o
  * reabrir un pasillo con un clic, resalta los aparta-suites inalcanzables desde
  * recepción (BFS) y agrupa los aparta-suites por bloque.
+ * <p>
+ * Cada aparta-suite se colorea según su estado operativo (se refresca solo cada
+ * pocos segundos) y se puede dibujar sobre el mapa la ruta más corta (Dijkstra)
+ * desde el cuarto de aseo hasta un aparta-suite, o el recorrido completo de la
+ * cola de preparación.
  */
 public class VistaEdificio extends VistaBase {
 
     private static final double MARGEN = 30;
     private static final double ESCALA = 0.9;
-    private static final double ANCHO_NODO = 92;
+    private static final double ANCHO_NODO = 98;
     private static final double ALTO_NODO = 30;
 
     private final Pane mapa = new Pane();
@@ -46,6 +58,14 @@ public class VistaEdificio extends VistaBase {
     private Map<String, NodoEdificioDTO> nodos = new HashMap<>();
     private List<ConexionDTO> conexiones = List.of();
     private Set<String> inalcanzables = new HashSet<>();
+    private Map<String, String> estados = new HashMap<>();
+    private final ComboBox<String> destinoRuta = new ComboBox<>();
+    private final Button recorridoCompleto = FabricaComponentesUI.crearBotonSecundario(
+            "Recorrido de la cola", this::mostrarRecorridoCompleto);
+    private final VBox panelRuta = new VBox(8);
+    private List<String> rutaCodigos = List.of();
+    private boolean actualizandoDestinos;
+    private Timeline refrescoEstados;
 
     public VistaEdificio(VentanaPrincipalSGA ventana) {
         super(ventana);
@@ -60,15 +80,25 @@ public class VistaEdificio extends VistaBase {
         bloque.getItems().setAll("Todos los bloques", "Bloque A", "Bloque B", "Bloque C");
         bloque.setValue("Todos los bloques");
         bloque.valueProperty().addListener((o, a, b) -> pintar());
+        destinoRuta.valueProperty().addListener((o, a, b) -> {
+            if (!actualizandoDestinos) {
+                mostrarRutaA(b);
+            }
+        });
+        destinoRuta.setPromptText("Ruta desde el aseo hasta…");
 
         VBox tarjetaMapa = FabricaComponentesUI.crearTarjeta(
                 new HBox(FabricaComponentesUI.crearEncabezado("Mapa del edificio",
                         "Haz clic en un pasillo para cerrarlo o reabrirlo."), FabricaComponentesUI.crearEspaciador(),
-                        FabricaComponentesUI.crearCampoEtiquetado("Agrupar", bloque)), mapa);
+                        FabricaComponentesUI.crearCampoEtiquetado("Agrupar", bloque)),
+                new HBox(10, FabricaComponentesUI.crearCampoEtiquetado("Ruta (Dijkstra)", destinoRuta), recorridoCompleto),
+                crearLeyenda(), mapa);
         tarjetaMapa.setSpacing(14);
         tarjetaMapa.setMaxWidth(Region.USE_PREF_SIZE);
 
         VBox lateral = new VBox(16,
+                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Ruta calculada",
+                        "Camino más corto por los pasillos abiertos."), panelRuta),
                 FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Inalcanzables desde recepción",
                         "Aparta-suites sin camino con los pasillos actuales."), panelInalcanzables),
                 FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Pasillos cerrados", null),
@@ -79,6 +109,11 @@ public class VistaEdificio extends VistaBase {
         lateral.setMinWidth(260);
         HBox.setHgrow(lateral, Priority.ALWAYS);
 
+        // Refresco "en tiempo real" de los estados mientras el mapa está en pantalla.
+        refrescoEstados = new Timeline(new KeyFrame(Duration.seconds(3), e -> refrescarEstados()));
+        refrescoEstados.setCycleCount(Timeline.INDEFINITE);
+        refrescoEstados.play();
+
         HBox columnas = new HBox(20, tarjetaMapa, lateral);
         ScrollPane scroll = new ScrollPane(columnas);
         scroll.setFitToWidth(true);
@@ -87,14 +122,151 @@ public class VistaEdificio extends VistaBase {
     }
 
     @Override
+    public void alOcultar() {
+        if (refrescoEstados != null) {
+            refrescoEstados.pause(); // no consume recursos si el mapa no está a la vista
+        }
+    }
+
+    @Override
     public void alMostrar() {
+        if (refrescoEstados != null) {
+            refrescoEstados.play();
+        }
         notificador().ejecutarConManejo(() -> {
             nodos = new HashMap<>();
             conector().nodosEdificio().forEach(n -> nodos.put(n.codigo(), n));
             conexiones = conector().conexionesEdificio();
             inalcanzables = new HashSet<>(conector().apartaSuitesInalcanzables());
+            cargarEstados();
+            cargarDestinos();
             pintar();
         }, null);
+    }
+
+    private void cargarEstados() {
+        Map<String, String> nuevos = new HashMap<>();
+        try {
+            for (ApartaSuiteDTO a : conector().listarApartaSuites()) {
+                nuevos.put(a.codigo(), a.estadoOperativo());
+            }
+        } catch (UnsupportedOperationException e) {
+            // el conector aún no entrega estados: el mapa se dibuja sin colores de estado
+        }
+        estados = nuevos;
+    }
+
+    private void cargarDestinos() {
+        String seleccionado = destinoRuta.getValue();
+        actualizandoDestinos = true;
+        destinoRuta.getItems().clear();
+        nodos.values().stream().filter(n -> "APARTAMENTO".equals(n.tipo()))
+                .map(NodoEdificioDTO::codigo).sorted().forEach(destinoRuta.getItems()::add);
+        destinoRuta.setValue(seleccionado != null && destinoRuta.getItems().contains(seleccionado) ? seleccionado : null);
+        actualizandoDestinos = false;
+    }
+
+    /**
+     * Llamado por el temporizador. Si el mapa ya no está en pantalla (por ejemplo,
+     * tras cerrar sesión) se detiene; si nada cambió no redibuja, para no
+     * interrumpir el hover ni los tooltips cada 3 s.
+     */
+    private void refrescarEstados() {
+        if (mapa.getScene() == null) {
+            refrescoEstados.pause();
+            return;
+        }
+        try {
+            List<ConexionDTO> nuevasConexiones = conector().conexionesEdificio();
+            Set<String> nuevasInalcanzables = new HashSet<>(conector().apartaSuitesInalcanzables());
+            Map<String, String> estadosAntes = estados;
+            cargarEstados();
+            boolean cambio = !nuevasConexiones.equals(conexiones) || !nuevasInalcanzables.equals(inalcanzables)
+                    || !estados.equals(estadosAntes);
+            conexiones = nuevasConexiones;
+            inalcanzables = nuevasInalcanzables;
+            if (cambio) {
+                pintar();
+            }
+        } catch (RuntimeException e) {
+            // un fallo de refresco no debe interrumpir la vista; se reintenta en 3 s
+        }
+    }
+
+    private void mostrarRutaA(String codigo) {
+        panelRuta.getChildren().clear();
+        if (codigo == null) {
+            rutaCodigos = List.of();
+            pintar();
+            return;
+        }
+        try {
+            mostrarRuta(conector().rutaPreparacion(codigo), "Aseo → " + codigo);
+        } catch (RuntimeException e) {
+            rutaCodigos = List.of();
+            panelRuta.getChildren().add(FabricaComponentesUI.crearTexto(
+                    "No hay ruta hasta " + codigo + " con los pasillos abiertos.", "texto-error"));
+            pintar();
+        }
+    }
+
+    private void mostrarRecorridoCompleto() {
+        destinoRuta.setValue(null);
+        notificador().ejecutarConManejo(
+                () -> mostrarRuta(conector().rutaRecorridoPreparacion(), "Recorrido de la cola de preparación"), null);
+    }
+
+    /** Convierte los nombres de la ruta en códigos de nodo, la dibuja y la lista en el panel. */
+    private void mostrarRuta(RutaDTO ruta, String titulo) {
+        Map<String, String> nombreACodigo = new HashMap<>();
+        nodos.values().forEach(n -> nombreACodigo.put(n.nombre(), n.codigo()));
+        List<String> codigos = new ArrayList<>();
+        panelRuta.getChildren().setAll(FabricaComponentesUI.crearTexto(titulo, "campo-label"));
+        for (int i = 0; i < ruta.pasos().size(); i++) {
+            String paso = ruta.pasos().get(i);
+            String codigo = nombreACodigo.get(paso);
+            if (codigo != null) {
+                codigos.add(codigo);
+            }
+            panelRuta.getChildren().add(new Label((i + 1) + ".  " + paso));
+        }
+        panelRuta.getChildren().add(FabricaComponentesUI.crearTexto(Math.round(ruta.metros()) + " m en total", "suite-precio"));
+        rutaCodigos = codigos;
+        pintar();
+    }
+
+    private HBox crearLeyenda() {
+        HBox leyenda = new HBox(14,
+                crearItemLeyenda("Preparado", "mapa-nodo-preparado"),
+                crearItemLeyenda("Ocupado", "mapa-nodo-ocupado"),
+                crearItemLeyenda("Pendiente / en preparación", "mapa-nodo-pendiente"),
+                crearItemLeyenda("Fuera de servicio", "mapa-nodo-fuera"));
+        leyenda.setAlignment(Pos.CENTER_LEFT);
+        return leyenda;
+    }
+
+    private HBox crearItemLeyenda(String texto, String claseEstado) {
+        Region muestra = new Region();
+        muestra.getStyleClass().addAll("mapa-nodo", claseEstado);
+        muestra.setMinSize(18, 18);
+        muestra.setPrefSize(18, 18);
+        muestra.setMaxSize(18, 18);
+        HBox item = new HBox(6, muestra, FabricaComponentesUI.crearTextoSecundario(texto));
+        item.setAlignment(Pos.CENTER_LEFT);
+        return item;
+    }
+
+    private static String claseDeEstado(String estado) {
+        if (estado == null) {
+            return null;
+        }
+        return switch (estado) {
+            case "PREPARADO" -> "mapa-nodo-preparado";
+            case "OCUPADO" -> "mapa-nodo-ocupado";
+            case "PENDIENTE_PREPARACION", "EN_PREPARACION" -> "mapa-nodo-pendiente";
+            case "FUERA_DE_SERVICIO" -> "mapa-nodo-fuera";
+            default -> null;
+        };
     }
 
     private void alternar(ConexionDTO c) {
@@ -133,6 +305,18 @@ public class VistaEdificio extends VistaBase {
             }
         }
 
+        for (int i = 0; i + 1 < rutaCodigos.size(); i++) {
+            NodoEdificioDTO a = nodos.get(rutaCodigos.get(i));
+            NodoEdificioDTO b = nodos.get(rutaCodigos.get(i + 1));
+            if (a == null || b == null) {
+                continue;
+            }
+            Line trazo = new Line(x(a), y(a), x(b), y(b));
+            trazo.getStyleClass().add("mapa-ruta");
+            trazo.setMouseTransparent(true);
+            mapa.getChildren().add(trazo);
+        }
+
         for (NodoEdificioDTO n : nodos.values()) {
             boolean apartamento = "APARTAMENTO".equals(n.tipo());
             Label etiqueta = new Label(apartamento ? n.codigo() : n.nombre());
@@ -141,6 +325,13 @@ public class VistaEdificio extends VistaBase {
             if (!apartamento) {
                 caja.getStyleClass().add("RECEPCION".equals(n.tipo()) || "CUARTO_ASEO".equals(n.tipo())
                         ? "mapa-nodo-servicio" : "mapa-nodo-paso");
+            }
+            String claseEstado = apartamento ? claseDeEstado(estados.get(n.codigo())) : null;
+            if (claseEstado != null) {
+                caja.getStyleClass().add(claseEstado);
+            }
+            if (rutaCodigos.contains(n.codigo())) {
+                caja.getStyleClass().add("mapa-nodo-en-ruta");
             }
             if (inalcanzables.contains(n.codigo())) {
                 caja.getStyleClass().add("mapa-nodo-inalcanzable");
@@ -154,7 +345,8 @@ public class VistaEdificio extends VistaBase {
             caja.setPrefSize(ANCHO_NODO, ALTO_NODO);
             caja.setLayoutX(x(n) - ANCHO_NODO / 2);
             caja.setLayoutY(y(n) - ALTO_NODO / 2);
-            Tooltip.install(caja, new Tooltip(n.nombre()));
+            String estado = apartamento ? estados.get(n.codigo()) : null;
+            Tooltip.install(caja, new Tooltip(estado == null ? n.nombre() : n.nombre() + " · " + estado));
             mapa.getChildren().add(caja);
         }
         pintarPaneles(filtroBloque);

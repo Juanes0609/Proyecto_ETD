@@ -1080,14 +1080,14 @@
     -fx-border-color: -sga-borde-input;
     -fx-border-width: 1.5;
     -fx-border-radius: 10;
-    -fx-padding: 5 9 5 9;
+    -fx-padding: 5 6 5 6;
     -fx-spacing: 5;
     -fx-alignment: center;
     -icono-color: -sga-error;
 }
 
 .mapa-nodo .label {
-    -fx-font-size: 11px;
+    -fx-font-size: 10.5px;
     -fx-font-weight: bold;
 }
 
@@ -1111,6 +1111,39 @@
 
 .mapa-nodo-inalcanzable .label {
     -fx-text-fill: -sga-error;
+}
+
+/* Estado de cada aparta-suite en el mapa (mismos colores que los badges) */
+.mapa-nodo-preparado {
+    -fx-background-color: -sga-exito-fondo;
+    -fx-border-color: -sga-exito;
+}
+
+.mapa-nodo-ocupado {
+    -fx-background-color: -sga-info-fondo;
+    -fx-border-color: -sga-info;
+}
+
+.mapa-nodo-pendiente {
+    -fx-background-color: -sga-advertencia-fondo;
+    -fx-border-color: -sga-advertencia;
+}
+
+.mapa-nodo-fuera {
+    -fx-background-color: -sga-error-fondo;
+    -fx-border-color: -sga-error;
+}
+
+/* Ruta calculada con Dijkstra, en dorado (detalle de la paleta) */
+.mapa-ruta {
+    -fx-stroke: -sga-dorado-oscuro;
+    -fx-stroke-width: 5;
+    -fx-stroke-line-cap: round;
+}
+
+.mapa-nodo-en-ruta {
+    -fx-border-color: -sga-dorado-oscuro;
+    -fx-border-width: 2.5;
 }
 
 .mapa-nodo-atenuado {
