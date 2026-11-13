@@ -1,5 +1,7 @@
 package gui.integracion;
 
+import estructuras.ListaCircular;
+
 import estructuras.Pila;
 import excepciones.CapacidadExcedidaException;
 import excepciones.EstructuraVaciaException;
@@ -99,6 +101,8 @@ public class ConectorSGADemo implements ConectorSGA {
     private final Map<String, Set<String>> favoritos = new HashMap<>();
     private final Map<String, Reserva> reservas = new LinkedHashMap<>();
     private final List<EmpleadoDTO> empleados = new ArrayList<>();
+    /** Rotación de recepción con la lista circular del proyecto (sin eliminar ni reordenar). */
+    private ListaCircular<EmpleadoDTO> rotacion = new ListaCircular<>();
     private final List<TemporadaDTO> temporadas = new ArrayList<>();
     private final Deque<SolicitudExternaDTO> colaExterna = new ArrayDeque<>();
     private final List<String> conflictos = new ArrayList<>();
@@ -126,6 +130,7 @@ public class ConectorSGADemo implements ConectorSGA {
         favoritos.clear();
         reservas.clear();
         empleados.clear();
+        rotacion = new ListaCircular<>();
         temporadas.clear();
         colaExterna.clear();
         conflictos.clear();
@@ -476,9 +481,31 @@ public class ConectorSGADemo implements ConectorSGA {
 
     @Override
     public EmpleadoDTO turnoActual() {
-        int hora = LocalTime.now().getHour();
-        int indice = hora >= 6 && hora < 14 ? 0 : hora >= 14 && hora < 22 ? 1 : 2;
-        return empleados.get(indice % empleados.size());
+        return rotacion.getActual();
+    }
+
+    @Override
+    public List<EmpleadoDTO> ordenTurnos() {
+        List<EmpleadoDTO> orden = new ArrayList<>();
+        rotacion.forEach(orden::add); // el iterador recorre la lista circular una vuelta desde el inicio
+        return orden;
+    }
+
+    @Override
+    public EmpleadoDTO avanzarTurno() {
+        rotacion.avanzarTurno();
+        return rotacion.getActual();
+    }
+
+    @Override
+    public void reiniciarTurnos() {
+        rotacion.reiniciarTurno();
+    }
+
+    /** Todo recepcionista nuevo entra al final de la rotación. */
+    private void agregarEmpleado(EmpleadoDTO empleado) {
+        empleados.add(empleado);
+        rotacion.agregar(empleado);
     }
 
     // ---------- Administración ----------
@@ -569,7 +596,7 @@ public class ConectorSGADemo implements ConectorSGA {
         if (empleados.stream().anyMatch(e -> e.documento().equals(empleado.documento()))) {
             throw new IllegalArgumentException("Ya existe un empleado con el documento " + empleado.documento() + ".");
         }
-        empleados.add(empleado);
+        agregarEmpleado(empleado);
     }
 
     @Override
@@ -806,9 +833,9 @@ public class ConectorSGADemo implements ConectorSGA {
         temporadas.add(new TemporadaDTO("ALTA", LocalDate.of(2027, 3, 20), LocalDate.of(2027, 4, 5)));
         temporadas.add(new TemporadaDTO("ALTA", LocalDate.of(2027, 6, 15), LocalDate.of(2027, 7, 31)));
 
-        empleados.add(new EmpleadoDTO("41900001", "Laura Ríos", "06:00 – 14:00"));
-        empleados.add(new EmpleadoDTO("41900002", "Andrés Castaño", "14:00 – 22:00"));
-        empleados.add(new EmpleadoDTO("41900003", "Sofía Marín", "22:00 – 06:00"));
+        agregarEmpleado(new EmpleadoDTO("41900001", "Laura Ríos", "06:00 – 14:00"));
+        agregarEmpleado(new EmpleadoDTO("41900002", "Andrés Castaño", "14:00 – 22:00"));
+        agregarEmpleado(new EmpleadoDTO("41900003", "Sofía Marín", "22:00 – 06:00"));
 
         HuespedDTO ana = huesped("1094000001", "Ana María Gómez", LocalDate.of(1995, 3, 12),
                 "300 123 4567", "huesped@demo.co");

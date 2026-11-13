@@ -42,6 +42,8 @@ public class VistaCatalogos extends VistaBase {
             "Los huéspedes registrados aparecerán aquí.");
     private final TableView<EmpleadoDTO> tablaEmpleados = FabricaComponentesUI.crearTabla("Sin empleados",
             "Registra a los recepcionistas del alojamiento.");
+    /** Rotación de recepción (lista circular), encima de la tabla de empleados. */
+    private final VBox tarjetaRotacion = new VBox(14);
     private List<ApartaSuiteDTO> suites = List.of();
     private List<HuespedDTO> huespedes = List.of();
     private List<EmpleadoDTO> empleados = List.of();
@@ -116,7 +118,9 @@ public class VistaCatalogos extends VistaBase {
             default -> {
                 nuevo.setText("Nuevo empleado");
                 nuevo.setOnAction(e -> formularioEmpleado());
-                cuerpo.getChildren().setAll(tablaEmpleados);
+                pintarRotacion();
+                VBox.setVgrow(tablaEmpleados, javafx.scene.layout.Priority.ALWAYS);
+                cuerpo.getChildren().setAll(new VBox(16, tarjetaRotacion, tablaEmpleados));
             }
         }
         filtrar();
@@ -240,7 +244,7 @@ public class VistaCatalogos extends VistaBase {
                 .conValidacion("Documento", c -> documento.getText().trim().matches("\\d{5,12}")
                         ? null : "Usa solo números (entre 5 y 12 dígitos).")
                 .agregarCampo("Nombre completo", nombre, null)
-                .agregarCampo("Turno", turno, "Los turnos rotan entre los recepcionistas registrados.");
+                .agregarCampo("Turno", turno, "Entra al final de la rotación de recepción.");
         Button guardar = FabricaComponentesUI.crearBotonPrimario("Guardar empleado", () -> {
             if (f.validar()) {
                 EmpleadoDTO dto = new EmpleadoDTO(documento.getText().trim(), nombre.getText().trim(), turno.getValue());
@@ -250,6 +254,101 @@ public class VistaCatalogos extends VistaBase {
         guardar.setMaxWidth(Double.MAX_VALUE);
         f.agregarNodo(guardar);
         mostrarHoja("Nuevo empleado", f);
+    }
+
+    // ---------- Rotación de recepción ----------
+
+    /**
+     * Dibuja la lista circular de recepción tal cual: una pastilla por
+     * recepcionista en orden, la del turno actual resaltada y un ↺ al final porque
+     * después del último vuelve el primero.
+     */
+    private void pintarRotacion() {
+        tarjetaRotacion.getStyleClass().setAll("tarjeta");
+        List<EmpleadoDTO> orden;
+        EmpleadoDTO actual;
+        try {
+            orden = conector().ordenTurnos();
+            actual = orden.isEmpty() ? null : conector().turnoActual();
+        } catch (RuntimeException e) {
+            tarjetaRotacion.getChildren().setAll(FabricaComponentesUI.crearEncabezado("Rotación de recepción", null),
+                    FabricaComponentesUI.crearTextoSecundario(gui.componentes.NotificadorUI.mensajeDe(e)));
+            return;
+        }
+
+        Button siguiente = FabricaComponentesUI.crearBotonSecundario("Pasar al siguiente", this::pasarTurno);
+        Button reiniciar = FabricaComponentesUI.crearEnlace("Reiniciar", this::reiniciarTurnos);
+        siguiente.setDisable(orden.size() < 2);
+        reiniciar.setDisable(orden.isEmpty());
+        HBox encabezado = new HBox(12, FabricaComponentesUI.crearEncabezado("Rotación de recepción", null),
+                FabricaComponentesUI.crearEspaciador(), reiniciar, siguiente);
+        encabezado.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        javafx.scene.layout.FlowPane anillo = new javafx.scene.layout.FlowPane(8, 8);
+        anillo.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        if (orden.isEmpty()) {
+            anillo.getChildren().add(FabricaComponentesUI.crearTextoSecundario(
+                    "Sin recepcionistas. Registra el primero con \"Nuevo empleado\"."));
+        }
+        for (int i = 0; i < orden.size(); i++) {
+            EmpleadoDTO e = orden.get(i);
+            boolean enTurno = actual != null && mismo(e, actual);
+            javafx.scene.control.Label nombre = new javafx.scene.control.Label(e.nombre());
+            nombre.getStyleClass().add("turno-nombre");
+            VBox pastilla = new VBox(1, nombre);
+            pastilla.getStyleClass().add("turno-pastilla");
+            if (enTurno) {
+                pastilla.getStyleClass().add("turno-pastilla-actual");
+                javafx.scene.control.Label marca = new javafx.scene.control.Label("En turno");
+                marca.getStyleClass().add("turno-marca");
+                pastilla.getChildren().add(marca);
+            }
+            pastilla.setAccessibleText(e.nombre() + (enTurno ? ", en turno" : ""));
+            anillo.getChildren().add(pastilla);
+            if (i < orden.size() - 1) {
+                anillo.getChildren().add(flecha(gui.componentes.Iconos.Icono.FLECHA_DERECHA, null));
+            }
+        }
+        if (orden.size() > 1) {
+            anillo.getChildren().add(flecha(gui.componentes.Iconos.Icono.DESHACER,
+                    "Después de " + orden.getLast().nombre() + " vuelve " + orden.getFirst().nombre()));
+        }
+        tarjetaRotacion.getChildren().setAll(encabezado, anillo);
+    }
+
+    private static Node flecha(gui.componentes.Iconos.Icono icono, String ayuda) {
+        StackPane caja = new StackPane(gui.componentes.Iconos.crear(icono, 16));
+        caja.getStyleClass().add("turno-flecha");
+        caja.setMinHeight(34);
+        if (ayuda != null) {
+            javafx.scene.control.Tooltip.install(caja, new javafx.scene.control.Tooltip(ayuda));
+        }
+        return caja;
+    }
+
+    /** El proveedor real no tiene documento: se compara por documento o, si falta, por nombre. */
+    private static boolean mismo(EmpleadoDTO a, EmpleadoDTO b) {
+        return "-".equals(a.documento()) || "-".equals(b.documento())
+                ? a.nombre().equals(b.nombre()) : a.documento().equals(b.documento());
+    }
+
+    private void pasarTurno() {
+        EmpleadoDTO[] nuevo = new EmpleadoDTO[1];
+        if (notificador().ejecutarConManejo(() -> nuevo[0] = conector().avanzarTurno(), null)) {
+            notificador().mostrarExito("Turno de " + nuevo[0].nombre() + ".");
+            pintarRotacion();
+        }
+    }
+
+    private void reiniciarTurnos() {
+        if (notificador().ejecutarConManejo(conector()::reiniciarTurnos, null)) {
+            pintarRotacion();
+            try {
+                notificador().mostrarExito("La rotación volvió a " + conector().turnoActual().nombre() + ".");
+            } catch (RuntimeException ignorada) {
+                // sin recepcionistas no hay a quién nombrar
+            }
+        }
     }
 
     // ---------- Apoyo ----------

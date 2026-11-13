@@ -245,6 +245,32 @@ public class ConectorSGAProveedor implements ConectorSGA {
         return new EmpleadoDTO("-", sistema.getTurnos().turnoActual(), "Turno actual");
     }
 
+    /** El modelo guarda solo nombres: el "turno" del DTO es la posición en la rotación. */
+    @Override
+    public List<EmpleadoDTO> ordenTurnos() {
+        List<EmpleadoDTO> orden = new ArrayList<>();
+        int posicion = 1;
+        for (String nombre : sistema.getTurnos().listarOrdenTurnos()) {
+            orden.add(new EmpleadoDTO("-", nombre, "Turno " + posicion++));
+        }
+        return orden;
+    }
+
+    @Override
+    public EmpleadoDTO avanzarTurno() {
+        return new EmpleadoDTO("-", sistema.getTurnos().avanzarTurno(), "Turno actual");
+    }
+
+    @Override
+    public void reiniciarTurnos() {
+        sistema.getTurnos().reiniciarTurno();
+    }
+
+    @Override
+    public void registrarEmpleado(EmpleadoDTO empleado) {
+        sistema.getTurnos().agregarRecepcionista(empleado.nombre());
+    }
+
     // ---------- Estadísticas ----------
 
     @Override

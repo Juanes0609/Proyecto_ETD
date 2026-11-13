@@ -224,6 +224,21 @@ public interface ConectorSGA {
         throw pendiente("turnoActual");
     }
 
+    /** Rotación completa de recepción, desde el primero de la lista circular. */
+    default List<EmpleadoDTO> ordenTurnos() {
+        throw pendiente("ordenTurnos");
+    }
+
+    /** Pasa el turno al siguiente recepcionista de la lista circular y lo devuelve. */
+    default EmpleadoDTO avanzarTurno() {
+        throw pendiente("avanzarTurno");
+    }
+
+    /** Devuelve el turno al primer recepcionista de la rotación. */
+    default void reiniciarTurnos() {
+        throw pendiente("reiniciarTurnos");
+    }
+
     // ---------- Administración ----------
 
     default ReporteDTO generarReporte() {

@@ -859,6 +859,41 @@
     -fx-text-fill: -sga-texto-terciario;
 }
 
+/* ---------- Rotación de recepción (lista circular) ---------- */
+.turno-pastilla {
+    -fx-background-color: -sga-superficie-hundida;
+    -fx-background-radius: 18;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 18;
+    -fx-padding: 7 14 7 14;
+    -fx-alignment: center;
+}
+
+.turno-nombre {
+    -fx-text-fill: -sga-texto;
+}
+
+.turno-pastilla-actual {
+    -fx-background-color: -sga-dorado-suave;
+    -fx-border-color: -sga-dorado;
+    -fx-border-width: 1.5;
+}
+
+.turno-pastilla-actual .turno-nombre {
+    -fx-text-fill: -sga-verde;
+    -fx-font-weight: bold;
+}
+
+.turno-marca {
+    -fx-text-fill: -sga-dorado-oscuro;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.turno-flecha {
+    -icono-color: -sga-texto-terciario;
+}
+
 /* ---------- Menú flotante (recorrido de la cola) ----------
    Mismo lenguaje que el menú de los desplegables: blanco, esquinas de 12 y
    sombra suave. Es informativo; solo la pastilla actúa. */
