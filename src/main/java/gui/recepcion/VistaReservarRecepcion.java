@@ -149,7 +149,7 @@ public class VistaReservarRecepcion extends VistaBase {
         FabricaComponentesUI.agregarColumna(tablaExterna, "Huésped", SolicitudExternaDTO::nombreHuesped);
         FabricaComponentesUI.agregarColumna(tablaExterna, "Aparta-suite", SolicitudExternaDTO::codigoApartaSuite);
         FabricaComponentesUI.agregarColumna(tablaExterna, "Fechas", s -> Formato.rango(s.entrada(), s.salida()));
-        FabricaComponentesUI.agregarColumna(tablaExterna, "Personas", s -> String.valueOf(s.personas()));
+        FabricaComponentesUI.agregarColumnaNumero(tablaExterna, "Personas", s -> String.valueOf(s.personas()));
         FabricaComponentesUI.agregarColumna(tablaExterna, "Recibida", s -> Formato.fechaHora(s.recepcion()));
         tablaExterna.getColumns().getFirst().setMaxWidth(70);
     }

@@ -58,8 +58,8 @@ public class VistaCatalogos extends VistaBase {
         FabricaComponentesUI.agregarColumna(tablaSuites, "Código", ApartaSuiteDTO::codigo);
         FabricaComponentesUI.agregarColumna(tablaSuites, "Nombre", ApartaSuiteDTO::nombre);
         FabricaComponentesUI.agregarColumna(tablaSuites, "Ubicación", ApartaSuiteDTO::ubicacion);
-        FabricaComponentesUI.agregarColumna(tablaSuites, "Dormitorios", s -> String.valueOf(s.dormitorios()));
-        FabricaComponentesUI.agregarColumna(tablaSuites, "Capacidad", s -> String.valueOf(s.capacidad()));
+        FabricaComponentesUI.agregarColumnaNumero(tablaSuites, "Dormitorios", s -> String.valueOf(s.dormitorios()));
+        FabricaComponentesUI.agregarColumnaNumero(tablaSuites, "Capacidad", s -> String.valueOf(s.capacidad()));
         FabricaComponentesUI.agregarColumnaEstado(tablaSuites, "Estado", ApartaSuiteDTO::estadoOperativo);
         alAbrirFila(tablaSuites, this::formularioSuite);
 

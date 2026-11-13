@@ -410,6 +410,22 @@ public final class FabricaComponentesUI {
         return columna;
     }
 
+    /** Columna de cifras (cantidades, montos, días): se alinea a la derecha, título incluido. */
+    public static <T> TableColumn<T, String> agregarColumnaNumero(TableView<T> tabla, String titulo,
+                                                                  Function<T, String> extractor) {
+        TableColumn<T, String> columna = agregarColumna(tabla, titulo, extractor);
+        columna.getStyleClass().add("columna-numero");
+        // Las cifras son cortas: columna angosta, para que el espacio sobrante vaya a nombres y textos.
+        // El ancho mínimo es el del título en negrita (12 px) más el margen de 14 px a cada lado.
+        javafx.scene.text.Text medida = new javafx.scene.text.Text(titulo);
+        medida.setFont(javafx.scene.text.Font.font("Inter", javafx.scene.text.FontWeight.BOLD, 12));
+        double minimo = Math.max(92, Math.ceil(medida.getLayoutBounds().getWidth()) + 32); // 92: cabe "$000.000"
+        columna.setMinWidth(minimo);
+        columna.setPrefWidth(minimo);
+        columna.setMaxWidth(Math.max(150, minimo));
+        return columna;
+    }
+
     /** Columna que muestra un badge de estado en lugar de texto plano. */
     public static <T> TableColumn<T, String> agregarColumnaEstado(TableView<T> tabla, String titulo,
                                                                   Function<T, String> extractor) {

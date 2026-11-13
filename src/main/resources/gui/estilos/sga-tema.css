@@ -1163,36 +1163,47 @@
     -fx-padding: 4;
 }
 
-/* ---------- Tablas ---------- */
+/* ---------- Tablas ----------
+   Encabezado en una franja suave y celdas con el MISMO margen lateral (14 px),
+   así cada título queda exactamente sobre sus datos. Sin líneas verticales;
+   filas de 46 px separadas por una línea muy tenue. Las columnas de cifras
+   (clase columna-numero) se alinean a la derecha, título incluido, para que las
+   cantidades se comparen de un vistazo. */
 .table-view {
     -fx-background-color: -sga-superficie;
     -fx-border-color: -sga-borde;
     -fx-background-radius: 14;
     -fx-border-radius: 14;
-    -fx-padding: 4;
+    -fx-padding: 1;
+    -fx-table-cell-border-color: transparent;
+    -fx-table-header-border-color: transparent;
 }
 
 .table-view .column-header-background {
-    -fx-background-color: -sga-superficie;
-    -fx-background-radius: 14 14 0 0;
+    -fx-background-color: -sga-superficie-hundida;
+    -fx-background-radius: 13 13 0 0;
+    -fx-border-color: transparent transparent -sga-borde transparent;
 }
 
-.table-view .column-header {
+.table-view .column-header, .table-view .filler {
     -fx-background-color: transparent;
-    -fx-border-color: transparent transparent -sga-borde transparent;
-    -fx-padding: 6 0 6 0;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-size: 40;
 }
 
 .table-view .column-header .label {
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-text-fill: -sga-texto-secundario;
     -fx-alignment: center-left;
+    -fx-padding: 0 14 0 14;
 }
 
 .table-row-cell {
     -fx-background-color: -sga-superficie;
-    -fx-cell-size: 40;
-    -fx-border-color: transparent transparent -sga-superficie-hundida transparent;
+    -fx-cell-size: 46;
+    -fx-border-color: transparent transparent #f0eee8 transparent;
 }
 
 .table-row-cell:hover {
@@ -1205,9 +1216,22 @@
 
 .table-row-cell .table-cell {
     -fx-text-fill: -sga-texto;
-    -fx-padding: 0 10 0 10;
+    -fx-padding: 0 14 0 14;
     -fx-border-color: transparent;
     -fx-alignment: center-left;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: -sga-verde;
+}
+
+/* Cifras a la derecha (título y datos) */
+.table-row-cell .table-cell.columna-numero {
+    -fx-alignment: center-right;
+}
+
+.table-view .column-header.columna-numero .label {
+    -fx-alignment: center-right;
 }
 
 .table-row-cell:empty, .table-row-cell:empty:hover {
@@ -1215,12 +1239,12 @@
     -fx-border-color: transparent;
 }
 
-.table-view .filler, .table-view .column-header:last-visible {
-    -fx-background-color: transparent;
+.table-view:focused {
+    -fx-background-insets: 0;
 }
 
-.table-view:focused {
-    -fx-border-color: -sga-primario;
+.table-view .column-resize-line, .table-view .column-overlay {
+    -fx-background-color: -sga-dorado;
 }
 
 /* ---------- Scroll ---------- */

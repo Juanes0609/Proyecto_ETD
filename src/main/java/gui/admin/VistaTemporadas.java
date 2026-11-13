@@ -42,13 +42,13 @@ public class VistaTemporadas extends VistaBase {
         FabricaComponentesUI.agregarColumnaEstado(temporadas, "Temporada", TemporadaDTO::tipo);
         FabricaComponentesUI.agregarColumna(temporadas, "Inicio", t -> Formato.fecha(t.inicio()));
         FabricaComponentesUI.agregarColumna(temporadas, "Fin", t -> Formato.fecha(t.fin()));
-        FabricaComponentesUI.agregarColumna(temporadas, "Días", t -> String.valueOf(
+        FabricaComponentesUI.agregarColumnaNumero(temporadas, "Días", t -> String.valueOf(
                 ChronoUnit.DAYS.between(t.inicio(), t.fin()) + 1));
 
         FabricaComponentesUI.agregarColumna(tarifas, "Aparta-suite", s -> s.codigo() + " · " + s.nombre());
-        FabricaComponentesUI.agregarColumna(tarifas, "Baja", s -> Formato.moneda(s.tarifaBaja()));
-        FabricaComponentesUI.agregarColumna(tarifas, "Media", s -> Formato.moneda(s.tarifaMedia()));
-        FabricaComponentesUI.agregarColumna(tarifas, "Alta", s -> Formato.moneda(s.tarifaAlta()));
+        FabricaComponentesUI.agregarColumnaNumero(tarifas, "Baja", s -> Formato.moneda(s.tarifaBaja()));
+        FabricaComponentesUI.agregarColumnaNumero(tarifas, "Media", s -> Formato.moneda(s.tarifaMedia()));
+        FabricaComponentesUI.agregarColumnaNumero(tarifas, "Alta", s -> Formato.moneda(s.tarifaAlta()));
         tarifas.setOnMouseClicked(e -> {
             ApartaSuiteDTO s = tarifas.getSelectionModel().getSelectedItem();
             if (s != null) {
@@ -61,7 +61,7 @@ public class VistaTemporadas extends VistaBase {
                 FabricaComponentesUI.crearBotonPrimario("Nueva temporada", this::nuevaTemporada)), temporadas);
         VBox derecha = new VBox(12, FabricaComponentesUI.crearEncabezado("Tarifas por persona y noche",
                 "Haz clic en un aparta-suite para editar sus tarifas."), tarifas);
-        izquierda.setPrefWidth(460);
+        izquierda.setPrefWidth(440);
         HBox.setHgrow(derecha, Priority.ALWAYS);
         HBox columnas = new HBox(24, izquierda, derecha);
         VBox.setVgrow(columnas, Priority.ALWAYS);

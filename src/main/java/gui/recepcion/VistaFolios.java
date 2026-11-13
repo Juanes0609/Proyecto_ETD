@@ -50,7 +50,7 @@ public class VistaFolios extends VistaBase {
     protected Node construir() {
         FabricaComponentesUI.agregarColumna(reservas, "Reserva", ReservaDTO::codigo);
         FabricaComponentesUI.agregarColumna(reservas, "Huésped", ReservaDTO::nombreTitular);
-        FabricaComponentesUI.agregarColumna(reservas, "Saldo", r -> Formato.moneda(r.saldo()));
+        FabricaComponentesUI.agregarColumnaNumero(reservas, "Saldo", r -> Formato.moneda(r.saldo()));
         reservas.getSelectionModel().selectedItemProperty().addListener((o, a, r) -> {
             seleccionada = r;
             pintarFolio();
@@ -60,7 +60,7 @@ public class VistaFolios extends VistaBase {
         FabricaComponentesUI.agregarColumna(movimientos, "Fecha", m -> Formato.fechaHora(m.fechaHora()));
         FabricaComponentesUI.agregarColumnaEstado(movimientos, "Tipo", MovimientoFolioDTO::tipo);
         FabricaComponentesUI.agregarColumna(movimientos, "Concepto", MovimientoFolioDTO::concepto);
-        FabricaComponentesUI.agregarColumna(movimientos, "Monto", m -> Formato.moneda(m.efectoEnSaldo()));
+        FabricaComponentesUI.agregarColumnaNumero(movimientos, "Monto", m -> Formato.moneda(m.efectoEnSaldo()));
 
         VBox izquierda = new VBox(12, buscador, reservas);
         izquierda.setPrefWidth(380);
