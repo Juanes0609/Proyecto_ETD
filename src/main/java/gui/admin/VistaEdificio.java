@@ -131,6 +131,8 @@ public class VistaEdificio extends VistaBase {
                 crearLeyenda(), mapa);
         tarjetaMapa.setSpacing(14);
         tarjetaMapa.setMaxWidth(Region.USE_PREF_SIZE);
+        // Tamaño fijo: la tarjeta no se estira cuando la columna lateral crece con la ruta.
+        tarjetaMapa.setMaxHeight(Region.USE_PREF_SIZE);
 
         VBox lateral = new VBox(16,
                 FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Ruta calculada", null), panelRuta),
@@ -149,6 +151,7 @@ public class VistaEdificio extends VistaBase {
         refrescoEstados.play();
 
         HBox columnas = new HBox(20, tarjetaMapa, lateral);
+        columnas.setAlignment(Pos.TOP_LEFT);
         ScrollPane scroll = new ScrollPane(columnas);
         scroll.setFitToWidth(true);
         scroll.getStyleClass().add("scroll-transparente");
