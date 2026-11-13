@@ -7,14 +7,19 @@ import gui.componentes.Formato;
 import gui.integracion.dto.ApartaSuiteDTO;
 import gui.integracion.dto.TemporadaDTO;
 import gui.navegacion.VistaBase;
+import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 
 import java.time.temporal.ChronoUnit;
@@ -56,14 +61,35 @@ public class VistaTemporadas extends VistaBase {
             }
         });
 
-        VBox izquierda = new VBox(12, new HBox(FabricaComponentesUI.crearEncabezado("Temporadas",
+        HBox encabezadoIzquierdo = new HBox(16, FabricaComponentesUI.crearEncabezado("Temporadas",
                 "Las noches sin temporada se cobran como baja."), FabricaComponentesUI.crearEspaciador(),
-                FabricaComponentesUI.crearBotonPrimario("Nueva temporada", this::nuevaTemporada)), temporadas);
-        VBox derecha = new VBox(12, FabricaComponentesUI.crearEncabezado("Tarifas por persona y noche",
-                "Haz clic en un aparta-suite para editar sus tarifas."), tarifas);
-        izquierda.setPrefWidth(440);
-        HBox.setHgrow(derecha, Priority.ALWAYS);
-        HBox columnas = new HBox(24, izquierda, derecha);
+                FabricaComponentesUI.crearBotonPrimario("Nueva temporada", this::nuevaTemporada));
+        encabezadoIzquierdo.setAlignment(Pos.BOTTOM_LEFT);
+        Node encabezadoDerecho = FabricaComponentesUI.crearEncabezado("Tarifas por persona y noche",
+                "Haz clic en un aparta-suite para editar sus tarifas.");
+
+        // Rejilla de 2×2: los encabezados comparten fila y las tablas también, así ambas
+        // tablas empiezan y terminan a la misma altura aunque un encabezado sea más alto.
+        GridPane columnas = new GridPane();
+        columnas.setHgap(24);
+        columnas.setVgap(12);
+        ColumnConstraints colIzquierda = new ColumnConstraints();
+        colIzquierda.setPercentWidth(44);
+        ColumnConstraints colDerecha = new ColumnConstraints();
+        colDerecha.setPercentWidth(56);
+        columnas.getColumnConstraints().setAll(colIzquierda, colDerecha);
+        RowConstraints filaEncabezados = new RowConstraints();
+        filaEncabezados.setValignment(VPos.BOTTOM);
+        RowConstraints filaTablas = new RowConstraints();
+        filaTablas.setVgrow(Priority.ALWAYS);
+        filaTablas.setFillHeight(true);
+        columnas.getRowConstraints().setAll(filaEncabezados, filaTablas);
+        columnas.add(encabezadoIzquierdo, 0, 0);
+        columnas.add(encabezadoDerecho, 1, 0);
+        columnas.add(temporadas, 0, 1);
+        columnas.add(tarifas, 1, 1);
+        temporadas.setMaxHeight(Double.MAX_VALUE);
+        tarifas.setMaxHeight(Double.MAX_VALUE);
         VBox.setVgrow(columnas, Priority.ALWAYS);
         return new VBox(columnas);
     }
