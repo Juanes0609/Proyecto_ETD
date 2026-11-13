@@ -8,34 +8,36 @@
 
 /* ---------- Tokens ---------- */
 .root {
-    /* Paleta base (Adobe Color, tríada y cuadrado de #8EBF92):
-       verde salvia #8EBF92 · ciruela #6A4D57 · arena #BFB18E · lavanda #8E9BBF.
-       El salvia es claro (contraste 2:1 con blanco), por eso el texto y los
-       anillos de foco usan una versión oscura del mismo tono. */
-    -sga-salvia: #8ebf92;
-    -sga-salvia-claro: #c6dfc8;
-    -sga-ciruela: #6a4d57;
-    -sga-ciruela-hover: #5a414a;
-    -sga-arena: #bfb18e;
-    -sga-arena-suave: #f4f1e8;
-    -sga-lavanda: #8e9bbf;
+    /* Paleta del equipo:
+       verde profundo #183F35 · menú lateral, encabezados y botones principales
+       blanco #FFFFFF        · tarjetas y fondos claros
+       dorado suave #C5A15B  · iconos, detalles y botones secundarios
+       blanco cálido #F4F2EC · fondo general
+       El dorado tiene poco contraste con blanco (2.3:1): sobre fondos claros los
+       trazos usan -sga-dorado-oscuro (3.5:1) y nunca se usa como color de texto. */
+    -sga-verde: #183f35;
+    -sga-verde-hover: #1f4d41;
+    -sga-verde-suave: #e4ece8;
+    -sga-dorado: #c5a15b;
+    -sga-dorado-oscuro: #a8843f;
+    -sga-dorado-suave: #f6eedd;
 
     /* Marca y acentos */
-    -sga-primario: #3f7a47;
-    -sga-primario-hover: #346a3c;
-    -sga-primario-suave: #e6f1e7;
-    /* Acción primaria: ciruela (contraste 7.5:1 con texto blanco) */
-    -sga-accion: -sga-ciruela;
-    -sga-accion-hover: -sga-ciruela-hover;
+    -sga-primario: -sga-verde;
+    -sga-primario-hover: -sga-verde-hover;
+    -sga-primario-suave: -sga-verde-suave;
+    /* Acción primaria: verde profundo (contraste 11:1 con texto blanco) */
+    -sga-accion: -sga-verde;
+    -sga-accion-hover: -sga-verde-hover;
     -sga-tinta: #17211c;
     -sga-tinta-hover: #2a3631;
 
     /* Superficies */
-    -sga-fondo: #f2f1ed;
+    -sga-fondo: #f4f2ec;
     -sga-superficie: #ffffff;
-    -sga-superficie-hundida: #f7f6f3;
-    -sga-borde: #e3e1db;
-    -sga-borde-input: #d3d0c8;
+    -sga-superficie-hundida: #f8f7f3;
+    -sga-borde: #e5e2d9;
+    -sga-borde-input: #d5d1c6;
 
     /* Texto */
     -sga-texto: #1b201d;
@@ -43,22 +45,22 @@
     -sga-texto-terciario: #8b918d;
     -sga-texto-inverso: #ffffff;
 
-    /* Estados */
-    -sga-exito: #2f6b37;
-    -sga-exito-fondo: #e6f1e7;
+    /* Estados (colores semánticos del enunciado) */
+    -sga-exito: #23704a;
+    -sga-exito-fondo: #e3f2e9;
     -sga-advertencia: #8a5a00;
     -sga-advertencia-fondo: #fcf0d9;
     -sga-error: #b42318;
     -sga-error-fondo: #fdeceb;
-    -sga-info: #34477a;
-    -sga-info-fondo: #e8ebf2;
+    -sga-info: #2c5a88;
+    -sga-info-fondo: #e7eff8;
 
-    /* Sidebar del personal: salvia con texto oscuro (7.9:1) */
-    -sga-sidebar: -sga-salvia;
-    -sga-sidebar-hover: #aacfad;
-    -sga-sidebar-activo: -sga-salvia-claro;
-    -sga-sidebar-texto: #2c4630;
-    -sga-sidebar-texto-fuerte: -sga-tinta;
+    /* Sidebar del personal: verde profundo con texto claro e iconos dorados */
+    -sga-sidebar: -sga-verde;
+    -sga-sidebar-hover: #21493e;
+    -sga-sidebar-activo: #245244;
+    -sga-sidebar-texto: #d5e0da;
+    -sga-sidebar-texto-fuerte: -sga-texto-inverso;
 
     -icono-color: -sga-texto;
     -icono-detalle-relleno: -sga-superficie;
@@ -98,16 +100,19 @@
 
 /* ---------- Tipografía ---------- */
 .titulo-grande {
+    -fx-text-fill: -sga-verde;
     -fx-font-size: 26px;
     -fx-font-weight: bold;
 }
 
 .titulo-seccion {
+    -fx-text-fill: -sga-verde;
     -fx-font-size: 19px;
     -fx-font-weight: bold;
 }
 
 .encabezado-vista {
+    -fx-text-fill: -sga-verde;
     -fx-font-size: 15px;
     -fx-font-weight: bold;
 }
@@ -138,7 +143,7 @@
 }
 
 .marca-logo {
-    -fx-background-color: -sga-ciruela;
+    -fx-background-color: -sga-verde;
     -fx-background-radius: 10;
 }
 
@@ -166,7 +171,11 @@
 }
 
 .sidebar .marca-logo {
-    -fx-background-color: -sga-ciruela;
+    -fx-background-color: -sga-dorado;
+}
+
+.sidebar .marca-monograma {
+    -fx-text-fill: -sga-verde;
 }
 
 /* ---------- Botones ---------- */
@@ -200,18 +209,17 @@
 
 .boton-secundario {
     -fx-background-color: -sga-superficie;
-    -fx-text-fill: -sga-texto;
+    -fx-text-fill: -sga-verde;
     -fx-font-weight: bold;
-    -fx-border-color: -sga-borde-input;
-    -fx-border-width: 1;
+    -fx-border-color: -sga-dorado;
+    -fx-border-width: 1.5;
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-padding: 9 16 9 16;
 }
 
 .boton-secundario:hover {
-    -fx-background-color: -sga-arena-suave;
-    -fx-border-color: -sga-arena;
+    -fx-background-color: -sga-dorado-suave;
 }
 
 .boton-peligro {
@@ -279,12 +287,16 @@
 /* Foco de teclado (solo al navegar con teclado, :focus-visible). El anillo es una
    capa de fondo con inset negativo, así el botón no cambia de tamaño. */
 .boton-primario:focus-visible {
-    -fx-background-color: -sga-primario, -sga-accion;
+    -fx-background-color: -sga-dorado, -sga-accion;
     -fx-background-insets: -3, 0;
     -fx-background-radius: 12, 10;
 }
 
-.boton-secundario:focus-visible, .boton-peligro:focus-visible {
+.boton-secundario:focus-visible {
+    -fx-border-color: -sga-verde;
+}
+
+.boton-peligro:focus-visible {
     -fx-border-color: -sga-primario;
 }
 
@@ -343,7 +355,7 @@
 }
 
 .campo-ayuda {
-    -icono-color: -sga-texto-terciario;
+    -icono-color: -sga-dorado-oscuro;
 }
 
 .campo-error .label {
@@ -432,7 +444,7 @@
 }
 
 .pestana:selected {
-    -icono-color: -sga-ciruela;
+    -icono-color: -sga-verde;
 }
 
 .pestana .destino-label {
@@ -441,7 +453,7 @@
 }
 
 .pestana:selected .destino-label {
-    -fx-text-fill: -sga-ciruela;
+    -fx-text-fill: -sga-verde;
     -fx-font-weight: bold;
 }
 
@@ -457,7 +469,7 @@
 }
 
 .pestana:selected .destino-indicador {
-    -fx-background-color: -sga-ciruela;
+    -fx-background-color: -sga-dorado;
 }
 
 /* Sidebar de recepción y administración */
@@ -480,7 +492,7 @@
     -fx-background-radius: 10;
     -fx-padding: 10 12 10 0;
     -fx-alignment: center-left;
-    -icono-color: -sga-sidebar-texto;
+    -icono-color: -sga-dorado;
     -icono-detalle-relleno: -sga-sidebar;
 }
 
@@ -490,7 +502,7 @@
 
 .destino-lateral:selected {
     -fx-background-color: -sga-sidebar-activo;
-    -icono-color: -sga-sidebar-texto-fuerte;
+    -icono-color: -sga-dorado;
     -icono-detalle-relleno: -sga-sidebar-activo;
 }
 
@@ -516,15 +528,29 @@
 }
 
 .destino-lateral:selected .destino-indicador {
-    -fx-background-color: -sga-ciruela;
+    -fx-background-color: -sga-dorado;
 }
 
 .sidebar-pie {
-    -fx-background-color: rgba(255, 255, 255, 0.38);
+    -fx-background-color: -sga-sidebar-hover;
     -fx-background-radius: 12;
     -fx-padding: 12;
     -fx-spacing: 2;
-    -icono-color: -sga-sidebar-texto;
+    -icono-color: -sga-dorado;
+}
+
+/* Dentro del sidebar oscuro, la acción de confirmar va en dorado y el enlace en claro */
+.sidebar-pie .boton-primario {
+    -fx-background-color: -sga-dorado;
+    -fx-text-fill: -sga-verde;
+}
+
+.sidebar-pie .boton-primario:hover {
+    -fx-background-color: #d1b06f;
+}
+
+.sidebar-pie .enlace {
+    -fx-text-fill: -sga-sidebar-texto-fuerte;
 }
 
 .sidebar-pie .label {
@@ -555,7 +581,7 @@
 }
 
 .avatar {
-    -fx-background-color: -sga-arena;
+    -fx-background-color: -sga-dorado-suave;
     -fx-background-radius: 20;
     -fx-min-width: 34;
     -fx-min-height: 34;
@@ -565,7 +591,7 @@
 }
 
 .avatar .label {
-    -fx-text-fill: -sga-tinta;
+    -fx-text-fill: -sga-verde;
     -fx-font-weight: bold;
 }
 
@@ -676,17 +702,17 @@
 }
 
 .suite-foto {
-    -fx-background-color: linear-gradient(to bottom right, #dcebdd, #b6d6b9);
+    -fx-background-color: linear-gradient(to bottom right, #e1ebe6, #b8cdc4);
     -fx-background-radius: 18 18 0 0;
     -icono-color: rgba(23, 33, 28, 0.35);
 }
 
 .suite-foto-b {
-    -fx-background-color: linear-gradient(to bottom right, #ece6d6, #d2c7aa);
+    -fx-background-color: linear-gradient(to bottom right, #f4ecda, #dcc699);
 }
 
 .suite-foto-c {
-    -fx-background-color: linear-gradient(to bottom right, #e1e5ef, #bfc7dc);
+    -fx-background-color: linear-gradient(to bottom right, #efede7, #d7d2c6);
 }
 
 .suite-foto-codigo {
@@ -696,6 +722,7 @@
 }
 
 .suite-nombre {
+    -fx-text-fill: -sga-verde;
     -fx-font-size: 18px;
     -fx-font-weight: bold;
 }
@@ -734,6 +761,7 @@
 }
 
 .hoja-titulo {
+    -fx-text-fill: -sga-verde;
     -fx-font-size: 19px;
     -fx-font-weight: bold;
 }
@@ -855,6 +883,7 @@
 }
 
 .login-titulo {
+    -fx-text-fill: -sga-verde;
     -fx-font-size: 22px;
     -fx-font-weight: bold;
 }
@@ -1040,8 +1069,8 @@
 }
 
 .mapa-nodo-servicio {
-    -fx-background-color: -sga-ciruela;
-    -fx-border-color: -sga-ciruela;
+    -fx-background-color: -sga-verde;
+    -fx-border-color: -sga-verde;
 }
 
 .mapa-nodo-servicio .label {
@@ -1067,7 +1096,7 @@
 
 /* ---------- Barras de reporte ---------- */
 .barra-dato {
-    -fx-background-color: -sga-salvia;
+    -fx-background-color: -sga-verde;
     -fx-background-radius: 6;
     -fx-min-height: 12;
     -fx-pref-height: 12;
@@ -1088,7 +1117,7 @@
 }
 
 .tab-pane .tab:selected {
-    -fx-border-color: transparent transparent -sga-ciruela transparent;
+    -fx-border-color: transparent transparent -sga-verde transparent;
     -fx-border-width: 0 0 2 0;
 }
 
