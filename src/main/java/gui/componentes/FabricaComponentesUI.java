@@ -336,6 +336,7 @@ public final class FabricaComponentesUI {
             int indice = i;
             ToggleButton segmento = new ToggleButton(opciones.get(i));
             segmento.getStyleClass().add("segmento");
+            reservarAnchoNegrita(segmento);
             segmento.setToggleGroup(grupo);
             segmento.setSelected(i == seleccionInicial);
             segmento.setOnAction(e -> {
@@ -345,6 +346,27 @@ public final class FabricaComponentesUI {
             contenedor.getChildren().add(segmento);
         }
         return contenedor;
+    }
+
+    /**
+     * El segmento elegido se pone en negrita y crece unos píxeles; sin esto, al
+     * cambiar de opción todo el control se corría y el elegido se veía descentrado.
+     * Se reserva siempre el ancho que el texto ocupa en negrita.
+     */
+    private static void reservarAnchoNegrita(ToggleButton segmento) {
+        Runnable medir = () -> {
+            javafx.scene.text.Font fuente = segmento.getFont();
+            javafx.scene.text.Text medida = new javafx.scene.text.Text(segmento.getText());
+            medida.setFont(javafx.scene.text.Font.font(fuente.getFamily(), javafx.scene.text.FontWeight.BOLD,
+                    fuente.getSize()));
+            double ancho = Math.ceil(medida.getLayoutBounds().getWidth()) + 2
+                    + segmento.getPadding().getLeft() + segmento.getPadding().getRight();
+            segmento.setMinWidth(ancho);
+            segmento.setPrefWidth(ancho);
+        };
+        // La fuente y el padding llegan del CSS; se mide de nuevo cuando cambia cualquiera.
+        segmento.fontProperty().addListener((obs, antes, ahora) -> medir.run());
+        segmento.paddingProperty().addListener((obs, antes, ahora) -> medir.run());
     }
 
     // ---------- Estados ----------
