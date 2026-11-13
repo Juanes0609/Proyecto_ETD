@@ -260,8 +260,8 @@ public class VistaCatalogos extends VistaBase {
 
     /**
      * Dibuja la lista circular de recepción tal cual: una pastilla por
-     * recepcionista en orden, la del turno actual resaltada y un ↺ al final porque
-     * después del último vuelve el primero.
+     * recepcionista en orden y la del turno actual resaltada (después del último
+     * vuelve el primero).
      */
     private void pintarRotacion() {
         tarjetaRotacion.getStyleClass().setAll("tarjeta");
@@ -306,23 +306,16 @@ public class VistaCatalogos extends VistaBase {
             pastilla.setAccessibleText(e.nombre() + (enTurno ? ", en turno" : ""));
             anillo.getChildren().add(pastilla);
             if (i < orden.size() - 1) {
-                anillo.getChildren().add(flecha(gui.componentes.Iconos.Icono.FLECHA_DERECHA, null));
+                anillo.getChildren().add(flecha(gui.componentes.Iconos.Icono.FLECHA_DERECHA));
             }
-        }
-        if (orden.size() > 1) {
-            anillo.getChildren().add(flecha(gui.componentes.Iconos.Icono.DESHACER,
-                    "Después de " + orden.getLast().nombre() + " vuelve " + orden.getFirst().nombre()));
         }
         tarjetaRotacion.getChildren().setAll(encabezado, anillo);
     }
 
-    private static Node flecha(gui.componentes.Iconos.Icono icono, String ayuda) {
+    private static Node flecha(gui.componentes.Iconos.Icono icono) {
         StackPane caja = new StackPane(gui.componentes.Iconos.crear(icono, 16));
         caja.getStyleClass().add("turno-flecha");
         caja.setMinHeight(34);
-        if (ayuda != null) {
-            javafx.scene.control.Tooltip.install(caja, new javafx.scene.control.Tooltip(ayuda));
-        }
         return caja;
     }
 
