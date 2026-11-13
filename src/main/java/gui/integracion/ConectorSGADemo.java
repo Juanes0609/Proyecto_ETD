@@ -698,6 +698,24 @@ public class ConectorSGADemo implements ConectorSGA {
                 .thenComparing(OrdenPreparacionDTO::ingresoCola);
     }
 
+    @Override
+    public RutaDTO rutaRecorridoPreparacion() {
+        List<String> pasos = new ArrayList<>();
+        double metros = 0;
+        String actual = NODO_ASEO;
+        for (OrdenPreparacionDTO orden : colaPreparacion()) {
+            RutaDTO tramo = dijkstra(actual, orden.codigoApartaSuite());
+            // el primer paso del tramo es el nodo donde ya estamos
+            pasos.addAll(pasos.isEmpty() ? tramo.pasos() : tramo.pasos().subList(1, tramo.pasos().size()));
+            metros += tramo.metros();
+            actual = orden.codigoApartaSuite();
+        }
+        if (pasos.isEmpty()) {
+            pasos.add(nodos.get(NODO_ASEO).nombre());
+        }
+        return new RutaDTO(pasos, metros);
+    }
+
     private Map<String, Double> vecinos(String nodo) {
         Map<String, Double> vecinos = new HashMap<>();
         for (ConexionDTO c : conexiones) {

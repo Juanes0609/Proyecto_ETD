@@ -211,6 +211,14 @@ public interface ConectorSGA {
         throw pendiente("rutaPreparacion");
     }
 
+    /**
+     * Recorrido completo desde el cuarto de aseo por todos los aparta-suites de la
+     * cola de preparación, en orden de prioridad (Dijkstra tramo por tramo).
+     */
+    default RutaDTO rutaRecorridoPreparacion() {
+        throw pendiente("rutaRecorridoPreparacion");
+    }
+
     /** Turno vigente de recepción (ListaCircular de recepcionistas). */
     default EmpleadoDTO turnoActual() {
         throw pendiente("turnoActual");
