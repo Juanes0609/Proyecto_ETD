@@ -27,16 +27,7 @@ import javafx.util.Duration;
 import java.util.List;
 
 /**
- * Ventana del personal (recepción y administración), patrón Single-Window:
- * <pre>
- * ┌────────────┬────────────────────────────────────────────────┐
- * │ Marca      │ Título · descripción              Usuario  Salir│
- * │ Destinos   ├────────────────────────────────────────────────┤
- * │ (3–4)      │ [Notificación inline]                ┌───────┐ │
- * │            │ Contenido del destino activo         │ Hoja  │ │
- * │ Turno/Datos│                                      └───────┘ │
- * └────────────┴────────────────────────────────────────────────┘
- * </pre>
+ * Ventana del personal (recepción y administración), patrón Single-Window.
  * El sidebar solo tiene destinos del rol; el activo se marca con icono relleno,
  * label en negrita y barra indicadora. Nunca se abren otros {@code Stage} ni {@code Alert}.
  */
