@@ -2,7 +2,9 @@ package gui.admin;
 
 import gui.VentanaPrincipalSGA;
 import gui.componentes.FabricaComponentesUI;
+import gui.componentes.Formato;
 import gui.componentes.Iconos;
+import gui.integracion.dto.OrdenPreparacionDTO;
 import gui.integracion.dto.ApartaSuiteDTO;
 import gui.integracion.dto.ConexionDTO;
 import gui.integracion.dto.NodoEdificioDTO;
@@ -24,6 +26,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
+import javafx.stage.Popup;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
@@ -61,7 +64,12 @@ public class VistaEdificio extends VistaBase {
     private Map<String, String> estados = new HashMap<>();
     private final ComboBox<String> destinoRuta = FabricaComponentesUI.crearDesplegable("Elige un aparta-suite");
     private final Button recorridoCompleto = FabricaComponentesUI.crearBotonSecundario(
-            "Recorrido de la cola", this::mostrarRecorridoCompleto);
+            "Recorrido de la cola", this::abrirMenuRecorrido);
+    /** Menú flotante del recorrido: resume la cola y ofrece dibujarla (o quitarla) del mapa. */
+    private final Popup menuRecorrido = new Popup();
+    /** Posición en la cola de cada aparta-suite mientras el recorrido está dibujado (insignias ①②). */
+    private Map<String, Integer> ordenCola = Map.of();
+    private boolean recorridoMostrado;
     private final VBox panelRuta = new VBox(8);
     /** Opción del desplegable que vuelve al mapa sin ninguna ruta dibujada (vista predeterminada). */
     private static final String SIN_RUTA = "Sin ruta (mapa completo)";
@@ -205,6 +213,7 @@ public class VistaEdificio extends VistaBase {
     /** Vista predeterminada: el grafo sin rutas y una indicación de cómo ver una. */
     private void mostrarSinRuta() {
         rutaCodigos = List.of();
+        ordenCola = Map.of();
         marcarRecorrido(false);
         panelRuta.getChildren().setAll(FabricaComponentesUI.crearTextoSecundario(
                 "Elige un aparta-suite o el recorrido de la cola para verlo en el mapa."));
@@ -212,6 +221,7 @@ public class VistaEdificio extends VistaBase {
 
     private void mostrarRutaA(String codigo) {
         panelRuta.getChildren().clear();
+        ordenCola = Map.of();
         marcarRecorrido(false);
         if (codigo == null) {
             mostrarSinRuta();
@@ -229,25 +239,105 @@ public class VistaEdificio extends VistaBase {
     }
 
     /**
-     * Dibuja el recorrido de toda la cola. Mientras se muestra, el botón queda
-     * deshabilitado (no haría nada nuevo) y el desplegable vuelve a su texto guía;
-     * elegir otra opción del desplegable lo habilita de nuevo.
+     * Abre (o cierra) el menú flotante bajo el botón. Muestra la cola resumida y
+     * el total del recorrido; solo su pastilla actúa: dibuja el recorrido o lo quita.
      */
-    private void mostrarRecorridoCompleto() {
-        actualizandoDestinos = true;
-        destinoRuta.setValue(null);
-        actualizandoDestinos = false;
-        if (notificador().ejecutarConManejo(
-                () -> mostrarRuta(conector().rutaRecorridoPreparacion(), "Recorrido de la cola de preparación"), null)) {
-            marcarRecorrido(true);
+    private void abrirMenuRecorrido() {
+        if (menuRecorrido.isShowing()) {
+            menuRecorrido.hide();
+            return;
+        }
+        VBox menu = new VBox();
+        menu.getStyleClass().addAll("root", "menu-flotante");
+        menu.getStylesheets().setAll(recorridoCompleto.getScene().getStylesheets());
+
+        List<OrdenPreparacionDTO> cola = colaActual();
+        Label titulo = new Label(cola.isEmpty() ? "Cola de preparación"
+                : "Cola de preparación · " + Formato.plural(cola.size(), "aparta-suite", "aparta-suites"));
+        titulo.getStyleClass().add("campo-label");
+        menu.getChildren().add(titulo);
+
+        if (cola.isEmpty()) {
+            menu.getChildren().add(FabricaComponentesUI.crearTextoSecundario("No hay aparta-suites en cola."));
+        } else {
+            for (int i = 0; i < cola.size(); i++) {
+                menu.getChildren().add(filaMenu(i + 1, cola.get(i)));
+            }
+            menu.getChildren().add(FabricaComponentesUI.crearSeparador());
+            try {
+                RutaDTO ruta = conector().rutaRecorridoPreparacion();
+                Label total = new Label(Math.round(ruta.metros()) + " m en total desde el cuarto de aseo");
+                total.getStyleClass().add("texto-secundario");
+                Button accion = new Button(recorridoMostrado ? "Quitar del mapa" : "Ver en el mapa");
+                accion.getStyleClass().add("boton-pastilla");
+                if (recorridoMostrado) {
+                    accion.getStyleClass().add("boton-pastilla-suave");
+                }
+                accion.setMinWidth(Region.USE_PREF_SIZE);
+                accion.setOnAction(e -> {
+                    menuRecorrido.hide();
+                    if (recorridoMostrado) {
+                        destinoRuta.setValue(SIN_RUTA);
+                    } else {
+                        dibujarRecorrido(ruta, cola);
+                    }
+                });
+                HBox pie = new HBox(12, total, FabricaComponentesUI.crearEspaciador(), accion);
+                pie.setAlignment(Pos.CENTER_LEFT);
+                menu.getChildren().add(pie);
+            } catch (RuntimeException e) {
+                menu.getChildren().add(FabricaComponentesUI.crearTexto(
+                        "No hay un recorrido posible con los pasillos abiertos.", "texto-error"));
+            }
+        }
+        menuRecorrido.getContent().setAll(menu);
+        menuRecorrido.setAutoHide(true);
+        javafx.geometry.Bounds b = recorridoCompleto.localToScreen(recorridoCompleto.getBoundsInLocal());
+        menuRecorrido.show(recorridoCompleto, b.getMinX(), b.getMaxY() + 6);
+    }
+
+    private List<OrdenPreparacionDTO> colaActual() {
+        try {
+            return conector().colaPreparacion();
+        } catch (RuntimeException e) {
+            return List.of();
         }
     }
 
-    /** Mientras el recorrido está en el mapa el botón lo indica y no se puede volver a pulsar. */
+    private HBox filaMenu(int posicion, OrdenPreparacionDTO o) {
+        Label numero = new Label(String.valueOf(posicion));
+        numero.getStyleClass().add("menu-numero");
+        Label nombre = new Label(o.codigoApartaSuite() + " · " + o.nombreApartaSuite());
+        nombre.getStyleClass().add("menu-fila-titulo");
+        Label detalle = new Label(o.entradaHoy() ? "Llega hoy · " + Formato.hora(o.horaLlegadaSiguiente()) : "Sin llegada hoy");
+        detalle.getStyleClass().add("texto-terciario");
+        HBox fila = new HBox(10, numero, nombre, FabricaComponentesUI.crearEspaciador(), detalle);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        return fila;
+    }
+
+    /** Dibuja el recorrido de toda la cola con el número de orden de cada parada. */
+    private void dibujarRecorrido(RutaDTO ruta, List<OrdenPreparacionDTO> cola) {
+        actualizandoDestinos = true;
+        destinoRuta.setValue(null);
+        actualizandoDestinos = false;
+        Map<String, Integer> orden = new HashMap<>();
+        for (int i = 0; i < cola.size(); i++) {
+            orden.put(cola.get(i).codigoApartaSuite(), i + 1);
+        }
+        ordenCola = orden;
+        mostrarRuta(ruta, "Recorrido de la cola de preparación");
+        marcarRecorrido(true);
+    }
+
+    /** Mientras el recorrido está en el mapa, el botón lo indica (sigue activo para abrir el menú). */
     private void marcarRecorrido(boolean mostrado) {
-        recorridoCompleto.setDisable(mostrado);
+        recorridoMostrado = mostrado;
         recorridoCompleto.setText(mostrado ? "Recorrido en el mapa" : "Recorrido de la cola");
-        recorridoCompleto.setGraphic(mostrado ? Iconos.crear(Iconos.Icono.CHECK, 16) : null);
+        recorridoCompleto.setGraphic(Iconos.crear(mostrado ? Iconos.Icono.CHECK : Iconos.Icono.CHEVRON_ABAJO, 16));
+        recorridoCompleto.setContentDisplay(mostrado ? javafx.scene.control.ContentDisplay.LEFT
+                : javafx.scene.control.ContentDisplay.RIGHT);
+        recorridoCompleto.setGraphicTextGap(8);
         recorridoCompleto.getStyleClass().remove("boton-activo");
         if (mostrado) {
             recorridoCompleto.getStyleClass().add("boton-activo");
@@ -386,6 +476,15 @@ public class VistaEdificio extends VistaBase {
             String estado = apartamento ? estados.get(n.codigo()) : null;
             Tooltip.install(caja, new Tooltip(estado == null ? n.nombre() : n.nombre() + " · " + estado));
             mapa.getChildren().add(caja);
+            Integer posicion = ordenCola.get(n.codigo());
+            if (posicion != null) { // insignia con el orden de la parada en el recorrido de la cola
+                Label insignia = new Label(String.valueOf(posicion));
+                insignia.getStyleClass().add("mapa-orden");
+                insignia.setLayoutX(x(n) + ANCHO_NODO / 2 - 11);
+                insignia.setLayoutY(y(n) - ALTO_NODO / 2 - 9);
+                insignia.setMouseTransparent(true);
+                mapa.getChildren().add(insignia);
+            }
         }
         pintarPaneles(filtroBloque);
     }

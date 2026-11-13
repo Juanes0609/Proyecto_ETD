@@ -846,7 +846,7 @@
 }
 
 /* Botón que representa algo ya activo en pantalla: no se desvanece, se marca en verde */
-.boton-secundario.boton-activo:disabled {
+.boton-secundario.boton-activo, .boton-secundario.boton-activo:disabled {
     -fx-opacity: 1;
     -fx-background-color: -sga-verde-suave;
     -fx-border-color: -sga-verde-suave;
@@ -857,6 +857,87 @@
 
 .desplegable .list-cell.desplegable-sugerencia {
     -fx-text-fill: -sga-texto-terciario;
+}
+
+/* ---------- Menú flotante (recorrido de la cola) ----------
+   Mismo lenguaje que el menú de los desplegables: blanco, esquinas de 12 y
+   sombra suave. Es informativo; solo la pastilla actúa. */
+.menu-flotante {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 12;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 12;
+    -fx-padding: 14 16 14 16;
+    -fx-spacing: 10;
+    -fx-min-width: 340;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.14), 22, 0, 0, 8);
+}
+
+.menu-numero {
+    -fx-background-color: -sga-dorado-suave;
+    -fx-background-radius: 11;
+    -fx-min-width: 22;
+    -fx-min-height: 22;
+    -fx-max-width: 22;
+    -fx-max-height: 22;
+    -fx-alignment: center;
+    -fx-text-fill: -sga-verde;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.menu-fila-titulo {
+    -fx-font-weight: bold;
+    -fx-text-fill: -sga-texto;
+}
+
+/* Botón pequeño en burbuja para la acción del menú */
+.boton-pastilla {
+    -fx-background-color: -sga-verde;
+    -fx-text-fill: -sga-texto-inverso;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 14;
+    -fx-padding: 6 14 6 14;
+}
+
+.boton-pastilla:hover {
+    -fx-background-color: -sga-verde-hover;
+}
+
+.boton-pastilla:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+.boton-pastilla-suave {
+    -fx-background-color: -sga-dorado-suave;
+    -fx-text-fill: -sga-verde;
+}
+
+.boton-pastilla-suave:hover {
+    -fx-background-color: #efe2c4;
+}
+
+.boton-pastilla:focus-visible {
+    -fx-background-color: -sga-dorado, -sga-verde;
+    -fx-background-insets: -3, 0;
+    -fx-background-radius: 16, 14;
+}
+
+/* Insignia con el orden de la parada sobre el mapa */
+.mapa-orden {
+    -fx-background-color: -sga-dorado;
+    -fx-background-radius: 10;
+    -fx-min-width: 20;
+    -fx-min-height: 20;
+    -fx-max-width: 20;
+    -fx-max-height: 20;
+    -fx-alignment: center;
+    -fx-text-fill: -sga-verde;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.18), 4, 0, 0, 1);
 }
 
 /* ---------- Cola de preparación ----------
