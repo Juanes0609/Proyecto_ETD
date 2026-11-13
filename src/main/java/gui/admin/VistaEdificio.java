@@ -63,6 +63,8 @@ public class VistaEdificio extends VistaBase {
     private final Button recorridoCompleto = FabricaComponentesUI.crearBotonSecundario(
             "Recorrido de la cola", this::mostrarRecorridoCompleto);
     private final VBox panelRuta = new VBox(8);
+    /** Opción del desplegable que vuelve al mapa sin ninguna ruta dibujada (vista predeterminada). */
+    private static final String SIN_RUTA = "Sin ruta (mapa completo)";
     private List<String> rutaCodigos = List.of();
     private boolean actualizandoDestinos;
     private Timeline refrescoEstados;
@@ -82,15 +84,21 @@ public class VistaEdificio extends VistaBase {
         bloque.valueProperty().addListener((o, a, b) -> pintar());
         destinoRuta.valueProperty().addListener((o, a, b) -> {
             if (!actualizandoDestinos) {
-                mostrarRutaA(b);
+                mostrarRutaA(SIN_RUTA.equals(b) ? null : b);
             }
         });
+        // El botón se centra con el campo del desplegable (no con su etiqueta) y mide lo mismo de alto.
+        recorridoCompleto.minHeightProperty().bind(destinoRuta.heightProperty());
+        recorridoCompleto.prefHeightProperty().bind(destinoRuta.heightProperty());
+        HBox filaRuta = new HBox(10, FabricaComponentesUI.crearCampoEtiquetado("Ruta", destinoRuta), recorridoCompleto);
+        filaRuta.setAlignment(Pos.BOTTOM_LEFT);
+        mostrarSinRuta();
 
         VBox tarjetaMapa = FabricaComponentesUI.crearTarjeta(
                 new HBox(FabricaComponentesUI.crearEncabezado("Mapa del edificio",
                         "Haz clic en un pasillo para cerrarlo o reabrirlo."), FabricaComponentesUI.crearEspaciador(),
                         FabricaComponentesUI.crearCampoEtiquetado("Agrupar", bloque)),
-                new HBox(10, FabricaComponentesUI.crearCampoEtiquetado("Ruta", destinoRuta), recorridoCompleto),
+                filaRuta,
                 crearLeyenda(), mapa);
         tarjetaMapa.setSpacing(14);
         tarjetaMapa.setMaxWidth(Region.USE_PREF_SIZE);
@@ -156,9 +164,13 @@ public class VistaEdificio extends VistaBase {
     private void cargarDestinos() {
         String seleccionado = destinoRuta.getValue();
         actualizandoDestinos = true;
-        destinoRuta.getItems().clear();
+        destinoRuta.getItems().setAll(SIN_RUTA);
         nodos.values().stream().filter(n -> "APARTAMENTO".equals(n.tipo()))
                 .map(NodoEdificioDTO::codigo).sorted().forEach(destinoRuta.getItems()::add);
+        // Sin elección previa (o si mostraba el recorrido de la cola) se conserva lo que había.
+        if (seleccionado == null && !recorridoCompleto.isDisabled()) {
+            seleccionado = SIN_RUTA;
+        }
         destinoRuta.setValue(seleccionado != null && destinoRuta.getItems().contains(seleccionado) ? seleccionado : null);
         actualizandoDestinos = false;
     }
@@ -190,10 +202,19 @@ public class VistaEdificio extends VistaBase {
         }
     }
 
+    /** Vista predeterminada: el grafo sin rutas y una indicación de cómo ver una. */
+    private void mostrarSinRuta() {
+        rutaCodigos = List.of();
+        marcarRecorrido(false);
+        panelRuta.getChildren().setAll(FabricaComponentesUI.crearTextoSecundario(
+                "Elige un aparta-suite o el recorrido de la cola para verlo en el mapa."));
+    }
+
     private void mostrarRutaA(String codigo) {
         panelRuta.getChildren().clear();
+        marcarRecorrido(false);
         if (codigo == null) {
-            rutaCodigos = List.of();
+            mostrarSinRuta();
             pintar();
             return;
         }
@@ -207,10 +228,30 @@ public class VistaEdificio extends VistaBase {
         }
     }
 
+    /**
+     * Dibuja el recorrido de toda la cola. Mientras se muestra, el botón queda
+     * deshabilitado (no haría nada nuevo) y el desplegable vuelve a su texto guía;
+     * elegir otra opción del desplegable lo habilita de nuevo.
+     */
     private void mostrarRecorridoCompleto() {
+        actualizandoDestinos = true;
         destinoRuta.setValue(null);
-        notificador().ejecutarConManejo(
-                () -> mostrarRuta(conector().rutaRecorridoPreparacion(), "Recorrido de la cola de preparación"), null);
+        actualizandoDestinos = false;
+        if (notificador().ejecutarConManejo(
+                () -> mostrarRuta(conector().rutaRecorridoPreparacion(), "Recorrido de la cola de preparación"), null)) {
+            marcarRecorrido(true);
+        }
+    }
+
+    /** Mientras el recorrido está en el mapa el botón lo indica y no se puede volver a pulsar. */
+    private void marcarRecorrido(boolean mostrado) {
+        recorridoCompleto.setDisable(mostrado);
+        recorridoCompleto.setText(mostrado ? "Recorrido en el mapa" : "Recorrido de la cola");
+        recorridoCompleto.setGraphic(mostrado ? Iconos.crear(Iconos.Icono.CHECK, 16) : null);
+        recorridoCompleto.getStyleClass().remove("boton-activo");
+        if (mostrado) {
+            recorridoCompleto.getStyleClass().add("boton-activo");
+        }
     }
 
     /** Convierte los nombres de la ruta en códigos de nodo, la dibuja y la lista en el panel. */

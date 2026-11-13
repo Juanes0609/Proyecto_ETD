@@ -140,6 +140,20 @@ public final class FabricaComponentesUI {
         ComboBox<T> combo = new ComboBox<>();
         combo.getStyleClass().add("desplegable");
         combo.setPromptText(sugerencia);
+        // Celda propia: JavaFX deja el campo en blanco al volver a null; así siempre
+        // se ve el texto guía en gris cuando no hay nada elegido.
+        combo.setButtonCell(new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(T item, boolean vacio) {
+                super.updateItem(item, vacio);
+                boolean sinValor = vacio || item == null;
+                setText(sinValor ? combo.getPromptText() : item.toString());
+                getStyleClass().remove("desplegable-sugerencia");
+                if (sinValor) {
+                    getStyleClass().add("desplegable-sugerencia");
+                }
+            }
+        });
         combo.skinProperty().addListener((obs, antes, skin) -> {
             Node chevron = combo.lookup(".arrow");
             if (chevron == null) {

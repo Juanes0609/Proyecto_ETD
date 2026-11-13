@@ -31,6 +31,11 @@ public class VistaPreparacion extends VistaBase {
     private final VBox listaEnCurso = new VBox(10);
     private final VBox ruta = new VBox(10);
     private final Button despachar = FabricaComponentesUI.crearBotonPrimario("Despachar siguiente", this::despachar);
+    /** Botón "Ver ruta" y fila de cada aparta-suite en espera, para marcar cuál se está mostrando. */
+    private final java.util.Map<String, Button> botonesRuta = new java.util.HashMap<>();
+    private final java.util.Map<String, HBox> filasCola = new java.util.HashMap<>();
+    private VBox tarjetaRuta;
+    private String rutaMostrada;
 
     public VistaPreparacion(VentanaPrincipalSGA ventana) {
         super(ventana);
@@ -48,7 +53,7 @@ public class VistaPreparacion extends VistaBase {
         VBox izquierda = new VBox(18, cola, enCurso);
         HBox.setHgrow(izquierda, Priority.ALWAYS);
 
-        VBox tarjetaRuta = FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Ruta más corta",
+        tarjetaRuta = FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Ruta más corta",
                 "Desde el cuarto de aseo, por los pasillos abiertos."), ruta);
         tarjetaRuta.setSpacing(14);
         tarjetaRuta.setPrefWidth(360);
@@ -70,11 +75,17 @@ public class VistaPreparacion extends VistaBase {
             pintarCola(cola);
             pintarEnCurso(enCurso);
             despachar.setDisable(cola.isEmpty());
-            if (!cola.isEmpty()) {
+            // Se conserva la ruta que se estaba viendo si ese aparta-suite sigue en la cola.
+            OrdenPreparacionDTO actual = cola.stream().filter(o -> o.codigoApartaSuite().equals(rutaMostrada))
+                    .findFirst().orElse(null);
+            if (actual != null) {
+                mostrarRuta(actual);
+            } else if (!cola.isEmpty()) {
                 mostrarRuta(cola.getFirst());
             } else if (!enCurso.isEmpty()) {
                 mostrarRuta(enCurso.getFirst());
             } else {
+                rutaMostrada = null;
                 ruta.getChildren().setAll(FabricaComponentesUI.crearTextoSecundario(
                         "No hay aparta-suites pendientes de preparación."));
             }
@@ -83,14 +94,23 @@ public class VistaPreparacion extends VistaBase {
 
     private void pintarCola(List<OrdenPreparacionDTO> cola) {
         listaCola.getChildren().clear();
+        botonesRuta.clear();
+        filasCola.clear();
         if (cola.isEmpty()) {
             listaCola.getChildren().add(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.CHECK,
                     "Todo al día", "No hay aparta-suites esperando preparación.", null));
         }
         for (int i = 0; i < cola.size(); i++) {
             OrdenPreparacionDTO o = cola.get(i);
-            listaCola.getChildren().add(crearFila(i + 1, o, FabricaComponentesUI.crearEnlace("Ver ruta",
-                    () -> mostrarRuta(o))));
+            Button verRuta = FabricaComponentesUI.conIcono(FabricaComponentesUI.crearEnlace("Ver ruta",
+                    () -> mostrarRuta(o)), Iconos.Icono.FLECHA_DERECHA);
+            verRuta.setContentDisplay(javafx.scene.control.ContentDisplay.RIGHT);
+            verRuta.setAccessibleText("Ver la ruta hasta " + o.nombreApartaSuite() + " en el panel de la derecha");
+            HBox fila = crearFila(i + 1, o, verRuta);
+            fila.getStyleClass().add("fila-cola");
+            botonesRuta.put(o.codigoApartaSuite(), verRuta);
+            filasCola.put(o.codigoApartaSuite(), fila);
+            listaCola.getChildren().add(fila);
         }
     }
 
@@ -136,7 +156,32 @@ public class VistaPreparacion extends VistaBase {
         alMostrar();
     }
 
+    /**
+     * Muestra la ruta en el panel derecho. La fila elegida queda resaltada y su
+     * botón cambia a "En el panel" (deshabilitado), así se ve qué ruta está a la
+     * vista y no parece que el botón no haga nada.
+     */
     private void mostrarRuta(OrdenPreparacionDTO o) {
+        boolean cambio = !o.codigoApartaSuite().equals(rutaMostrada);
+        rutaMostrada = o.codigoApartaSuite();
+        botonesRuta.forEach((codigo, boton) -> {
+            boolean actual = codigo.equals(rutaMostrada);
+            boton.setDisable(actual);
+            boton.setText(actual ? "En el panel" : "Ver ruta");
+            boton.setGraphic(Iconos.crear(actual ? Iconos.Icono.CHECK : Iconos.Icono.FLECHA_DERECHA, 16));
+        });
+        filasCola.forEach((codigo, fila) -> {
+            fila.getStyleClass().remove("fila-cola-actual");
+            if (codigo.equals(rutaMostrada)) {
+                fila.getStyleClass().add("fila-cola-actual");
+            }
+        });
+        if (cambio && tarjetaRuta != null) { // breve fundido para notar que el panel cambió
+            javafx.animation.FadeTransition f = new javafx.animation.FadeTransition(javafx.util.Duration.millis(180), ruta);
+            f.setFromValue(0.2);
+            f.setToValue(1);
+            f.play();
+        }
         ruta.getChildren().setAll(FabricaComponentesUI.crearTexto(o.codigoApartaSuite() + " · " + o.nombreApartaSuite(),
                 "encabezado-vista"));
         try {

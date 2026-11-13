@@ -845,6 +845,43 @@
     -fx-font-weight: bold;
 }
 
+/* Botón que representa algo ya activo en pantalla: no se desvanece, se marca en verde */
+.boton-secundario.boton-activo:disabled {
+    -fx-opacity: 1;
+    -fx-background-color: -sga-verde-suave;
+    -fx-border-color: -sga-verde-suave;
+    -fx-text-fill: -sga-verde;
+    -icono-color: -sga-verde;
+    -fx-graphic-text-gap: 8;
+}
+
+.desplegable .list-cell.desplegable-sugerencia {
+    -fx-text-fill: -sga-texto-terciario;
+}
+
+/* ---------- Cola de preparación ----------
+   La fila cuya ruta está en el panel derecho se resalta, y su botón deja de
+   parecer un enlace ("En el panel", con ✓) para que no se pulse en vano. */
+.fila-cola {
+    -fx-background-radius: 12;
+    -fx-padding: 6 8 6 8;
+}
+
+.fila-cola-actual {
+    -fx-background-color: -sga-verde-suave;
+}
+
+.fila-cola .enlace:disabled {
+    -fx-opacity: 1;
+    -fx-text-fill: -sga-verde;
+    -icono-color: -sga-verde;
+    -fx-underline: false;
+}
+
+.fila-cola .enlace {
+    -icono-color: -sga-texto;
+}
+
 /* ---------- Notificaciones flotantes ----------
    Burbuja blanca como la barra de pestañas del huésped. El tipo se indica con
    el círculo del icono (color + icono), el texto queda neutro y legible. */
