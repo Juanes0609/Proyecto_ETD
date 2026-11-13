@@ -111,10 +111,9 @@ public class VistaFolios extends VistaBase {
                 + " · " + r.nombreApartaSuite() + " · " + Formato.rango(r.entrada(), r.salida())),
                 FabricaComponentesUI.crearTexto("Saldo pendiente", "campo-label"), lblSaldo);
 
-        ComboBox<String> concepto = new ComboBox<>();
+        ComboBox<String> concepto = FabricaComponentesUI.crearDesplegable("Ej. Restaurante");
         concepto.getItems().setAll(SERVICIOS);
         concepto.setEditable(true);
-        concepto.setPromptText("Ej. Restaurante");
         TextField monto = FabricaComponentesUI.crearCampoTexto("Ej. 45000");
         FormularioFlexible formulario = new FormularioFlexible()
                 .agregarCampo("Concepto", concepto, "Elige un servicio o escribe otro.")

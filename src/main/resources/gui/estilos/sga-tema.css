@@ -436,6 +436,62 @@
     -fx-background-color: transparent;
 }
 
+/* ---------- Desplegables ----------
+   Chevron fino en lugar del triángulo (gira 180° al abrirse, ver
+   FabricaComponentesUI#crearDesplegable) y menú separado 6 px del campo con
+   sombra suave. */
+.combo-box .arrow-button {
+    -fx-padding: 0 14 0 6;
+}
+
+.combo-box .arrow {
+    -fx-shape: "M0.7 1.4 L1.4 0.7 L6 5.3 L10.6 0.7 L11.3 1.4 L6 6.7 Z";
+    -fx-background-color: -sga-texto-secundario;
+    -fx-padding: 3.5 6 3.5 6;
+}
+
+.combo-box:hover .arrow, .combo-box:showing .arrow {
+    -fx-background-color: -sga-verde;
+}
+
+.combo-box:showing {
+    -fx-border-color: -sga-primario;
+}
+
+.combo-box-popup > .list-view {
+    -fx-translate-y: 6;
+    -fx-background-color: -sga-superficie;
+    -fx-background-insets: 0;
+    -fx-background-radius: 12;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 12;
+    -fx-padding: 6;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.14), 22, 0, 0, 8);
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+    -fx-text-fill: -sga-texto;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover {
+    -fx-background-color: -sga-superficie-hundida;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:selected {
+    -fx-background-color: -sga-verde-suave;
+    -fx-text-fill: -sga-verde;
+    -fx-font-weight: bold;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -sga-texto;
+    -fx-padding: 8 4 8 12;
+}
+
 .dato-solo-lectura {
     -fx-background-color: -sga-superficie-hundida;
     -fx-background-radius: 10;

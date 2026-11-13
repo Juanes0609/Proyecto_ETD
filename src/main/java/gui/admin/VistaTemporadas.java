@@ -78,9 +78,8 @@ public class VistaTemporadas extends VistaBase {
     }
 
     private void nuevaTemporada() {
-        ComboBox<String> tipo = new ComboBox<>();
+        ComboBox<String> tipo = FabricaComponentesUI.crearDesplegable("Elige el tipo");
         tipo.getItems().setAll(List.of("BAJA", "MEDIA", "ALTA"));
-        tipo.setPromptText("Elige el tipo");
         DatePicker inicio = FabricaComponentesUI.crearSelectorFecha("dd/mm/aaaa");
         DatePicker fin = FabricaComponentesUI.crearSelectorFecha("dd/mm/aaaa");
         FormularioFlexible f = new FormularioFlexible()

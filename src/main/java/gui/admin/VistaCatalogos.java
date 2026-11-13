@@ -234,9 +234,8 @@ public class VistaCatalogos extends VistaBase {
     private void formularioEmpleado() {
         TextField documento = FabricaComponentesUI.crearCampoTexto("Ej. 41900004");
         TextField nombre = FabricaComponentesUI.crearCampoTexto("Nombres y apellidos");
-        ComboBox<String> turno = new ComboBox<>();
+        ComboBox<String> turno = FabricaComponentesUI.crearDesplegable("Elige un turno");
         turno.getItems().setAll("06:00 – 14:00", "14:00 – 22:00", "22:00 – 06:00");
-        turno.setPromptText("Elige un turno");
         FormularioFlexible f = new FormularioFlexible()
                 .agregarCampo("Documento", documento, null)
                 .conValidacion("Documento", c -> documento.getText().trim().matches("\\d{5,12}")

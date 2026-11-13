@@ -3,7 +3,9 @@ package gui.componentes;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.animation.RotateTransition;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -128,6 +130,30 @@ public final class FabricaComponentesUI {
     }
 
     // ---------- Campos ----------
+
+    /**
+     * Desplegable del sistema: chevron (estilo en CSS) que gira 180° al abrirse y
+     * menú separado del campo con sombra suave. Todas las listas desplegables de
+     * la interfaz se crean aquí para que se vean y se comporten igual.
+     */
+    public static <T> ComboBox<T> crearDesplegable(String sugerencia) {
+        ComboBox<T> combo = new ComboBox<>();
+        combo.getStyleClass().add("desplegable");
+        combo.setPromptText(sugerencia);
+        combo.skinProperty().addListener((obs, antes, skin) -> {
+            Node chevron = combo.lookup(".arrow");
+            if (chevron == null) {
+                return;
+            }
+            RotateTransition giro = new RotateTransition(javafx.util.Duration.millis(160), chevron);
+            combo.showingProperty().addListener((o, estabaAbierto, abierto) -> {
+                giro.stop(); // interrumpible: si se cierra a mitad de giro, vuelve desde donde va
+                giro.setToAngle(abierto ? 180 : 0);
+                giro.play();
+            });
+        });
+        return combo;
+    }
 
     public static TextField crearCampoTexto(String sugerencia) {
         TextField campo = new TextField();

@@ -54,12 +54,12 @@ public class VistaEdificio extends VistaBase {
     private final VBox panelCerrados = new VBox(8);
     private final VBox panelInalcanzables = new VBox(8);
     private final VBox panelBloque = new VBox(8);
-    private final ComboBox<String> bloque = new ComboBox<>();
+    private final ComboBox<String> bloque = FabricaComponentesUI.crearDesplegable(null);
     private Map<String, NodoEdificioDTO> nodos = new HashMap<>();
     private List<ConexionDTO> conexiones = List.of();
     private Set<String> inalcanzables = new HashSet<>();
     private Map<String, String> estados = new HashMap<>();
-    private final ComboBox<String> destinoRuta = new ComboBox<>();
+    private final ComboBox<String> destinoRuta = FabricaComponentesUI.crearDesplegable("Ruta desde el aseo hasta…");
     private final Button recorridoCompleto = FabricaComponentesUI.crearBotonSecundario(
             "Recorrido de la cola", this::mostrarRecorridoCompleto);
     private final VBox panelRuta = new VBox(8);
@@ -85,7 +85,6 @@ public class VistaEdificio extends VistaBase {
                 mostrarRutaA(b);
             }
         });
-        destinoRuta.setPromptText("Ruta desde el aseo hasta…");
 
         VBox tarjetaMapa = FabricaComponentesUI.crearTarjeta(
                 new HBox(FabricaComponentesUI.crearEncabezado("Mapa del edificio",
