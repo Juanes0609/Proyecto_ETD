@@ -90,20 +90,18 @@ public class VistaEdificio extends VistaBase {
                 new HBox(FabricaComponentesUI.crearEncabezado("Mapa del edificio",
                         "Haz clic en un pasillo para cerrarlo o reabrirlo."), FabricaComponentesUI.crearEspaciador(),
                         FabricaComponentesUI.crearCampoEtiquetado("Agrupar", bloque)),
-                new HBox(10, FabricaComponentesUI.crearCampoEtiquetado("Ruta (Dijkstra)", destinoRuta), recorridoCompleto),
+                new HBox(10, FabricaComponentesUI.crearCampoEtiquetado("Ruta", destinoRuta), recorridoCompleto),
                 crearLeyenda(), mapa);
         tarjetaMapa.setSpacing(14);
         tarjetaMapa.setMaxWidth(Region.USE_PREF_SIZE);
 
         VBox lateral = new VBox(16,
-                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Ruta calculada",
-                        "Camino más corto por los pasillos abiertos."), panelRuta),
-                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Inalcanzables desde recepción",
-                        "Aparta-suites sin camino con los pasillos actuales."), panelInalcanzables),
+                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Ruta calculada", null), panelRuta),
+                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Inalcanzables desde recepción", null),
+                        panelInalcanzables),
                 FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Pasillos cerrados", null),
                         panelCerrados),
-                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Aparta-suites por bloque",
-                        "Agrupación con recorrido del grafo."), panelBloque));
+                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Aparta-suites por bloque", null), panelBloque));
         lateral.setPrefWidth(300);
         lateral.setMinWidth(260);
         HBox.setHgrow(lateral, Priority.ALWAYS);

@@ -50,16 +50,15 @@ public class VistaReportes extends VistaBase {
         HBox indicadores = new HBox(14,
                 indicador("Ocupación", Math.round(r.porcentajeOcupacion()) + " %",
                         r.ocupados() + " de " + r.totalApartaSuites() + " ocupados"),
-                indicador("Ingresos registrados", Formato.moneda(r.ingresos()), "Pagos netos en los folios"),
-                indicador("Reservas", String.valueOf(reservas), "Todos los canales"),
-                indicador("Conflictos de canal", String.valueOf(r.conflictosCanal()), "Externas rechazadas"),
-                indicador("Preparación promedio", Math.round(r.minutosPromedioPreparacion()) + " min",
-                        "Desde que entra a la cola"));
+                indicador("Ingresos registrados", Formato.moneda(r.ingresos()), null),
+                indicador("Reservas", String.valueOf(reservas), null),
+                indicador("Conflictos de canal", String.valueOf(r.conflictosCanal()), null),
+                indicador("Preparación promedio", Math.round(r.minutosPromedioPreparacion()) + " min", null));
         indicadores.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
 
         HBox graficas = new HBox(20,
-                tarjetaBarras("Reservas por canal", "Cuántas reservas entraron por cada canal.", r.reservasPorCanal()),
-                tarjetaBarras("Estado de los aparta-suites", "Situación operativa actual del complejo.",
+                tarjetaBarras("Reservas por canal", null, r.reservasPorCanal()),
+                tarjetaBarras("Estado de los aparta-suites", null,
                         r.apartaSuitesPorEstado()));
         graficas.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
         contenido.getChildren().setAll(indicadores, graficas);
@@ -68,7 +67,9 @@ public class VistaReportes extends VistaBase {
     private static VBox indicador(String etiqueta, String valor, String detalle) {
         Label lblValor = new Label(valor);
         VBox tarjeta = FabricaComponentesUI.crearTarjetaIndicador(etiqueta, lblValor);
-        tarjeta.getChildren().add(FabricaComponentesUI.crearTexto(detalle, "texto-terciario"));
+        if (detalle != null) { // solo datos (ej. "1 de 10 ocupados"), nunca explicaciones
+            tarjeta.getChildren().add(FabricaComponentesUI.crearTexto(detalle, "texto-terciario"));
+        }
         tarjeta.setPrefWidth(178);
         tarjeta.setMinWidth(130);
         tarjeta.setMaxWidth(Double.MAX_VALUE);

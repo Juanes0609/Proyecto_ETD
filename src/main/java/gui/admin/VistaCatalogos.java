@@ -86,9 +86,8 @@ public class VistaCatalogos extends VistaBase {
         barra.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         // La tabla ocupa todo el alto disponible: así ninguna fila queda cortada a la mitad.
         javafx.scene.layout.VBox.setVgrow(cuerpo, javafx.scene.layout.Priority.ALWAYS);
-        return new VBox(16, barra, FabricaComponentesUI.crearTextoSecundario(
-                "Cada catálogo se muestra ordenado por su clave (recorrido inorden del árbol de búsqueda). "
-                        + "Haz clic en una fila para editarla."), cuerpo);
+        return new VBox(16, barra, FabricaComponentesUI.crearTextoSecundario("Haz clic en una fila para editarla."),
+                cuerpo);
     }
 
     @Override
@@ -241,7 +240,7 @@ public class VistaCatalogos extends VistaBase {
                 .conValidacion("Documento", c -> documento.getText().trim().matches("\\d{5,12}")
                         ? null : "Usa solo números (entre 5 y 12 dígitos).")
                 .agregarCampo("Nombre completo", nombre, null)
-                .agregarCampo("Turno", turno, "Los turnos rotan entre los recepcionistas registrados.");
+                .agregarCampo("Turno", turno, null);
         Button guardar = FabricaComponentesUI.crearBotonPrimario("Guardar empleado", () -> {
             if (f.validar()) {
                 EmpleadoDTO dto = new EmpleadoDTO(documento.getText().trim(), nombre.getText().trim(), turno.getValue());

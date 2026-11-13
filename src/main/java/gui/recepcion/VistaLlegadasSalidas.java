@@ -111,8 +111,6 @@ public class VistaLlegadasSalidas extends VistaBase {
         switch (r.estado()) {
             case "CONFIRMADA" -> agregarCheckIn(detalle, r, estadoSuite);
             case "EN_CURSO" -> {
-                detalle.getChildren().add(FabricaComponentesUI.crearTextoConIcono(Iconos.Icono.INFO,
-                        "Al hacer check-out, el aparta-suite entra a la cola de preparación.", "campo-ayuda"));
                 detalle.getChildren().add(boton("Registrar check-out", () -> conector().registrarCheckOut(r.codigo()),
                         "Check-out de " + r.codigo() + " registrado. " + r.nombreApartaSuite() + " pasó a preparación."));
             }

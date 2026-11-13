@@ -53,8 +53,6 @@ public class VistaReservarRecepcion extends VistaBase {
         configurarTablaExterna();
         panelSuites = new VBox(16);
         panelExterno = new VBox(16, FabricaComponentesUI.crearBarraAcciones(
-                FabricaComponentesUI.crearTextoSecundario("Se atiende siempre la solicitud más antigua. Si el "
-                        + "aparta-suite ya está reservado, queda registrada como conflicto de canal."),
                 FabricaComponentesUI.crearEspaciador(), procesar), tablaExterna);
         VBox contenido = new VBox(18);
         segmentado = crearSegmentado(0);

@@ -56,8 +56,7 @@ public class VistaTemporadas extends VistaBase {
             }
         });
 
-        VBox izquierda = new VBox(12, new HBox(FabricaComponentesUI.crearEncabezado("Temporadas",
-                "Las noches sin temporada se cobran como baja."), FabricaComponentesUI.crearEspaciador(),
+        VBox izquierda = new VBox(12, new HBox(FabricaComponentesUI.crearEncabezado("Temporadas", null), FabricaComponentesUI.crearEspaciador(),
                 FabricaComponentesUI.crearBotonPrimario("Nueva temporada", this::nuevaTemporada)), temporadas);
         VBox derecha = new VBox(12, FabricaComponentesUI.crearEncabezado("Tarifas por persona y noche",
                 "Haz clic en un aparta-suite para editar sus tarifas."), tarifas);
