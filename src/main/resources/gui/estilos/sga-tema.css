@@ -926,40 +926,6 @@
     -fx-text-fill: -sga-texto;
 }
 
-/* Botón pequeño en burbuja para la acción del menú */
-.boton-pastilla {
-    -fx-background-color: -sga-verde;
-    -fx-text-fill: -sga-texto-inverso;
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-background-radius: 14;
-    -fx-padding: 6 14 6 14;
-}
-
-.boton-pastilla:hover {
-    -fx-background-color: -sga-verde-hover;
-}
-
-.boton-pastilla:pressed {
-    -fx-scale-x: 0.97;
-    -fx-scale-y: 0.97;
-}
-
-.boton-pastilla-suave {
-    -fx-background-color: -sga-dorado-suave;
-    -fx-text-fill: -sga-verde;
-}
-
-.boton-pastilla-suave:hover {
-    -fx-background-color: #efe2c4;
-}
-
-.boton-pastilla:focus-visible {
-    -fx-background-color: -sga-dorado, -sga-verde;
-    -fx-background-insets: -3, 0;
-    -fx-background-radius: 16, 14;
-}
-
 /* Insignia con el orden de la parada sobre el mapa */
 .mapa-orden {
     -fx-background-color: -sga-dorado;

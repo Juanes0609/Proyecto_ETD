@@ -64,12 +64,16 @@ public class VistaEdificio extends VistaBase {
     private Map<String, String> estados = new HashMap<>();
     private final ComboBox<String> destinoRuta = FabricaComponentesUI.crearDesplegable("Elige un aparta-suite");
     private final Button recorridoCompleto = FabricaComponentesUI.crearBotonSecundario(
-            "Por despachar", this::abrirMenuRecorrido);
-    /** Menú flotante del recorrido: resume la cola y ofrece dibujarla (o quitarla) del mapa. */
+            "Por despachar", this::alternarRecorrido);
+    /** Ancho fijo del botón para que la fila no cambie al activarlo o desactivarlo. */
+    private static final double ANCHO_BOTON_RECORRIDO = 170;
+    /** Resumen flotante del recorrido (solo informativo): la cola en orden y el total en metros. */
     private final Popup menuRecorrido = new Popup();
     /** Posición en la cola de cada aparta-suite mientras el recorrido está dibujado (insignias ①②). */
     private Map<String, Integer> ordenCola = Map.of();
     private boolean recorridoMostrado;
+    /** Si el ✕ puede aparecer al pasar el ratón sobre el botón activo. */
+    private boolean cerrarConHover;
     private final VBox panelRuta = new VBox(8);
     /** Opción del desplegable que vuelve al mapa sin ninguna ruta dibujada. */
     private static final String SIN_RUTA = "Sin ruta";
@@ -100,6 +104,21 @@ public class VistaEdificio extends VistaBase {
         // El botón se centra con el campo del desplegable (no con su etiqueta) y mide lo mismo de alto.
         recorridoCompleto.minHeightProperty().bind(destinoRuta.heightProperty());
         recorridoCompleto.prefHeightProperty().bind(destinoRuta.heightProperty());
+        recorridoCompleto.setMinWidth(ANCHO_BOTON_RECORRIDO);
+        recorridoCompleto.setPrefWidth(ANCHO_BOTON_RECORRIDO);
+        recorridoCompleto.setMaxWidth(ANCHO_BOTON_RECORRIDO);
+        recorridoCompleto.setGraphicTextGap(8);
+        recorridoCompleto.setContentDisplay(javafx.scene.control.ContentDisplay.LEFT);
+        // Activo, al pasar el ratón el ✓ se vuelve ✕: el siguiente clic quita el recorrido del mapa.
+        // Justo tras activarlo el ratón sigue encima: el ✕ aparece solo después de salir y volver.
+        recorridoCompleto.hoverProperty().addListener((o, a, b) -> {
+            if (!b) {
+                cerrarConHover = true;
+            }
+            actualizarIconoRecorrido();
+        });
+        menuRecorrido.setAutoHide(true);
+        menuRecorrido.setConsumeAutoHidingEvents(false); // un clic en el botón cierra el resumen y alterna
         HBox filaRuta = new HBox(10, FabricaComponentesUI.crearCampoEtiquetado("Ruta", destinoRuta), recorridoCompleto);
         filaRuta.setAlignment(Pos.BOTTOM_LEFT);
         mostrarSinRuta();
@@ -217,7 +236,7 @@ public class VistaEdificio extends VistaBase {
         ordenCola = Map.of();
         marcarRecorrido(false);
         panelRuta.getChildren().setAll(FabricaComponentesUI.crearTextoSecundario(
-                "Elige un aparta-suite o abre «Por despachar» para verlo en el mapa."));
+                "Elige un aparta-suite o pulsa «Por despachar» para verlo en el mapa."));
     }
 
     private void mostrarRutaA(String codigo) {
@@ -240,19 +259,38 @@ public class VistaEdificio extends VistaBase {
     }
 
     /**
-     * Abre (o cierra) el menú flotante bajo el botón. Muestra la cola resumida y
-     * el total del recorrido; solo su pastilla actúa: dibuja el recorrido o lo quita.
+     * El botón funciona como interruptor: si el recorrido no está en el mapa lo
+     * dibuja y abre su resumen; si ya está, lo quita y vuelve a lo que indica el
+     * desplegable «Ruta».
      */
-    private void abrirMenuRecorrido() {
-        if (menuRecorrido.isShowing()) {
-            menuRecorrido.hide();
+    private void alternarRecorrido() {
+        menuRecorrido.hide();
+        if (recorridoMostrado) {
+            String elegido = destinoRuta.getValue();
+            mostrarRutaA(elegido == null || SIN_RUTA.equals(elegido) ? null : elegido);
             return;
         }
+        List<OrdenPreparacionDTO> cola = colaActual();
+        RutaDTO ruta = null;
+        if (!cola.isEmpty()) {
+            try {
+                ruta = conector().rutaRecorridoPreparacion();
+            } catch (RuntimeException e) {
+                ruta = null;
+            }
+        }
+        if (ruta != null) {
+            dibujarRecorrido(ruta, cola);
+        }
+        mostrarResumen(cola, ruta);
+    }
+
+    /** Resumen flotante bajo el botón; sin acciones, se cierra al hacer clic fuera. */
+    private void mostrarResumen(List<OrdenPreparacionDTO> cola, RutaDTO ruta) {
         VBox menu = new VBox();
         menu.getStyleClass().addAll("root", "menu-flotante");
         menu.getStylesheets().setAll(recorridoCompleto.getScene().getStylesheets());
 
-        List<OrdenPreparacionDTO> cola = colaActual();
         Label titulo = new Label(cola.isEmpty() ? "Por despachar"
                 : "Por despachar · " + Formato.plural(cola.size(), "aparta-suite", "aparta-suites"));
         titulo.getStyleClass().add("campo-label");
@@ -265,36 +303,15 @@ public class VistaEdificio extends VistaBase {
                 menu.getChildren().add(filaMenu(i + 1, cola.get(i)));
             }
             menu.getChildren().add(FabricaComponentesUI.crearSeparador());
-            try {
-                RutaDTO ruta = conector().rutaRecorridoPreparacion();
-                Label total = new Label(Math.round(ruta.metros()) + " m en total desde el cuarto de aseo");
-                total.getStyleClass().add("texto-secundario");
-                Button accion = new Button(recorridoMostrado ? "Quitar del mapa" : "Ver en el mapa");
-                accion.getStyleClass().add("boton-pastilla");
-                if (recorridoMostrado) {
-                    accion.getStyleClass().add("boton-pastilla-suave");
-                }
-                accion.setMinWidth(Region.USE_PREF_SIZE);
-                accion.setOnAction(e -> {
-                    menuRecorrido.hide();
-                    if (recorridoMostrado) {
-                        // Vuelve a lo que indica el desplegable, que no se tocó al mostrar el recorrido.
-                        String elegido = destinoRuta.getValue();
-                        mostrarRutaA(elegido == null || SIN_RUTA.equals(elegido) ? null : elegido);
-                    } else {
-                        dibujarRecorrido(ruta, cola);
-                    }
-                });
-                HBox pie = new HBox(12, total, FabricaComponentesUI.crearEspaciador(), accion);
-                pie.setAlignment(Pos.CENTER_LEFT);
-                menu.getChildren().add(pie);
-            } catch (RuntimeException e) {
+            if (ruta != null) {
+                menu.getChildren().add(FabricaComponentesUI.crearTextoSecundario(
+                        Math.round(ruta.metros()) + " m en total desde el cuarto de aseo"));
+            } else {
                 menu.getChildren().add(FabricaComponentesUI.crearTexto(
                         "No hay un recorrido posible con los pasillos abiertos.", "texto-error"));
             }
         }
         menuRecorrido.getContent().setAll(menu);
-        menuRecorrido.setAutoHide(true);
         javafx.geometry.Bounds b = recorridoCompleto.localToScreen(recorridoCompleto.getBoundsInLocal());
         menuRecorrido.show(recorridoCompleto, b.getMinX(), b.getMaxY() + 6);
     }
@@ -330,18 +347,24 @@ public class VistaEdificio extends VistaBase {
         marcarRecorrido(true);
     }
 
-    /** Mientras el recorrido está en el mapa, el botón lo indica (sigue activo para abrir el menú). */
+    /** Mientras el recorrido está en el mapa, el botón queda activo (verde con ✓). */
     private void marcarRecorrido(boolean mostrado) {
         recorridoMostrado = mostrado;
-        recorridoCompleto.setText("Por despachar"); // mismo texto en ambos estados; el ✓ indica que está en el mapa
-        recorridoCompleto.setGraphic(Iconos.crear(mostrado ? Iconos.Icono.CHECK : Iconos.Icono.CHEVRON_ABAJO, 16));
-        recorridoCompleto.setContentDisplay(mostrado ? javafx.scene.control.ContentDisplay.LEFT
-                : javafx.scene.control.ContentDisplay.RIGHT);
-        recorridoCompleto.setGraphicTextGap(8);
+        cerrarConHover = !recorridoCompleto.isHover();
         recorridoCompleto.getStyleClass().remove("boton-activo");
         if (mostrado) {
             recorridoCompleto.getStyleClass().add("boton-activo");
         }
+        recorridoCompleto.setAccessibleText(mostrado ? "Quitar el recorrido por despachar del mapa"
+                : "Mostrar el recorrido por despachar en el mapa");
+        recorridoCompleto.setTooltip(mostrado ? new Tooltip("Quitar del mapa") : null);
+        actualizarIconoRecorrido();
+    }
+
+    /** Inactivo: solo texto. Activo: ✓, que pasa a ✕ con el ratón encima. */
+    private void actualizarIconoRecorrido() {
+        recorridoCompleto.setGraphic(!recorridoMostrado ? null : Iconos.crear(
+                recorridoCompleto.isHover() && cerrarConHover ? Iconos.Icono.CERRAR : Iconos.Icono.CHECK, 16));
     }
 
     /** Convierte los nombres de la ruta en códigos de nodo, la dibuja y la lista en el panel. */
