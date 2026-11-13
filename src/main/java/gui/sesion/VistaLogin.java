@@ -235,7 +235,7 @@ public class VistaLogin extends StackPane {
     private static VBox tarjeta(Node... contenido) {
         VBox tarjeta = new VBox(contenido);
         tarjeta.getStyleClass().add("login-card");
-        tarjeta.setPrefWidth(420);
+        tarjeta.setPrefWidth(440);
         return tarjeta;
     }
 

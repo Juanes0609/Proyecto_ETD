@@ -6,6 +6,22 @@
    estados que no dependen solo del color.
    ========================================================================= */
 
+/* ---------- Fuente ----------
+   Inter (licencia OFL, ver fuentes/Inter-LICENSE.txt) va incluida en el proyecto:
+   con "System" el texto en negrita se dibujaba un poco más ancho de lo que JavaFX
+   medía y se cortaba el borde de la última letra. Con una fuente propia JavaFX
+   mide exactamente lo que dibuja y se ve igual en macOS y Windows. */
+@font-face {
+    font-family: "Inter";
+    src: url("../fuentes/Inter-Regular.ttf");
+}
+
+@font-face {
+    font-family: "Inter";
+    font-weight: bold;
+    src: url("../fuentes/Inter-Bold.ttf");
+}
+
 /* ---------- Tokens ---------- */
 .root {
     /* Paleta del equipo:
@@ -65,7 +81,7 @@
     -icono-color: -sga-texto;
     -icono-detalle-relleno: -sga-superficie;
 
-    -fx-font-family: "System";
+    -fx-font-family: "Inter";
     -fx-font-size: 13px;
     -fx-background-color: -sga-fondo;
     -fx-accent: -sga-primario;
@@ -135,6 +151,13 @@
 .texto-error {
     -fx-text-fill: -sga-error;
     -icono-color: -sga-error;
+}
+
+/* Respaldo contra recortes: los títulos y cifras grandes en negrita reservan
+   2 px a la derecha para el borde del último glifo. */
+.titulo-grande, .titulo-seccion, .encabezado-vista, .indicador-valor, .suite-precio,
+.suite-nombre, .login-titulo, .hoja-titulo, .marca-nombre {
+    -fx-padding: 0 2 0 0;
 }
 
 /* ---------- Marca (siempre arriba a la izquierda) ---------- */

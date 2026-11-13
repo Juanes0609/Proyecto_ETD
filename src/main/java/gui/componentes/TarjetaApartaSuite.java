@@ -59,15 +59,19 @@ public class TarjetaApartaSuite extends VBox {
         Label ubicacion = FabricaComponentesUI.crearTextoSecundario(suite.ubicacion());
         Label datos = FabricaComponentesUI.crearTexto(Formato.plural(suite.dormitorios(), "dormitorio", "dormitorios")
                 + " · hasta " + Formato.plural(suite.capacidad(), "huésped", "huéspedes"));
-        VBox.setMargin(datos, new Insets(6, 0, 10, 0));
+        VBox.setMargin(datos, new Insets(6, 0, 4, 0));
+        // La cancelación es una característica del aparta-suite: va con sus datos y
+        // deja la fila inferior solo para el precio y la acción (así nada se ajusta ni se corta).
+        HBox cancelacion = FabricaComponentesUI.crearTextoConIcono(Iconos.Icono.CHECK,
+                "Cancelación gratuita", "texto-exito");
+        VBox.setMargin(cancelacion, new Insets(0, 0, 10, 0));
 
         Label precio = new Label(Formato.moneda(tarifaVigente));
         precio.getStyleClass().add("suite-precio");
         precio.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
-        Label unidad = FabricaComponentesUI.crearTexto("COP por persona / noche", "texto-secundario");
-        HBox cancelacion = FabricaComponentesUI.crearTextoConIcono(Iconos.Icono.CHECK,
-                "Cancelación gratuita", "texto-exito");
-        VBox bloquePrecio = new VBox(2, precio, unidad, cancelacion);
+        Label unidad = new Label("por persona / noche");
+        unidad.getStyleClass().add("texto-secundario");
+        VBox bloquePrecio = new VBox(2, precio, unidad);
         HBox.setHgrow(bloquePrecio, Priority.ALWAYS);
 
         Button accion = FabricaComponentesUI.crearBotonPrimario(textoAccion, alAbrir);
@@ -77,7 +81,7 @@ public class TarjetaApartaSuite extends VBox {
         filaInferior.setAlignment(Pos.BOTTOM_LEFT);
         VBox.setMargin(filaInferior, new Insets(12, 0, 0, 0));
 
-        VBox cuerpo = new VBox(nombre, ubicacion, datos, FabricaComponentesUI.crearSeparador(), filaInferior);
+        VBox cuerpo = new VBox(nombre, ubicacion, datos, cancelacion, FabricaComponentesUI.crearSeparador(), filaInferior);
         cuerpo.getStyleClass().add("tarjeta-suite-cuerpo");
         getChildren().addAll(foto, cuerpo);
 

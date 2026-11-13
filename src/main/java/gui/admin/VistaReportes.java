@@ -9,7 +9,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -46,7 +45,9 @@ public class VistaReportes extends VistaBase {
 
     private void pintar(ReporteDTO r) {
         int reservas = r.reservasPorCanal().values().stream().mapToInt(Integer::intValue).sum();
-        FlowPane indicadores = new FlowPane(14, 14,
+        // Fila de indicadores que reparte el ancho por igual: todas las tarjetas
+        // miden lo mismo y, si la ventana es angosta, el detalle se ajusta en 2 líneas.
+        HBox indicadores = new HBox(14,
                 indicador("Ocupación", Math.round(r.porcentajeOcupacion()) + " %",
                         r.ocupados() + " de " + r.totalApartaSuites() + " ocupados"),
                 indicador("Ingresos registrados", Formato.moneda(r.ingresos()), "Pagos netos en los folios"),
@@ -54,6 +55,7 @@ public class VistaReportes extends VistaBase {
                 indicador("Conflictos de canal", String.valueOf(r.conflictosCanal()), "Externas rechazadas"),
                 indicador("Preparación promedio", Math.round(r.minutosPromedioPreparacion()) + " min",
                         "Desde que entra a la cola"));
+        indicadores.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
 
         HBox graficas = new HBox(20,
                 tarjetaBarras("Reservas por canal", "Cuántas reservas entraron por cada canal.", r.reservasPorCanal()),
@@ -68,7 +70,8 @@ public class VistaReportes extends VistaBase {
         VBox tarjeta = FabricaComponentesUI.crearTarjetaIndicador(etiqueta, lblValor);
         tarjeta.getChildren().add(FabricaComponentesUI.crearTexto(detalle, "texto-terciario"));
         tarjeta.setPrefWidth(178);
-        tarjeta.setMinWidth(170);
+        tarjeta.setMinWidth(130);
+        tarjeta.setMaxWidth(Double.MAX_VALUE);
         return tarjeta;
     }
 

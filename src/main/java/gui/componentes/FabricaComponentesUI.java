@@ -61,6 +61,9 @@ public final class FabricaComponentesUI {
         Label lbl = new Label(texto);
         lbl.getStyleClass().addAll(clases);
         lbl.setWrapText(true);
+        // Un texto que se ajusta pide el alto de todas sus líneas; sin esto algunos
+        // contenedores le dan una sola línea y lo cortan con "…".
+        lbl.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
         return lbl;
     }
 
@@ -72,6 +75,7 @@ public final class FabricaComponentesUI {
     public static HBox crearTextoConIcono(Iconos.Icono icono, String texto, String clase) {
         Label lbl = new Label(texto);
         lbl.setWrapText(true);
+        lbl.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
         HBox fila = new HBox(6, Iconos.crear(icono, 15), lbl);
         fila.setAlignment(Pos.CENTER_LEFT);
         fila.getStyleClass().add(clase);
@@ -115,6 +119,8 @@ public final class FabricaComponentesUI {
     private static Button crearBoton(String texto, String claseEstilo, Runnable accion) {
         Button boton = new Button(texto);
         boton.getStyleClass().add(claseEstilo);
+        // Un botón nunca se recorta con "…": siempre mide lo que su texto necesita.
+        boton.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
         if (accion != null) {
             boton.setOnAction(e -> accion.run());
         }
