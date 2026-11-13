@@ -79,8 +79,7 @@ public class VistaReservasCliente extends VistaBase {
         Label nombre = FabricaComponentesUI.crearTexto(r.nombreApartaSuite(), "suite-nombre");
         Label fechas = new Label(Formato.rango(r.entrada(), r.salida()) + " · "
                 + Formato.plural(r.noches(), "noche", "noches") + " · " + Formato.plural(r.personas(), "huésped", "huéspedes"));
-        Label codigo = FabricaComponentesUI.crearTexto("Reserva " + r.codigo() + " · canal " + Formato.estado(r.canal())
-                .toLowerCase(), "texto-terciario");
+        Label codigo = FabricaComponentesUI.crearTexto("Reserva " + r.codigo(), "texto-terciario");
         VBox izquierda = new VBox(4, nombre, fechas, codigo);
 
         Label totalReserva = new Label(Formato.moneda(r.total()));

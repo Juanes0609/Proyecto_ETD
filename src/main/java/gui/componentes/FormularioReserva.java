@@ -131,8 +131,7 @@ public class FormularioReserva extends VBox {
         // ---- Hora de llegada ----
         TextField hora = FabricaComponentesUI.crearCampoTexto("HH:mm · Ej. 15:30");
         FormularioFlexible formularioLlegada = new FormularioFlexible()
-                .agregarCampoOpcional("Hora estimada de llegada", hora,
-                        "Ayuda a priorizar la preparación del aparta-suite.")
+                .agregarCampoOpcional("Hora estimada de llegada", hora, null)
                 .conValidacion("Hora estimada de llegada", c -> horaValida(hora.getText()) ? null
                         : "Usa el formato de 24 horas, por ejemplo 15:30.");
 
