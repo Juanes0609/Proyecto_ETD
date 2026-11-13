@@ -98,8 +98,19 @@ public class VistaLogin extends StackPane {
             }
         });
 
+        Button enlaceCrearCuenta = FabricaComponentesUI.crearEnlace("Crear cuenta",
+                () -> mostrarTarjeta(crearTarjetaRegistroPaso1()));
+        // Con un solo clic: se actúa al presionar, antes de que el correo pierda el foco y
+        // muestre "obligatorio" (ese mensaje movía el enlace y el primer clic se perdía).
+        // Con teclado (Tab + Enter/Espacio) sigue funcionando igual.
+        enlaceCrearCuenta.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, e -> {
+            if (e.isPrimaryButtonDown()) {
+                e.consume();
+                enlaceCrearCuenta.fire();
+            }
+        });
         HBox crearCuenta = new HBox(2, FabricaComponentesUI.crearTextoSecundario("¿Nuevo en " + MarcaApp.NOMBRE + "?"),
-                FabricaComponentesUI.crearEnlace("Crear cuenta", () -> mostrarTarjeta(crearTarjetaRegistroPaso1())));
+                enlaceCrearCuenta);
         crearCuenta.setAlignment(Pos.CENTER);
 
         VBox tarjeta = tarjeta(encabezado("Hola de nuevo", "Inicia sesión para continuar en " + MarcaApp.NOMBRE),
