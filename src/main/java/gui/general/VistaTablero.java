@@ -116,8 +116,12 @@ public class VistaTablero extends VistaBase {
         return celda;
     }
 
-    /** Lo siguiente que pasa en el aparta-suite: quién sale o quién llega hoy. */
+    /** Lo siguiente que pasa en el aparta-suite (quién sale o llega hoy) o, si está fuera de servicio, el motivo. */
     private static String movimientoDe(ApartaSuiteDTO suite, List<ReservaDTO> reservas) {
+        if (!suite.reservable()) {
+            String motivo = suite.motivoFueraServicio();
+            return motivo == null || motivo.isBlank() ? null : motivo;
+        }
         LocalDate hoy = LocalDate.now();
         for (ReservaDTO r : reservas) {
             if (!r.codigoApartaSuite().equals(suite.codigo())) {

@@ -19,7 +19,9 @@ public record ApartaSuiteDTO(
         List<String> caracteristicas,
         String descripcion,
         String estadoOperativo,
-        String rutaImagen) implements java.io.Serializable {
+        String rutaImagen,
+        /** Por qué está fuera de servicio; vacío o {@code null} en cualquier otro estado. */
+        String motivoFueraServicio) implements java.io.Serializable {
 
     public double tarifa(String tipoTemporada) {
         return switch (tipoTemporada) {

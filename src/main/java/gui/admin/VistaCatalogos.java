@@ -145,6 +145,9 @@ public class VistaCatalogos extends VistaBase {
         TextField caracteristicas = FabricaComponentesUI.crearCampoTexto("Ej. Balcón, Cocineta, Wi-Fi");
         TextArea descripcion = FabricaComponentesUI.crearAreaTexto("Una frase que describa el aparta-suite");
 
+        TextField motivo = FabricaComponentesUI.crearCampoTexto("Ej. Mantenimiento de la ducha");
+        boolean[] fuera = {false};
+
         FormularioFlexible f = new FormularioFlexible();
         if (existente == null) {
             f.agregarCampo("Código", codigo, "Bloque y número, por ejemplo D-101.")
@@ -169,6 +172,26 @@ public class VistaCatalogos extends VistaBase {
             capacidad.setText(String.valueOf(existente.capacidad()));
             caracteristicas.setText(String.join(", ", existente.caracteristicas()));
             descripcion.setText(existente.descripcion());
+            // Fuera de servicio: solo desde Preparado, y siempre con su motivo.
+            boolean cambiable = "PREPARADO".equals(existente.estadoOperativo()) || !existente.reservable();
+            fuera[0] = !existente.reservable();
+            motivo.setText(existente.motivoFueraServicio() == null ? "" : existente.motivoFueraServicio());
+            motivo.setDisable(!fuera[0]);
+            HBox servicio = FabricaComponentesUI.crearSegmentado(List.of("En servicio", "Fuera de servicio"),
+                    fuera[0] ? 1 : 0, indice -> {
+                        fuera[0] = indice == 1;
+                        motivo.setDisable(!fuera[0]);
+                        if (fuera[0]) {
+                            motivo.requestFocus();
+                        }
+                    });
+            servicio.setDisable(!cambiable);
+            f.agregarSeccion("Estado").agregarNodo(servicio)
+                    .agregarCampoOpcional("Motivo", motivo, cambiable
+                            ? "Obligatorio para dejarlo fuera de servicio."
+                            : "Solo se puede sacar de servicio cuando está Preparado.")
+                    .conValidacion("Motivo", c -> fuera[0] && motivo.getText().isBlank()
+                            ? "Indica por qué queda fuera de servicio." : null);
         } else {
             f.agregarNodo(FabricaComponentesUI.crearTextoSecundario(
                     "Las tarifas se definen en Temporadas y tarifas."));
@@ -184,12 +207,21 @@ public class VistaCatalogos extends VistaBase {
                     existente == null ? 0 : existente.tarifaBaja(), existente == null ? 0 : existente.tarifaMedia(),
                     existente == null ? 0 : existente.tarifaAlta(),
                     Arrays.stream(caracteristicas.getText().split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList(),
-                    descripcion.getText().trim(), existente == null ? "PREPARADO" : existente.estadoOperativo(), null);
+                    descripcion.getText().trim(), estadoAlGuardar(existente, fuera[0]), null,
+                    fuera[0] ? motivo.getText().trim() : "");
             guardar(() -> conector().guardarApartaSuite(dto), dto.nombre() + " se guardó en el catálogo.");
         });
         guardar.setMaxWidth(Double.MAX_VALUE);
         f.agregarNodo(guardar);
         mostrarHoja(existente == null ? "Nuevo aparta-suite" : "Editar " + existente.nombre(), f);
+    }
+
+    /** Al volver a servicio queda Preparado; si no se tocó el interruptor, conserva su estado. */
+    private static String estadoAlGuardar(ApartaSuiteDTO existente, boolean fueraDeServicio) {
+        if (fueraDeServicio) {
+            return "FUERA_DE_SERVICIO";
+        }
+        return existente == null || !existente.reservable() ? "PREPARADO" : existente.estadoOperativo();
     }
 
     private void formularioHuesped(HuespedDTO existente) {

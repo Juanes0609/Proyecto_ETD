@@ -109,6 +109,10 @@ public class ConectorSGAProveedor implements ConectorSGA {
                     EstadoOperativo.PREPARADO, caracteristicas, "");
             a.actualizarTarifas(d.tarifaBaja(), d.tarifaMedia(), d.tarifaAlta());
             sistema.registrarApartamento(a);
+            if ("FUERA_DE_SERVICIO".equals(d.estadoOperativo()) && d.motivoFueraServicio() != null
+                    && !d.motivoFueraServicio().isBlank()) {
+                cambiarEstadoOperativo(a, EstadoOperativo.FUERASERVICIO, d.motivoFueraServicio());
+            }
             return;
         }
         if (d.capacidad() <= 0) {
@@ -122,8 +126,29 @@ public class ConectorSGAProveedor implements ConectorSGA {
         a.setCapacidadMaxima(d.capacidad());
         a.setCaracteristicas(caracteristicas);
         if (d.estadoOperativo() != null) {
-            a.setEstadoOperativo(estadoModelo(d.estadoOperativo()));
+            cambiarEstadoOperativo(a, estadoModelo(d.estadoOperativo()), d.motivoFueraServicio());
         }
+    }
+
+    /**
+     * Fuera de servicio exige registrar el motivo y solo se permite si el aparta-suite
+     * no está ocupado ni en la cola de preparación.
+     */
+    private void cambiarEstadoOperativo(Apartamento a, EstadoOperativo nuevo, String motivo) {
+        if (nuevo == EstadoOperativo.FUERASERVICIO) {
+            if (motivo == null || motivo.isBlank()) {
+                throw new IllegalArgumentException("Indica el motivo por el que queda fuera de servicio.");
+            }
+            EstadoOperativo actual = a.getEstadoOperativo();
+            if (actual != EstadoOperativo.PREPARADO && actual != EstadoOperativo.FUERASERVICIO) {
+                throw new excepciones.TransicionEstadoInvalidaException(a.getNombre()
+                        + " está ocupado o en preparación: no puede quedar fuera de servicio todavía.");
+            }
+            a.setMotivoFueraServicio(motivo.trim());
+        } else {
+            a.setMotivoFueraServicio("");
+        }
+        a.setEstadoOperativo(nuevo);
     }
 
     @Override
@@ -135,7 +160,7 @@ public class ConectorSGAProveedor implements ConectorSGA {
         return new ApartaSuiteDTO(a.getCodigo(), a.getNombre(), a.getBloque(), a.getPiso(),
                 a.getNumeroDormitorios(), a.getCapacidadMaxima(), a.getTarifaBaja(), a.getTarifaMedia(),
                 a.getTarifaAlta(), caracteristicasDe(a.getCaracteristicas()), descripcionDe(a.getCodigo()),
-                estadoDto(a.getEstadoOperativo()), null);
+                estadoDto(a.getEstadoOperativo()), null, a.getMotivoFueraServicio());
     }
 
     /** El modelo guarda las características en un solo texto separado por comas. */

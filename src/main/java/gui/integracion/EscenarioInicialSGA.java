@@ -138,7 +138,8 @@ public final class EscenarioInicialSGA {
                                         int capacidad, double baja, double media, double alta, String estado,
                                         String descripcion, String... caracteristicas) {
         return new ApartaSuiteDTO(codigo, nombre, bloque, piso, dormitorios, capacidad, baja, media, alta,
-                List.of(caracteristicas), descripcion, estado, null);
+                List.of(caracteristicas), descripcion, estado, null,
+                "FUERA_DE_SERVICIO".equals(estado) ? "Mantenimiento del calentador de agua" : "");
     }
 
     /** El total y el cargo de alojamiento los calcula el conector al cargar (con las temporadas). */

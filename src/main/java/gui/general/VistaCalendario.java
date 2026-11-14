@@ -145,7 +145,8 @@ public class VistaCalendario extends VistaBase {
                             + (estado == Noche.BLOQUEADA ? "\nRetenida hasta que se pague el anticipo" : "");
                 } else if (!suite.reservable() && !fecha.isBefore(hoy)) {
                     estado = Noche.BLOQUEADA;
-                    motivo = "Fuera de servicio";
+                    String causa = suite.motivoFueraServicio();
+                    motivo = causa == null || causa.isBlank() ? "Fuera de servicio" : "Fuera de servicio: " + causa;
                 }
                 Region celda = new Region();
                 celda.getStyleClass().addAll("calendario-celda", "calendario-" + estado.name().toLowerCase(Locale.ROOT));
