@@ -1245,6 +1245,16 @@
 }
 
 /* ---------- Mapa del edificio ---------- */
+/* Controles de zoom flotando sobre el mapa */
+.mapa-controles {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 12;
+    -fx-border-color: -sga-borde;
+    -fx-border-radius: 12;
+    -fx-padding: 4;
+    -fx-effect: dropshadow(gaussian, rgba(23, 33, 28, 0.10), 10, 0, 0, 3);
+}
+
 .mapa {
     -fx-background-color: -sga-superficie;
     -fx-background-radius: 16;

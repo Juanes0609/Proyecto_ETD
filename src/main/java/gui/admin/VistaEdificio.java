@@ -12,7 +12,9 @@ import gui.integracion.dto.RutaDTO;
 import gui.navegacion.VistaBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -22,14 +24,22 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
+import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.transform.Scale;
+import javafx.scene.transform.Translate;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,12 +58,25 @@ import java.util.Set;
  */
 public class VistaEdificio extends VistaBase {
 
-    private static final double MARGEN = 30;
-    private static final double ESCALA = 0.9;
+    private static final double ANCHO_MAPA = 620;
+    private static final double ALTO_MAPA = 410;
+    /** Espacio libre alrededor del dibujo cuando se ajusta a la tarjeta. */
+    private static final double MARGEN = 24;
+    private static final double ZOOM_MAXIMO = 3;
+    private static final double PASO_ZOOM = 1.25;
     private static final double ANCHO_NODO = 98;
     private static final double ALTO_NODO = 30;
 
+    /** Ventana fija del mapa; el dibujo vive en {@link #lienzo}, que se escala y desplaza dentro. */
     private final Pane mapa = new Pane();
+    private final Pane lienzo = new Pane();
+    private final Scale zoom = new Scale(1, 1, 0, 0);
+    private final Translate desplazamiento = new Translate();
+    /** Escala con la que todo el edificio cabe en la tarjeta; el zoom mínimo es la mitad. */
+    private double escalaAjuste = 1;
+    /** Límites del dibujo la última vez que se ajustó: si cambian (bloque nuevo), se reajusta. */
+    private String limitesAjustados = "";
+    private double arrastreX, arrastreY;
     private final VBox panelCerrados = new VBox(8);
     private final VBox panelInalcanzables = new VBox(8);
     private final VBox panelBloque = new VBox(8);
@@ -77,6 +100,7 @@ public class VistaEdificio extends VistaBase {
     private final VBox panelRuta = new VBox(8);
     /** Opción del desplegable que vuelve al mapa sin ninguna ruta dibujada. */
     private static final String SIN_RUTA = "Sin ruta";
+    private static final String TODOS_LOS_BLOQUES = "Todos los bloques";
     private List<String> rutaCodigos = List.of();
     private boolean actualizandoDestinos;
     private Timeline refrescoEstados;
@@ -88,11 +112,12 @@ public class VistaEdificio extends VistaBase {
     @Override
     protected Node construir() {
         mapa.getStyleClass().add("mapa");
-        mapa.setPrefSize(620, 410);
-        mapa.setMinSize(620, 410);
-        mapa.setMaxSize(620, 410);
-        bloque.getItems().setAll("Todos los bloques", "Bloque A", "Bloque B", "Bloque C");
-        bloque.setValue("Todos los bloques");
+        mapa.setPrefSize(ANCHO_MAPA, ALTO_MAPA);
+        mapa.setMinSize(ANCHO_MAPA, ALTO_MAPA);
+        mapa.setMaxSize(ANCHO_MAPA, ALTO_MAPA);
+        prepararZoom();
+        bloque.getItems().setAll(TODOS_LOS_BLOQUES);
+        bloque.setValue(TODOS_LOS_BLOQUES);
         bloque.valueProperty().addListener((o, a, b) -> pintar());
         destinoRuta.valueProperty().addListener((o, a, b) -> {
             if (!actualizandoDestinos) {
@@ -134,7 +159,7 @@ public class VistaEdificio extends VistaBase {
                         "Haz clic en un pasillo para cerrarlo o reabrirlo."), FabricaComponentesUI.crearEspaciador(),
                         FabricaComponentesUI.crearCampoEtiquetado("Agrupar", bloque)),
                 filaRuta,
-                crearLeyenda(), mapa);
+                crearLeyenda(), crearMarcoMapa());
         tarjetaMapa.setSpacing(14);
         tarjetaMapa.setMaxWidth(Region.USE_PREF_SIZE);
         // Tamaño fijo: la tarjeta no se estira cuando la columna lateral crece con la ruta.
@@ -183,6 +208,7 @@ public class VistaEdificio extends VistaBase {
             inalcanzables = new HashSet<>(conector().apartaSuitesInalcanzables());
             cargarEstados();
             cargarDestinos();
+            cargarBloques();
             pintar();
         }, null);
     }
@@ -451,7 +477,7 @@ public class VistaEdificio extends VistaBase {
     }
 
     private void pintar() {
-        mapa.getChildren().clear();
+        lienzo.getChildren().clear();
         String filtroBloque = bloque.getValue().startsWith("Bloque") ? bloque.getValue().substring(7) : null;
 
         for (ConexionDTO c : conexiones) {
@@ -467,13 +493,17 @@ public class VistaEdificio extends VistaBase {
             String texto = (c.habilitada() ? "Cerrar" : "Reabrir") + " pasillo " + a.nombre() + " – " + b.nombre()
                     + " (" + Math.round(c.metros()) + " m)";
             Tooltip.install(zona, new Tooltip(texto));
-            zona.setOnMouseClicked(e -> alternar(c));
+            zona.setOnMouseClicked(e -> {
+                if (e.isStillSincePress()) { // al arrastrar el mapa no se cierra el pasillo
+                    alternar(c);
+                }
+            });
             Text peso = new Text((x(a) + x(b)) / 2 + 3, (y(a) + y(b)) / 2 - 5, Math.round(c.metros()) + " m");
             peso.getStyleClass().add("mapa-peso");
             peso.setMouseTransparent(true);
-            mapa.getChildren().addAll(linea, zona);
+            lienzo.getChildren().addAll(linea, zona);
             if (Math.hypot(x(a) - x(b), y(a) - y(b)) > 70) {
-                mapa.getChildren().add(peso); // en tramos cortos el peso queda en el tooltip
+                lienzo.getChildren().add(peso); // en tramos cortos el peso queda en el tooltip
             }
         }
 
@@ -486,7 +516,7 @@ public class VistaEdificio extends VistaBase {
             Line trazo = new Line(x(a), y(a), x(b), y(b));
             trazo.getStyleClass().add("mapa-ruta");
             trazo.setMouseTransparent(true);
-            mapa.getChildren().add(trazo);
+            lienzo.getChildren().add(trazo);
         }
 
         for (NodoEdificioDTO n : nodos.values()) {
@@ -519,7 +549,7 @@ public class VistaEdificio extends VistaBase {
             caja.setLayoutY(y(n) - ALTO_NODO / 2);
             String estado = apartamento ? estados.get(n.codigo()) : null;
             Tooltip.install(caja, new Tooltip(estado == null ? n.nombre() : n.nombre() + " · " + estado));
-            mapa.getChildren().add(caja);
+            lienzo.getChildren().add(caja);
             Integer posicion = ordenCola.get(n.codigo());
             if (posicion != null) { // insignia con el orden de la parada en el recorrido de la cola
                 Label insignia = new Label(String.valueOf(posicion));
@@ -527,10 +557,145 @@ public class VistaEdificio extends VistaBase {
                 insignia.setLayoutX(x(n) + ANCHO_NODO / 2 - 11);
                 insignia.setLayoutY(y(n) - ALTO_NODO / 2 - 9);
                 insignia.setMouseTransparent(true);
-                mapa.getChildren().add(insignia);
+                lienzo.getChildren().add(insignia);
             }
         }
+        ajustarSiCambio();
         pintarPaneles(filtroBloque);
+    }
+
+    /** Bloques que existen en el edificio (incluye los que se agreguen desde Catálogos). */
+    private List<String> bloquesDelEdificio() {
+        return nodos.values().stream().filter(n -> "APARTAMENTO".equals(n.tipo()))
+                .map(NodoEdificioDTO::bloque).distinct().sorted().toList();
+    }
+
+    private void cargarBloques() {
+        String elegido = bloque.getValue();
+        List<String> opciones = new ArrayList<>(List.of(TODOS_LOS_BLOQUES));
+        bloquesDelEdificio().forEach(b -> opciones.add("Bloque " + b));
+        if (!opciones.equals(bloque.getItems())) {
+            bloque.getItems().setAll(opciones);
+            bloque.setValue(opciones.contains(elegido) ? elegido : TODOS_LOS_BLOQUES);
+        }
+    }
+
+    // ---------- Zoom y desplazamiento ----------
+
+    /** Tarjeta del mapa con los controles de zoom flotando en la esquina inferior derecha. */
+    private StackPane crearMarcoMapa() {
+        Button acercar = FabricaComponentesUI.crearBotonIcono(Iconos.Icono.MAS, "Acercar", () -> zoomEnCentro(PASO_ZOOM));
+        Button alejar = FabricaComponentesUI.crearBotonIcono(Iconos.Icono.MENOS, "Alejar",
+                () -> zoomEnCentro(1 / PASO_ZOOM));
+        Button ajustar = FabricaComponentesUI.crearBotonIcono(Iconos.Icono.AJUSTAR, "Ver todo el edificio",
+                this::ajustarVista);
+        VBox controles = new VBox(2, acercar, alejar, ajustar);
+        controles.getStyleClass().add("mapa-controles");
+        controles.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        StackPane marco = new StackPane(mapa, controles);
+        StackPane.setAlignment(controles, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(controles, new Insets(10));
+        marco.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        return marco;
+    }
+
+    /**
+     * Pellizco del trackpad o Ctrl/⌘ + rueda: zoom hacia el puntero. Rueda o dos
+     * dedos sin modificador, o arrastrar el fondo: desplazar el dibujo.
+     */
+    private void prepararZoom() {
+        lienzo.getTransforms().setAll(desplazamiento, zoom);
+        lienzo.setManaged(false);
+        mapa.getChildren().setAll(lienzo);
+        Rectangle recorte = new Rectangle(ANCHO_MAPA, ALTO_MAPA);
+        recorte.setArcWidth(32);
+        recorte.setArcHeight(32);
+        mapa.setClip(recorte);
+
+        mapa.addEventFilter(ZoomEvent.ZOOM, e -> {
+            zoomEn(e.getX(), e.getY(), e.getZoomFactor());
+            e.consume();
+        });
+        mapa.addEventFilter(ScrollEvent.SCROLL, e -> {
+            if (e.isControlDown() || e.isShortcutDown()) {
+                zoomEn(e.getX(), e.getY(), e.getDeltaY() > 0 ? 1.1 : 1 / 1.1);
+            } else {
+                desplazar(e.getDeltaX(), e.getDeltaY());
+            }
+            e.consume(); // la página no se mueve mientras el puntero está sobre el mapa
+        });
+        mapa.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+            arrastreX = e.getX();
+            arrastreY = e.getY();
+        });
+        mapa.addEventFilter(MouseEvent.MOUSE_DRAGGED, e -> {
+            desplazar(e.getX() - arrastreX, e.getY() - arrastreY);
+            arrastreX = e.getX();
+            arrastreY = e.getY();
+            mapa.setCursor(Cursor.CLOSED_HAND);
+        });
+        mapa.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> mapa.setCursor(Cursor.DEFAULT));
+    }
+
+    private void zoomEnCentro(double factor) {
+        zoomEn(ANCHO_MAPA / 2, ALTO_MAPA / 2, factor);
+    }
+
+    /** Escala alrededor del punto (x, y) de la ventana para que ese punto no se mueva. */
+    private void zoomEn(double x, double y, double factor) {
+        double actual = zoom.getX();
+        double nueva = Math.max(escalaAjuste / 2, Math.min(ZOOM_MAXIMO, actual * factor));
+        double mundoX = (x - desplazamiento.getX()) / actual;
+        double mundoY = (y - desplazamiento.getY()) / actual;
+        zoom.setX(nueva);
+        zoom.setY(nueva);
+        desplazamiento.setX(x - mundoX * nueva);
+        desplazamiento.setY(y - mundoY * nueva);
+    }
+
+    private void desplazar(double dx, double dy) {
+        desplazamiento.setX(desplazamiento.getX() + dx);
+        desplazamiento.setY(desplazamiento.getY() + dy);
+    }
+
+    /** Escala y centra el dibujo para que todo el edificio quepa en la tarjeta. */
+    private void ajustarVista() {
+        double[] l = limitesDelDibujo();
+        if (l == null) {
+            return;
+        }
+        double ancho = l[2] - l[0];
+        double alto = l[3] - l[1];
+        escalaAjuste = Math.min(1, Math.min((ANCHO_MAPA - 2 * MARGEN) / ancho, (ALTO_MAPA - 2 * MARGEN) / alto));
+        zoom.setX(escalaAjuste);
+        zoom.setY(escalaAjuste);
+        desplazamiento.setX((ANCHO_MAPA - ancho * escalaAjuste) / 2 - l[0] * escalaAjuste);
+        desplazamiento.setY((ALTO_MAPA - alto * escalaAjuste) / 2 - l[1] * escalaAjuste);
+    }
+
+    /** Al cambiar el edificio (bloque o aparta-suite nuevo) se vuelve a ver completo. */
+    private void ajustarSiCambio() {
+        double[] l = limitesDelDibujo();
+        String clave = l == null ? "" : Arrays.toString(l);
+        if (!clave.equals(limitesAjustados)) {
+            limitesAjustados = clave;
+            ajustarVista();
+        }
+    }
+
+    /** {minX, minY, maxX, maxY} de las cajas de los nodos, o {@code null} si no hay nodos. */
+    private double[] limitesDelDibujo() {
+        if (nodos.isEmpty()) {
+            return null;
+        }
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+        for (NodoEdificioDTO n : nodos.values()) {
+            minX = Math.min(minX, x(n) - ANCHO_NODO / 2);
+            maxX = Math.max(maxX, x(n) + ANCHO_NODO / 2);
+            minY = Math.min(minY, y(n) - ALTO_NODO / 2 - 10); // espacio para la insignia de orden
+            maxY = Math.max(maxY, y(n) + ALTO_NODO / 2);
+        }
+        return new double[]{minX, minY, maxX, maxY};
     }
 
     private void pintarPaneles(String filtroBloque) {
@@ -555,7 +720,7 @@ public class VistaEdificio extends VistaBase {
         }
 
         panelBloque.getChildren().clear();
-        for (String b : List.of("A", "B", "C")) {
+        for (String b : bloquesDelEdificio()) {
             if (filtroBloque != null && !filtroBloque.equals(b)) {
                 continue;
             }
@@ -568,10 +733,10 @@ public class VistaEdificio extends VistaBase {
     }
 
     private static double x(NodoEdificioDTO n) {
-        return n.x() * ESCALA + MARGEN;
+        return n.x();
     }
 
     private static double y(NodoEdificioDTO n) {
-        return n.y() * ESCALA + MARGEN - 8;
+        return n.y();
     }
 }
