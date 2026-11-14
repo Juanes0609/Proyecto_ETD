@@ -17,6 +17,8 @@ import gui.recepcion.VistaPreparacion;
 import gui.recepcion.VistaReservarRecepcion;
 import gui.sesion.VistaLogin;
 import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -56,9 +58,27 @@ public class AplicacionSGA extends Application {
         escenario.setScene(escena);
         mostrarLogin();
         escenario.show();
+        vigilarVencimientos();
     }
 
     /** La ventana de inicio de sesión se ajusta a la tarjeta y no se redimensiona. */
+    /**
+     * Vencimiento automático: cada minuto se cancelan las reservas pendientes que
+     * llevan más de 24 horas sin anticipo y se liberan sus noches. No avisa en
+     * pantalla; cada vista muestra el estado nuevo al volver a ella.
+     */
+    private void vigilarVencimientos() {
+        Timeline reloj = new Timeline(new KeyFrame(Duration.minutes(1), e -> {
+            try {
+                conector.procesarVencimientos();
+            } catch (RuntimeException error) {
+                // No se pudo guardar el cambio: se reintenta en el siguiente minuto.
+            }
+        }));
+        reloj.setCycleCount(Timeline.INDEFINITE);
+        reloj.play();
+    }
+
     private void mostrarLogin() {
         escenario.setTitle(TITULO);
         escenario.setMinWidth(0);

@@ -22,8 +22,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Llegadas y salidas: check-in (solo si el aparta-suite está Preparado) y
- * check-out (el aparta-suite pasa a la cola de preparación). Cada acción se
+ * Llegadas y salidas: check-in (solo si el aparta-suite está Preparado),
+ * check-out (el aparta-suite pasa a la cola de preparación) y no-show cuando el
+ * huésped no llega. Cada acción se
  * confirma en el mini menú lateral, donde se explica por qué está bloqueada
  * cuando no se puede hacer.
  */
@@ -138,6 +139,36 @@ public class VistaLlegadasSalidas extends VistaBase {
                     Iconos.Icono.PORTAPAPELES));
         }
         detalle.getChildren().add(checkIn);
+        // No-show: acción secundaria y destructiva, solo desde el día de llegada; se confirma aquí mismo.
+        if (!r.entrada().isAfter(LocalDate.now())) {
+            Button noShow = FabricaComponentesUI.crearEnlace("El huésped no llegó", null);
+            noShow.setOnAction(e -> confirmarNoShow(detalle, noShow, r));
+            detalle.getChildren().add(noShow);
+        }
+    }
+
+    /** Reemplaza el enlace por la confirmación inline (sin ventanas emergentes). */
+    private void confirmarNoShow(VBox detalle, Button enlace, ReservaDTO r) {
+        Button confirmar = FabricaComponentesUI.crearBotonPeligro("Marcar no-show", () -> {
+            if (notificador().ejecutarConManejo(() -> conector().marcarNoShow(r.codigo()),
+                    "Reserva " + r.codigo() + " marcada como no-show. " + r.nombreApartaSuite()
+                            + " quedó libre para esas noches.")) {
+                ocultarHoja();
+                cargar();
+            }
+        });
+        VBox confirmacion = new VBox(10);
+        Button cancelar = FabricaComponentesUI.crearEnlace("Cancelar", () -> {
+            detalle.getChildren().set(detalle.getChildren().indexOf(confirmacion), enlace);
+            enlace.requestFocus();
+        });
+        HBox botones = new HBox(8, confirmar, cancelar);
+        botones.setAlignment(Pos.CENTER_LEFT);
+        confirmacion.getChildren().addAll(FabricaComponentesUI.crearTextoConIcono(Iconos.Icono.ALERTA,
+                "La reserva termina como no-show y sus noches se liberan. No se puede deshacer.", "campo-ayuda"),
+                botones);
+        detalle.getChildren().set(detalle.getChildren().indexOf(enlace), confirmacion);
+        confirmar.requestFocus();
     }
 
     private Button boton(String texto, Runnable accion, String exito) {

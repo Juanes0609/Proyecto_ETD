@@ -108,7 +108,8 @@ public class VistaReservasCliente extends VistaBase {
 
     private static String pagosTexto(ReservaDTO r) {
         return switch (r.estado()) {
-            case "PENDIENTE" -> "Anticipo pendiente";
+            case "PENDIENTE" -> r.vence() == null ? "Anticipo pendiente"
+                    : "Paga el anticipo antes del " + Formato.fechaHora(r.vence()) + " o se cancelará";
             case "CANCELADA" -> "Pagado " + Formato.moneda(r.pagado());
             default -> "Pagado " + Formato.moneda(r.pagado()) + " · saldo " + Formato.moneda(Math.max(0, r.saldo()));
         };
