@@ -19,7 +19,7 @@ public record ApartaSuiteDTO(
         List<String> caracteristicas,
         String descripcion,
         String estadoOperativo,
-        String rutaImagen) {
+        String rutaImagen) implements java.io.Serializable {
 
     public double tarifa(String tipoTemporada) {
         return switch (tipoTemporada) {

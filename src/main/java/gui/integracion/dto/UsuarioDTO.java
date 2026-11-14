@@ -1,7 +1,7 @@
 package gui.integracion.dto;
 
 /** Usuario autenticado. {@code documento} enlaza con el huésped o el empleado. */
-public record UsuarioDTO(String correo, String nombre, Rol rol, String documento) {
+public record UsuarioDTO(String correo, String nombre, Rol rol, String documento) implements java.io.Serializable {
 
     /** Iniciales para el avatar ("Ana Gómez" → "AG"). */
     public String iniciales() {

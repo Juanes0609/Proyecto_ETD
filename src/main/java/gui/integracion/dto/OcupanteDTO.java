@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.Period;
 
 /** Persona que se aloja en la reserva (titular o acompañante). */
-public record OcupanteDTO(String nombre, String documento, LocalDate fechaNacimiento) {
+public record OcupanteDTO(String nombre, String documento, LocalDate fechaNacimiento) implements java.io.Serializable {
 
     /** Los menores de 6 años ocupan cupo pero no pagan. */
     public boolean paga(LocalDate fechaReferencia) {

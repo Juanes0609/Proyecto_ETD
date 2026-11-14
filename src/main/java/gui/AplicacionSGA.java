@@ -6,7 +6,7 @@ import gui.admin.VistaReportes;
 import gui.admin.VistaTemporadas;
 import gui.cliente.VentanaCliente;
 import gui.integracion.ConectorSGA;
-import gui.integracion.ConectorSGADemo;
+import gui.integracion.ConectorSGAHibrido;
 import gui.integracion.dto.Rol;
 import gui.integracion.dto.UsuarioDTO;
 import gui.navegacion.GestorNavegacion;
@@ -34,8 +34,8 @@ public class AplicacionSGA extends Application {
     public static final String TITULO = MarcaApp.NOMBRE;
     private static final String HOJA_ESTILOS = "/gui/estilos/sga-tema.css";
 
-    /** Cambiar por {@code new ConectorSGAProveedor()} cuando el núcleo esté listo. */
-    private final ConectorSGA conector = new ConectorSGADemo();
+    /** Modelo real del equipo + lo que aún falta en el núcleo; guarda los cambios en disco. */
+    private final ConectorSGA conector = new ConectorSGAHibrido();
     private Stage escenario;
     private Scene escena;
 

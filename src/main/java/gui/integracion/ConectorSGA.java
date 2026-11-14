@@ -26,11 +26,12 @@ import java.util.Optional;
  * Único punto de contacto entre la GUI y el núcleo del SGA.
  * <p>
  * La GUI trabaja con DTOs propios ({@code gui.integracion.dto}) para no depender
- * de las clases internas de {@code modelo}. Hay dos implementaciones:
+ * de las clases internas de {@code modelo}. Implementaciones:
  * <ul>
- *     <li>{@link ConectorSGADemo}: datos de ejemplo en memoria, para diseñar y probar la interfaz.</li>
- *     <li>{@link ConectorSGAProveedor}: delega en {@code SistemaGestionAlojamiento} a medida que
- *         el equipo lo implemente.</li>
+ *     <li>{@link ConectorSGAProveedor}: delega en {@code SistemaGestionAlojamiento} lo que el
+ *         núcleo ya implementa.</li>
+ *     <li>{@link ConectorSGAHibrido}: la que usa la aplicación; añade lo que el núcleo aún no
+ *         tiene y guarda los cambios en disco.</li>
  * </ul>
  * Cada método tiene una implementación por defecto que lanza
  * {@link UnsupportedOperationException}; {@code NotificadorUI} la muestra como
@@ -39,12 +40,12 @@ import java.util.Optional;
  */
 public interface ConectorSGA {
 
-    /** {@code true} solo en la implementación con datos de ejemplo. */
-    default boolean esDemo() {
+    /** {@code true} si hay cuentas de prueba predeterminadas que se pueden mostrar en el login. */
+    default boolean tieneCuentasDePrueba() {
         return false;
     }
 
-    /** Recarga el escenario inicial (persistencia/DatosInicialesSGA). */
+    /** Vuelve a los datos de prueba iniciales (descarta lo guardado). */
     default void cargarEscenarioInicial() {
         throw pendiente("cargarEscenarioInicial");
     }

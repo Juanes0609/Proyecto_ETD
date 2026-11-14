@@ -3,7 +3,7 @@ package gui.integracion.dto;
 import java.time.LocalDateTime;
 
 /** Movimiento inalterable del folio: CARGO, PAGO, ANULACION_CARGO o ANULACION_PAGO. */
-public record MovimientoFolioDTO(String tipo, String concepto, double monto, LocalDateTime fechaHora) {
+public record MovimientoFolioDTO(String tipo, String concepto, double monto, LocalDateTime fechaHora) implements java.io.Serializable {
 
     /** Efecto sobre el saldo pendiente: cargos suman y pagos restan. */
     public double efectoEnSaldo() {

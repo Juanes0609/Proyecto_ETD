@@ -4,5 +4,5 @@ import java.time.LocalDate;
 
 /** Datos personales de un huésped (titular de reservas). */
 public record HuespedDTO(String documento, String nombre, LocalDate fechaNacimiento,
-                         String telefono, String correo) {
+                         String telefono, String correo) implements java.io.Serializable {
 }

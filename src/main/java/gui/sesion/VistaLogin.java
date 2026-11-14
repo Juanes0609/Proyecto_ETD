@@ -5,7 +5,7 @@ import gui.componentes.FabricaComponentesUI;
 import gui.componentes.FormularioFlexible;
 import gui.componentes.Iconos;
 import gui.integracion.ConectorSGA;
-import gui.integracion.ConectorSGADemo;
+import gui.integracion.EscenarioInicialSGA;
 import gui.integracion.dto.HuespedDTO;
 import gui.integracion.dto.Rol;
 import gui.integracion.dto.UsuarioDTO;
@@ -115,10 +115,10 @@ public class VistaLogin extends StackPane {
 
         VBox tarjeta = tarjeta(encabezado("Hola de nuevo", "Inicia sesión para continuar en " + MarcaApp.NOMBRE),
                 formulario, error, entrar, crearCuenta);
-        if (conector.esDemo()) {
+        if (conector.tieneCuentasDePrueba()) {
             tarjeta.getChildren().addAll(FabricaComponentesUI.crearSeparador(), FabricaComponentesUI.crearTexto(
-                    "Modo demostración · huesped@demo.co, recepcion@demo.co o admin@demo.co · clave "
-                            + ConectorSGADemo.CLAVE_DEMO, "texto-terciario"));
+                    "Cuentas de prueba · huesped@demo.co, recepcion@demo.co o admin@demo.co · clave "
+                            + EscenarioInicialSGA.CLAVE_PRUEBA, "texto-terciario"));
         }
         javafx.application.Platform.runLater(correo::requestFocus);
         return tarjeta;
