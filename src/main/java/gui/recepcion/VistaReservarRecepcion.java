@@ -113,14 +113,20 @@ public class VistaReservarRecepcion extends VistaBase {
     }
 
     private void pintarSuites() {
-        List<ApartaSuiteDTO> visibles = suites.stream()
-                .filter(s -> filtro.coincide(s.capacidad(), s.tarifa(temporada))).toList();
+        List<ApartaSuiteDTO> encontrados = new java.util.ArrayList<>();
+        notificador().ejecutarConManejo(() -> {
+            temporada = conector().temporadaEn(filtro.entrada() != null ? filtro.entrada() : LocalDate.now());
+            encontrados.addAll(conector().buscarDisponibles(filtro.entrada(), filtro.salida(),
+                    filtro.personas(), filtro.orden()));
+        }, null);
+        List<ApartaSuiteDTO> visibles = encontrados.stream()
+                .filter(s -> filtro.coincidePrecio(s.tarifa(temporada))).toList();
         filtro.setResultado(visibles.size());
         grilla.getChildren().clear();
         grilla.setAlignment(visibles.isEmpty() ? javafx.geometry.Pos.TOP_CENTER : javafx.geometry.Pos.TOP_LEFT);
         if (visibles.isEmpty()) {
             grilla.getChildren().add(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.FILTRO,
-                    "Ningún aparta-suite coincide", "Ajusta el número de personas o el precio.",
+                    "Ningún aparta-suite coincide", "Ajusta las fechas, el número de personas o el precio.",
                     FabricaComponentesUI.crearBotonSecundario("Limpiar filtros", filtro::limpiar)));
         }
         for (ApartaSuiteDTO suite : visibles) {
@@ -131,8 +137,10 @@ public class VistaReservarRecepcion extends VistaBase {
 
     /** Reserva directa (teléfono o presencial): solo se diligencian titular y acompañantes. */
     private void abrirReserva(ApartaSuiteDTO suite) {
-        LocalDate hoy = LocalDate.now();
-        mostrarHoja("Reserva directa", new FormularioReserva(conector(), suite, hoy, hoy.plusDays(1), false,
+        // Si ya se buscó por fechas, la reserva arranca con esas mismas fechas.
+        LocalDate desde = filtro.entrada() != null ? filtro.entrada() : LocalDate.now();
+        LocalDate hasta = filtro.entrada() != null ? filtro.salida() : desde.plusDays(1);
+        mostrarHoja("Reserva directa", new FormularioReserva(conector(), suite, desde, hasta, false,
                 Math.min(filtro.personas(), suite.capacidad()), null, "DIRECTA", reserva -> {
             ocultarHoja();
             notificador().mostrarExito("Reserva " + reserva.codigo() + " confirmada a nombre de "

@@ -1,6 +1,8 @@
 package gui.componentes;
 
 import javafx.geometry.Pos;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
@@ -10,15 +12,27 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+import java.time.LocalDate;
+import java.util.List;
+
 /**
- * Filtro discreto que va arriba a la izquierda de las cards: un botón "Filtrar"
- * que despliega dos criterios (grupo de personas y precio máximo) y muestra
- * los filtros activos como chips que se pueden quitar uno a uno.
+ * Búsqueda de disponibilidad que va sobre las cards: un botón "Filtrar" que
+ * despliega los criterios (fechas de la estancia, grupo de personas y precio
+ * máximo), los filtros activos como chips que se quitan uno a uno, y a la
+ * derecha el selector de orden (precio, capacidad o dormitorios).
  * El resultado se actualiza en vivo, sin botón "Aplicar".
  */
 public class FiltroApartaSuites extends VBox {
 
     private static final double PASO_PRECIO = 5_000;
+    /** Criterios de orden: texto visible → clave que entiende el conector. */
+    private static final List<String> ORDENES = List.of("Precio", "Capacidad", "Dormitorios");
+
+    private final DatePicker entrada = FabricaComponentesUI.crearSelectorFecha(null);
+    private final DatePicker salida = FabricaComponentesUI.crearSelectorFecha(null);
+    private final ComboBox<String> orden = FabricaComponentesUI.crearDesplegable(null);
+    /** Evita avisar dos veces cuando una fecha corrige a la otra. */
+    private boolean ajustandoFechas;
 
     private final Spinner<Integer> personas;
     private final Slider precio;
@@ -36,12 +50,44 @@ public class FiltroApartaSuites extends VBox {
         ToggleButton filtrar = new ToggleButton("Filtrar");
         filtrar.setGraphic(Iconos.crear(Iconos.Icono.FILTRO, 16));
         filtrar.getStyleClass().add("boton-sutil");
-        filtrar.setAccessibleText("Mostrar filtros por personas y precio");
+        filtrar.setAccessibleText("Mostrar filtros por fechas, personas y precio");
 
         resultado.getStyleClass().add("texto-secundario");
         chips.setAlignment(Pos.CENTER_LEFT);
-        HBox fila = new HBox(10, filtrar, chips, FabricaComponentesUI.crearEspaciador(), resultado);
+        orden.getItems().setAll(ORDENES);
+        orden.setValue(ORDENES.getFirst());
+        orden.setAccessibleText("Ordenar aparta-suites por");
+        orden.valueProperty().addListener((obs, antes, ahora) -> alCambiar.run());
+        Label lblOrden = FabricaComponentesUI.crearTexto("Ordenar por", "texto-secundario");
+        lblOrden.setLabelFor(orden);
+        lblOrden.setMinWidth(Region.USE_PREF_SIZE);
+        resultado.setMinWidth(Region.USE_PREF_SIZE);
+        HBox fila = new HBox(10, filtrar, chips, FabricaComponentesUI.crearEspaciador(), resultado, lblOrden, orden);
         fila.setAlignment(Pos.CENTER_LEFT);
+
+        entrada.setPrefWidth(150);
+        salida.setPrefWidth(150);
+        entrada.setAccessibleText("Fecha de entrada");
+        salida.setAccessibleText("Fecha de salida");
+        // La salida siempre queda después de la entrada: si no, se corrige sola a la noche siguiente.
+        entrada.valueProperty().addListener((obs, antes, ahora) -> {
+            if (ahora != null && (salida.getValue() == null || !salida.getValue().isAfter(ahora))) {
+                fijarFechas(ahora, ahora.plusDays(1));
+            }
+            cambio();
+        });
+        salida.valueProperty().addListener((obs, antes, ahora) -> {
+            if (ahora != null && entrada.getValue() == null) {
+                fijarFechas(ahora.minusDays(1), ahora);
+            } else if (ahora != null && !ahora.isAfter(entrada.getValue())) {
+                fijarFechas(entrada.getValue(), entrada.getValue().plusDays(1));
+            }
+            cambio();
+        });
+        HBox controlFechas = new HBox(8, entrada, FabricaComponentesUI.crearTexto("a", "texto-secundario"), salida);
+        controlFechas.setAlignment(Pos.CENTER_LEFT);
+        VBox campoFechas = campo("Fechas de la estancia", controlFechas,
+                "Solo se muestran los que están libres todas esas noches.");
 
         personas = new Spinner<>(1, Math.max(1, capacidadMaxima), 1);
         personas.setEditable(true);
@@ -69,7 +115,7 @@ public class FiltroApartaSuites extends VBox {
         controlPrecio.setAlignment(Pos.CENTER_LEFT);
         VBox campoPrecio = campo("Precio por persona / noche", controlPrecio, "Según la temporada vigente.");
 
-        HBox criterios = new HBox(32, campoPersonas, campoPrecio, FabricaComponentesUI.crearEspaciador(),
+        HBox criterios = new HBox(32, campoFechas, campoPersonas, campoPrecio, FabricaComponentesUI.crearEspaciador(),
                 FabricaComponentesUI.crearEnlace("Limpiar filtros", this::limpiar));
         criterios.setAlignment(Pos.TOP_LEFT);
         VBox panel = FabricaComponentesUI.crearTarjeta(criterios);
@@ -92,9 +138,33 @@ public class FiltroApartaSuites extends VBox {
         return precio.getValue();
     }
 
-    /** {@code true} si el aparta-suite cumple los filtros activos. */
-    public boolean coincide(int capacidad, double tarifaVigente) {
-        return capacidad >= personas() && tarifaVigente <= precioMaximo() + 0.5;
+    /** Entrada de la estancia buscada, o {@code null} si no se filtra por fechas. */
+    public LocalDate entrada() {
+        return salida.getValue() == null ? null : entrada.getValue();
+    }
+
+    public LocalDate salida() {
+        return entrada.getValue() == null ? null : salida.getValue();
+    }
+
+    /** PRECIO, CAPACIDAD o DORMITORIOS. */
+    public String orden() {
+        return orden.getValue() == null ? "PRECIO" : orden.getValue().toUpperCase(java.util.Locale.ROOT);
+    }
+
+    /** {@code true} si la tarifa vigente entra en el precio máximo elegido. */
+    public boolean coincidePrecio(double tarifaVigente) {
+        return tarifaVigente <= precioMaximo() + 0.5;
+    }
+
+    private void fijarFechas(LocalDate nuevaEntrada, LocalDate nuevaSalida) {
+        if (ajustandoFechas) {
+            return;
+        }
+        ajustandoFechas = true;
+        entrada.setValue(nuevaEntrada);
+        salida.setValue(nuevaSalida);
+        ajustandoFechas = false;
     }
 
     public void setResultado(int cantidad) {
@@ -104,15 +174,26 @@ public class FiltroApartaSuites extends VBox {
     public void limpiar() {
         personas.getValueFactory().setValue(1);
         precio.setValue(precioTope);
+        fijarFechas(null, null);
+        cambio();
     }
 
     private void cambio() {
+        if (ajustandoFechas) {
+            return; // una fecha está corrigiendo a la otra: se avisa una sola vez al terminar
+        }
         actualizarChips();
         alCambiar.run();
     }
 
     private void actualizarChips() {
         chips.getChildren().clear();
+        if (entrada() != null) {
+            chips.getChildren().add(FabricaComponentesUI.crearChip(Formato.rango(entrada(), salida()), () -> {
+                fijarFechas(null, null);
+                cambio();
+            }));
+        }
         if (personas() > 1) {
             chips.getChildren().add(FabricaComponentesUI.crearChip(Formato.plural(personas(), "persona", "personas"),
                     () -> personas.getValueFactory().setValue(1)));

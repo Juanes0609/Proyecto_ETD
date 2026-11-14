@@ -18,8 +18,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Vista principal del huésped: todos los aparta-suites del complejo como cards,
- * con un filtro discreto (personas y precio) arriba a la izquierda.
+ * Vista principal del huésped: búsqueda de disponibilidad. Los aparta-suites se
+ * muestran como cards, filtrados por fechas, personas y precio, en el orden que
+ * elija (precio, capacidad o dormitorios).
  */
 public class VistaInicioCliente extends VistaBase {
 
@@ -71,8 +72,15 @@ public class VistaInicioCliente extends VistaBase {
     }
 
     private void pintar() {
-        List<ApartaSuiteDTO> visibles = suites.stream()
-                .filter(s -> filtro.coincide(s.capacidad(), s.tarifa(temporada))).toList();
+        List<ApartaSuiteDTO> encontrados = new java.util.ArrayList<>();
+        notificador().ejecutarConManejo(() -> {
+            // Con fechas elegidas, el precio es el de la temporada en que cae la entrada.
+            temporada = conector().temporadaEn(filtro.entrada() != null ? filtro.entrada() : LocalDate.now());
+            encontrados.addAll(conector().buscarDisponibles(filtro.entrada(), filtro.salida(),
+                    filtro.personas(), filtro.orden()));
+        }, null);
+        List<ApartaSuiteDTO> visibles = encontrados.stream()
+                .filter(s -> filtro.coincidePrecio(s.tarifa(temporada))).toList();
         filtro.setResultado(visibles.size());
         grilla.getChildren().clear();
         grilla.setAlignment(visibles.isEmpty() ? javafx.geometry.Pos.TOP_CENTER : javafx.geometry.Pos.TOP_LEFT);
@@ -85,7 +93,7 @@ public class VistaInicioCliente extends VistaBase {
         if (visibles.isEmpty()) {
             grilla.getChildren().add(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.FILTRO,
                     "Ningún aparta-suite coincide",
-                    "Prueba con menos personas o un precio máximo mayor.",
+                    "Prueba con otras fechas, menos personas o un precio máximo mayor.",
                     FabricaComponentesUI.crearBotonSecundario("Limpiar filtros", filtro::limpiar)));
             return;
         }
