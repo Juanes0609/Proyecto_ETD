@@ -19,9 +19,10 @@ import java.util.Comparator;
 
 public class ServicioReservas {
     private static final int HORAS_VENCIMIENTO = 24;
-
     private final ServicioFacturacion facturacion;
     private int consecutivo;
+    private final ColaPrioridad<Reserva> vencimientos =
+            new ColaPrioridad<>(Comparator.comparing(Reserva::getHoraVencimiento));
 
 
     public ServicioReservas(ServicioFacturacion facturacion) {
@@ -82,13 +83,18 @@ public class ServicioReservas {
             if (o == null) throw new IllegalArgumentException("La lista de ocupantes no puede contener null");
             reserva.getListOcupantes().agregarFinal(o);
         }
-        apartamento.registrarReserva(reserva);
-        titular.agregarReserva(reserva);
+
 
         // 6. Cargo inicial en el folio: el valor total de la estancia
         double total = facturacion.liquidar(estancia, reserva.getListOcupantes());
         if (total > 0) {
             reserva.getFolio().registrarCargo("Estancia " + entrada + " a " + salida, total);
+        }
+        // 7. Registrar al final, cuando ya nada puede fallar
+        apartamento.registrarReserva(reserva);
+        titular.agregarReserva(reserva);
+        if (canal == Canal.PORTAL) {
+            vencimientos.encolar(reserva);
         }
         return reserva;
     }
@@ -100,13 +106,39 @@ public class ServicioReservas {
             throw new TransicionEstadoInvalidaException(
                     "El anticipo solo aplica a reservas PENDIENTES del portal");
         }
-        double total = facturacion.liquidar(reserva.getEstancia(), reserva.getListOcupantes());
+        double total = facturacion.paraApartamento(reserva.getApartamento())
+                .liquidar(reserva.getEstancia(), reserva.getListOcupantes());
         double anticipo = facturacion.calcularAnticipo(total);
         if (anticipo > 0) {
             reserva.getFolio().registrarPago("Anticipo 30%", anticipo);
         }
         confirmar(reserva);
     }
+
+    // cancela las PENDIENTES cuyo plazo de 24 h ya pasó. Devuelve cuántas canceló.
+    public int procesarVencimientos(LocalDateTime ahora) {
+        int canceladas = 0;
+        while (!vencimientos.estaVacia()) {
+            Reserva r = vencimientos.consultarPrioridad();
+            if (r.getHoraVencimiento().isAfter(ahora)) {
+                break;   // la cola está ordenada: las demás vencen después
+            }
+            vencimientos.desencolar();
+            if (r.getEstadoReserva() == EstadoReserva.PENDIENTE) {   // si ya pagó o canceló, se ignora
+                cancelar(r);   // cancelar ya libera las noches
+                canceladas++;
+            }
+        }
+        return canceladas;
+    }
+
+    // liberar noches significa sacar la reserva del árbol de reservas activas del apartamento
+    private void liberarNoches(Reserva reserva) {
+        if (reserva.getApartamento() != null) {
+            reserva.getApartamento().retirarReservaActiva(reserva);
+        }
+    }
+
 
     public void cambiarEstado(Reserva reserva, EstadoReserva destino) {
         EstadoReserva actual = reserva.getEstadoReserva();
@@ -123,7 +155,7 @@ public class ServicioReservas {
 
     public void cancelar(Reserva reserva) {
         cambiarEstado(reserva, EstadoReserva.CANCELADA);
-        reserva.getApartamento().retirarReservaActiva(reserva);
+        liberarNoches(reserva);
     }
 
     public void iniciarEstancia(Reserva reserva) {
@@ -136,6 +168,6 @@ public class ServicioReservas {
 
     public void marcarNoShow(Reserva reserva) {
         cambiarEstado(reserva, EstadoReserva.NOSHOW);
-        reserva.getApartamento().retirarReservaActiva(reserva);
+        liberarNoches(reserva);
     }
 }
