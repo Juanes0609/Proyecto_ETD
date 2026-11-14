@@ -1,8 +1,10 @@
 package gui.integracion;
 
 import estructuras.ListaDoblementeEnlazada;
+import gui.integracion.dto.ApartaSuiteDTO;
 import gui.integracion.dto.ConexionDTO;
 import gui.integracion.dto.EmpleadoDTO;
+import gui.integracion.dto.HuespedDTO;
 import gui.integracion.dto.NodoEdificioDTO;
 import gui.integracion.dto.OrdenPreparacionDTO;
 import gui.integracion.dto.ReporteDTO;
@@ -13,6 +15,7 @@ import modelo.Arista;
 import modelo.ConflictoCanal;
 import modelo.ConstructorEdificio;
 import modelo.EstadoOperativo;
+import modelo.Huesped;
 import modelo.NodoEdificio;
 import modelo.OrdenPreparacion;
 import modelo.ReporteEstadisticas;
@@ -22,6 +25,7 @@ import modelo.Vertice;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,14 +36,16 @@ import java.util.Map;
  * que el núcleo (modelo, estructuras y servicio) quede implementado; mientras
  * tanto se heredan los métodos por defecto, que avisan "en construcción".
  * <p>
- * Ya implementado: mapa del edificio, preparación (cola de prioridad), canal
- * externo (cola FIFO), turnos (lista circular) y estadísticas de recorridos.
+ * Ya implementado: catálogo de aparta-suites y tarifas, huéspedes y favoritos
+ * (árbol binario y conjunto), mapa del edificio (grafo, BFS y Dijkstra),
+ * preparación (cola de prioridad), canal externo (cola FIFO), turnos (lista
+ * circular) y estadísticas.
  * <p>
- * Para usarlo, cambiar {@code new ConectorSGADemo()} por
- * {@code new ConectorSGAProveedor(sistema)} en {@code AplicacionSGA}.
+ * La aplicación usa {@link ConectorSGAHibrido}, que extiende esta clase y cubre
+ * lo que el núcleo todavía no ofrece.
  */
 public class ConectorSGAProveedor implements ConectorSGA {
-    private final SistemaGestionAlojamiento sistema;
+    private SistemaGestionAlojamiento sistema;
     private boolean edificioConstruido;
 
     public ConectorSGAProveedor() {
@@ -68,6 +74,159 @@ public class ConectorSGAProveedor implements ConectorSGA {
     /** Fuerza a reconstruir el grafo (por ejemplo, tras cargar un escenario nuevo). */
     public void reconstruirEdificio() {
         edificioConstruido = false;
+    }
+
+    /** Cambia el sistema completo (al cargar datos guardados); el grafo se vuelve a armar. */
+    protected void reemplazarSistema(SistemaGestionAlojamiento nuevo) {
+        if (nuevo == null) {
+            throw new IllegalArgumentException("El sistema es obligatorio");
+        }
+        sistema = nuevo;
+        edificioConstruido = false;
+    }
+
+    // ---------- Catálogo y tarifas ----------
+
+    @Override
+    public List<ApartaSuiteDTO> listarApartaSuites() {
+        List<ApartaSuiteDTO> lista = new ArrayList<>();
+        for (Apartamento a : sistema.listarApartamentos()) {
+            lista.add(aDto(a));
+        }
+        return lista;
+    }
+
+    /**
+     * Registra un aparta-suite nuevo o modifica el existente en su sitio (así
+     * conserva sus reservas, órdenes de preparación y nodo del mapa).
+     */
+    @Override
+    public void guardarApartaSuite(ApartaSuiteDTO d) {
+        String caracteristicas = d.caracteristicas() == null ? "" : String.join(", ", d.caracteristicas());
+        Apartamento a = sistema.buscarApartamento(d.codigo());
+        if (a == null) {
+            a = new Apartamento(d.codigo(), d.nombre(), d.bloque(), d.piso(), d.dormitorios(), d.capacidad(),
+                    EstadoOperativo.PREPARADO, caracteristicas, "");
+            a.actualizarTarifas(d.tarifaBaja(), d.tarifaMedia(), d.tarifaAlta());
+            sistema.registrarApartamento(a);
+            return;
+        }
+        if (d.capacidad() <= 0) {
+            throw new IllegalArgumentException("La capacidad máxima debe ser mayor que cero");
+        }
+        a.actualizarTarifas(d.tarifaBaja(), d.tarifaMedia(), d.tarifaAlta());
+        a.setNombre(d.nombre());
+        a.setBloque(d.bloque());
+        a.setPiso(d.piso());
+        a.setNumeroDormitorios(d.dormitorios());
+        a.setCapacidadMaxima(d.capacidad());
+        a.setCaracteristicas(caracteristicas);
+        if (d.estadoOperativo() != null) {
+            a.setEstadoOperativo(estadoModelo(d.estadoOperativo()));
+        }
+    }
+
+    @Override
+    public void actualizarTarifas(String codigoApartaSuite, double baja, double media, double alta) {
+        apartamento(codigoApartaSuite).actualizarTarifas(baja, media, alta);
+    }
+
+    protected ApartaSuiteDTO aDto(Apartamento a) {
+        return new ApartaSuiteDTO(a.getCodigo(), a.getNombre(), a.getBloque(), a.getPiso(),
+                a.getNumeroDormitorios(), a.getCapacidadMaxima(), a.getTarifaBaja(), a.getTarifaMedia(),
+                a.getTarifaAlta(), caracteristicasDe(a.getCaracteristicas()), descripcionDe(a.getCodigo()),
+                estadoDto(a.getEstadoOperativo()), null);
+    }
+
+    /** El modelo guarda las características en un solo texto separado por comas. */
+    private static List<String> caracteristicasDe(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(texto.split(",")).map(String::trim).filter(c -> !c.isEmpty()).toList();
+    }
+
+    /** El modelo no guarda descripción; quien extienda el conector puede aportarla. */
+    protected String descripcionDe(String codigoApartaSuite) {
+        return "";
+    }
+
+    protected Apartamento apartamento(String codigo) {
+        Apartamento a = sistema.buscarApartamento(codigo);
+        if (a == null) {
+            throw new IllegalArgumentException("No existe el aparta-suite " + codigo + ".");
+        }
+        return a;
+    }
+
+    // ---------- Huéspedes y favoritos ----------
+
+    @Override
+    public List<HuespedDTO> listarHuespedes() {
+        List<HuespedDTO> lista = new ArrayList<>();
+        for (Huesped h : sistema.listarHuespedes()) {
+            lista.add(aDto(h));
+        }
+        return lista;
+    }
+
+    @Override
+    public HuespedDTO obtenerHuesped(String documento) {
+        return aDto(huesped(documento));
+    }
+
+    @Override
+    public void registrarHuesped(HuespedDTO d) {
+        sistema.registrarHuesped(new Huesped(d.nombre(), d.documento(), d.telefono(), d.fechaNacimiento(),
+                d.correo(), null));
+    }
+
+    /** Modifica el huésped en su sitio para no perder sus favoritos ni su historial. */
+    @Override
+    public void actualizarHuesped(HuespedDTO d) {
+        if (d.nombre() == null || d.nombre().isBlank()) {
+            throw new IllegalArgumentException("El nombre es obligatorio");
+        }
+        Huesped h = huesped(d.documento());
+        h.setNombre(d.nombre());
+        h.setTelefono(d.telefono());
+        h.setFechaNacimiento(d.fechaNacimiento());
+        h.setCorreo(d.correo());
+    }
+
+    /** Agrega o quita el favorito en el {@code Conjunto} del huésped. */
+    @Override
+    public boolean alternarFavorito(String documentoHuesped, String codigoApartaSuite) {
+        Huesped h = huesped(documentoHuesped);
+        Apartamento a = apartamento(codigoApartaSuite);
+        if (h.esFavorito(a)) {
+            h.quitarFavorito(a);
+            return false;
+        }
+        h.agregarFavorito(a);
+        return true;
+    }
+
+    @Override
+    public List<ApartaSuiteDTO> favoritos(String documentoHuesped) {
+        List<ApartaSuiteDTO> lista = new ArrayList<>();
+        for (Apartamento a : huesped(documentoHuesped).getFavoritos()) {
+            lista.add(aDto(a));
+        }
+        return lista;
+    }
+
+    protected HuespedDTO aDto(Huesped h) {
+        return new HuespedDTO(h.getDocumento(), h.getNombre(), h.getFechaNacimiento(), h.getTelefono(),
+                h.getCorreo());
+    }
+
+    protected Huesped huesped(String documento) {
+        Huesped h = sistema.buscarHuesped(documento);
+        if (h == null) {
+            throw new IllegalArgumentException("No hay un huésped con el documento " + documento + ".");
+        }
+        return h;
     }
 
     // ---------- Mapa del edificio ----------
@@ -295,13 +454,23 @@ public class ConectorSGAProveedor implements ConectorSGA {
                 r.getConflictosDeCanal(), r.getTiempoPromedioPreparacion());
     }
 
-    private String estadoDto(EstadoOperativo e) {
+    protected static String estadoDto(EstadoOperativo e) {
         return switch (e) {
             case PREPARADO -> "PREPARADO";
             case OCUPADO -> "OCUPADO";
             case PENDIENTEPREPARACION -> "PENDIENTE_PREPARACION";
             case ENPREPARACION -> "EN_PREPARACION";
             case FUERASERVICIO -> "FUERA_DE_SERVICIO";
+        };
+    }
+
+    protected static EstadoOperativo estadoModelo(String estado) {
+        return switch (estado) {
+            case "OCUPADO" -> EstadoOperativo.OCUPADO;
+            case "PENDIENTE_PREPARACION" -> EstadoOperativo.PENDIENTEPREPARACION;
+            case "EN_PREPARACION" -> EstadoOperativo.ENPREPARACION;
+            case "FUERA_DE_SERVICIO" -> EstadoOperativo.FUERASERVICIO;
+            default -> EstadoOperativo.PREPARADO;
         };
     }
 }
