@@ -14,11 +14,6 @@ import java.util.Map;
  * que se agregue (bloques, pisos o aparta-suites), ningún nodo quede encima de
  * otro y ninguna línea atraviese un nodo. Las conexiones y distancias son las
  * del modelo; aquí solo se decide la posición.
- * <pre>
- *  Recepción ─┬─ Pasillo ─ [piso 1] ─ Escalera ─ [pisos altos]   ← un bloque por fila
- *    /        └─ Pasillo ─ ...
- *  Aseo
- * </pre>
  * Cada aparta-suite se coloca arriba o abajo (alternando) de la línea
  * pasillo–escalera, en el primer hueco donde su caja y su línea no choquen con
  * nada de su fila. Recepción queda a la altura media de los bloques y se aleja
