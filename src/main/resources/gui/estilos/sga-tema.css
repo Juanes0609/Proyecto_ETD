@@ -1400,3 +1400,74 @@
 .tab-pane > .tab-content-area {
     -fx-padding: 12 0 0 0;
 }
+
+/* ---------- Tablero de inicio ----------
+   Cada aparta-suite es una celda con una franja del color de su estado
+   (los mismos colores de los badges y del mapa). El estado va además escrito. */
+.tablero-celda {
+    -fx-background-color: -sga-superficie;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-width: 1 1 1 4;
+    -fx-border-color: -sga-borde;
+    -fx-padding: 12 14 12 14;
+}
+
+.tablero-preparado {
+    -fx-border-color: -sga-borde -sga-borde -sga-borde -sga-exito;
+}
+
+.tablero-ocupado {
+    -fx-border-color: -sga-borde -sga-borde -sga-borde -sga-info;
+}
+
+.tablero-pendiente {
+    -fx-border-color: -sga-borde -sga-borde -sga-borde -sga-advertencia;
+}
+
+.tablero-fuera {
+    -fx-border-color: -sga-borde -sga-borde -sga-borde -sga-error;
+}
+
+/* ---------- Calendario de ocupación ---------- */
+.calendario-dia {
+    -fx-font-size: 11px;
+    -fx-text-fill: -sga-texto-terciario;
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+}
+
+.calendario-hoy {
+    -fx-text-fill: -sga-primario;
+    -fx-font-weight: bold;
+}
+
+.calendario-celda {
+    -fx-min-height: 26;
+    -fx-pref-height: 26;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+}
+
+.calendario-libre {
+    -fx-background-color: -sga-superficie-hundida;
+}
+
+.calendario-ocupada {
+    -fx-background-color: -sga-info;
+}
+
+/* Bloqueada: además del color lleva borde punteado */
+.calendario-bloqueada {
+    -fx-background-color: -sga-advertencia-fondo;
+    -fx-border-color: -sga-advertencia;
+    -fx-border-style: dashed;
+}
+
+.calendario-muestra {
+    -fx-min-width: 18;
+    -fx-pref-width: 18;
+    -fx-min-height: 18;
+    -fx-pref-height: 18;
+    -fx-max-height: 18;
+}

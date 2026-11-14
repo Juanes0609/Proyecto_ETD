@@ -16,7 +16,9 @@ import java.util.List;
 public enum TipoVista {
 
     // ---------- Recepción ----------
-    RECEPCION_RESERVAR(Rol.RECEPCIONISTA, "Reservar", Iconos.Icono.CALENDARIO,
+    RECEPCION_INICIO(Rol.RECEPCIONISTA, "Inicio", Iconos.Icono.CASA,
+            "Todos los aparta-suites y su estado operativo en este momento."),
+    RECEPCION_RESERVAR(Rol.RECEPCIONISTA, "Reservar", Iconos.Icono.ETIQUETA,
             "Registra reservas por teléfono o en persona y atiende el canal externo."),
     RECEPCION_LLEGADAS(Rol.RECEPCIONISTA, "Llegadas y salidas", Iconos.Icono.MALETA,
             "Check-in y check-out de las reservas activas."),
@@ -25,9 +27,16 @@ public enum TipoVista {
     RECEPCION_PREPARACION(Rol.RECEPCIONISTA, "Preparación", Iconos.Icono.PORTAPAPELES,
             "Cola de aseo con prioridad para las llegadas de hoy y ruta más corta."),
 
+    RECEPCION_CALENDARIO(Rol.RECEPCIONISTA, "Calendario", Iconos.Icono.CALENDARIO,
+            "Noches ocupadas, bloqueadas y libres de cada aparta-suite en el mes."),
+
     // ---------- Administración ----------
+    ADMIN_INICIO(Rol.ADMINISTRADOR, "Inicio", Iconos.Icono.CASA,
+            "Todos los aparta-suites y su estado operativo en este momento."),
     ADMIN_REPORTES(Rol.ADMINISTRADOR, "Reportes", Iconos.Icono.GRAFICA,
             "Ocupación, ingresos, reservas por canal y tiempos de preparación."),
+    ADMIN_CALENDARIO(Rol.ADMINISTRADOR, "Calendario", Iconos.Icono.CALENDARIO,
+            "Noches ocupadas, bloqueadas y libres de cada aparta-suite en el mes."),
     ADMIN_EDIFICIO(Rol.ADMINISTRADOR, "Edificio", Iconos.Icono.RED,
             "Conectividad del edificio, pasillos cerrados y agrupación por bloque."),
     ADMIN_CATALOGOS(Rol.ADMINISTRADOR, "Catálogos", Iconos.Icono.CARPETA,

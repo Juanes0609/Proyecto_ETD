@@ -5,6 +5,8 @@ import gui.admin.VistaEdificio;
 import gui.admin.VistaReportes;
 import gui.admin.VistaTemporadas;
 import gui.cliente.VentanaCliente;
+import gui.general.VistaCalendario;
+import gui.general.VistaTablero;
 import gui.integracion.ConectorSGA;
 import gui.integracion.ConectorSGAHibrido;
 import gui.integracion.dto.Rol;
@@ -120,6 +122,11 @@ public class AplicacionSGA extends Application {
      * constante en {@code TipoVista} y una línea aquí.
      */
     private void registrarVistas(GestorNavegacion navegacion) {
+        // Inicio y Calendario son los mismos para recepción y administración.
+        navegacion.registrar(TipoVista.RECEPCION_INICIO, VistaTablero::new);
+        navegacion.registrar(TipoVista.RECEPCION_CALENDARIO, VistaCalendario::new);
+        navegacion.registrar(TipoVista.ADMIN_INICIO, VistaTablero::new);
+        navegacion.registrar(TipoVista.ADMIN_CALENDARIO, VistaCalendario::new);
         navegacion.registrar(TipoVista.RECEPCION_RESERVAR, VistaReservarRecepcion::new);
         navegacion.registrar(TipoVista.RECEPCION_LLEGADAS, VistaLlegadasSalidas::new);
         navegacion.registrar(TipoVista.RECEPCION_FOLIOS, VistaFolios::new);
