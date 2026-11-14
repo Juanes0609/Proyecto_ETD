@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -67,6 +68,8 @@ public class FiltroApartaSuites extends VBox {
 
         entrada.setPrefWidth(150);
         salida.setPrefWidth(150);
+        entrada.setMinWidth(150); // la fecha completa siempre se lee
+        salida.setMinWidth(150);
         entrada.setAccessibleText("Fecha de entrada");
         salida.setAccessibleText("Fecha de salida");
         // La salida siempre queda después de la entrada: si no, se corrige sola a la noche siguiente.
@@ -87,7 +90,7 @@ public class FiltroApartaSuites extends VBox {
         HBox controlFechas = new HBox(8, entrada, FabricaComponentesUI.crearTexto("a", "texto-secundario"), salida);
         controlFechas.setAlignment(Pos.CENTER_LEFT);
         VBox campoFechas = campo("Fechas de la estancia", controlFechas,
-                "Solo se muestran los que están libres todas esas noches.");
+                "Solo los libres todas esas noches.");
 
         personas = new Spinner<>(1, Math.max(1, capacidadMaxima), 1);
         personas.setEditable(true);
@@ -99,7 +102,8 @@ public class FiltroApartaSuites extends VBox {
         precio.setMajorTickUnit(PASO_PRECIO);
         precio.setMinorTickCount(0);
         precio.setSnapToTicks(true);
-        precio.setPrefWidth(260);
+        precio.setPrefWidth(220);
+        precio.setMinWidth(160);
         Label valorPrecio = new Label();
         valorPrecio.getStyleClass().add("encabezado-vista");
         valorPrecio.setMinWidth(Region.USE_PREF_SIZE);
@@ -110,14 +114,16 @@ public class FiltroApartaSuites extends VBox {
         valorPrecio.setText("Hasta " + Formato.moneda(precioTope));
 
         VBox campoPersonas = campo("Grupo de personas", new HBox(personas),
-                "Incluye niños: ocupan cupo, pero los menores de 6 años no pagan.");
+                "Los menores de 6 años ocupan cupo y no pagan.");
         HBox controlPrecio = new HBox(12, precio, valorPrecio);
         controlPrecio.setAlignment(Pos.CENTER_LEFT);
         VBox campoPrecio = campo("Precio por persona / noche", controlPrecio, "Según la temporada vigente.");
 
-        HBox criterios = new HBox(32, campoFechas, campoPersonas, campoPrecio, FabricaComponentesUI.crearEspaciador(),
+        // FlowPane: si la ventana es angosta los criterios bajan de línea en vez de apretarse.
+        FlowPane criterios = new FlowPane(28, 14, campoFechas, campoPersonas, campoPrecio,
                 FabricaComponentesUI.crearEnlace("Limpiar filtros", this::limpiar));
-        criterios.setAlignment(Pos.TOP_LEFT);
+        criterios.setPrefWrapLength(1100); // usa todo el ancho antes de bajar de línea
+        criterios.setRowValignment(javafx.geometry.VPos.TOP);
         VBox panel = FabricaComponentesUI.crearTarjeta(criterios);
         panel.setVisible(false);
         panel.setManaged(false);
@@ -211,6 +217,7 @@ public class FiltroApartaSuites extends VBox {
         mensaje.getStyleClass().addAll("campo-mensaje", "campo-ayuda");
         mensaje.setAlignment(Pos.CENTER_LEFT);
         VBox caja = new VBox(6, lbl, control, mensaje);
+        caja.setMinWidth(Region.USE_PREF_SIZE);
         HBox.setHgrow(caja, Priority.NEVER);
         return caja;
     }
