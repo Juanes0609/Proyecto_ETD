@@ -64,6 +64,8 @@ public class VistaEdificio extends VistaBase {
     private static final double MARGEN = 24;
     private static final double ZOOM_MAXIMO = 3;
     private static final double PASO_ZOOM = 1.25;
+    /** Zoom máximo al enfocar un bloque (doble clic o «Agrupar»). */
+    private static final double ZOOM_BLOQUE = 1.4;
     private static final double ANCHO_NODO = 98;
     private static final double ALTO_NODO = 30;
 
@@ -77,6 +79,8 @@ public class VistaEdificio extends VistaBase {
     /** Límites del dibujo la última vez que se ajustó: si cambian (bloque nuevo), se reajusta. */
     private String limitesAjustados = "";
     private double arrastreX, arrastreY;
+    /** Posición de dibujo de cada nodo, calculada con {@link DisposicionMapa}. */
+    private final Map<String, double[]> posiciones = new HashMap<>();
     private final VBox panelCerrados = new VBox(8);
     private final VBox panelInalcanzables = new VBox(8);
     private final VBox panelBloque = new VBox(8);
@@ -118,7 +122,15 @@ public class VistaEdificio extends VistaBase {
         prepararZoom();
         bloque.getItems().setAll(TODOS_LOS_BLOQUES);
         bloque.setValue(TODOS_LOS_BLOQUES);
-        bloque.valueProperty().addListener((o, a, b) -> pintar());
+        // Elegir un bloque lo resalta y lo acerca; «Todos los bloques» vuelve a ver el edificio completo.
+        bloque.valueProperty().addListener((o, a, b) -> {
+            pintar();
+            if (b != null && b.startsWith("Bloque ")) {
+                enfocar(limitesDeBloque(b.substring(7)));
+            } else {
+                ajustarVista();
+            }
+        });
         destinoRuta.valueProperty().addListener((o, a, b) -> {
             if (!actualizandoDestinos) {
                 mostrarRutaA(SIN_RUTA.equals(b) ? null : b);
@@ -478,6 +490,9 @@ public class VistaEdificio extends VistaBase {
 
     private void pintar() {
         lienzo.getChildren().clear();
+        posiciones.clear();
+        posiciones.putAll(new DisposicionMapa(ANCHO_NODO, ALTO_NODO,
+                ANCHO_MAPA - 2 * MARGEN, ALTO_MAPA - 2 * MARGEN).calcular(nodos.values(), conexiones));
         String filtroBloque = bloque.getValue().startsWith("Bloque") ? bloque.getValue().substring(7) : null;
 
         for (ConexionDTO c : conexiones) {
@@ -549,6 +564,16 @@ public class VistaEdificio extends VistaBase {
             caja.setLayoutY(y(n) - ALTO_NODO / 2);
             String estado = apartamento ? estados.get(n.codigo()) : null;
             Tooltip.install(caja, new Tooltip(estado == null ? n.nombre() : n.nombre() + " · " + estado));
+            // Doble clic: acerca su bloque (en recepción o aseo, vuelve a ver todo el edificio).
+            caja.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2 && e.isStillSincePress()) {
+                    if ("-".equals(n.bloque()) || n.bloque() == null) {
+                        ajustarVista();
+                    } else {
+                        enfocar(limitesDeBloque(n.bloque()));
+                    }
+                }
+            });
             lienzo.getChildren().add(caja);
             Integer posicion = ordenCola.get(n.codigo());
             if (posicion != null) { // insignia con el orden de la parada en el recorrido de la cola
@@ -661,16 +686,28 @@ public class VistaEdificio extends VistaBase {
     /** Escala y centra el dibujo para que todo el edificio quepa en la tarjeta. */
     private void ajustarVista() {
         double[] l = limitesDelDibujo();
-        if (l == null) {
-            return;
+        if (l != null) {
+            escalaAjuste = encuadrar(l, 1);
         }
+    }
+
+    /** Acerca una zona (un bloque) sin pasar de {@link #ZOOM_BLOQUE}. */
+    private void enfocar(double[] limites) {
+        if (limites != null) {
+            encuadrar(limites, ZOOM_BLOQUE);
+        }
+    }
+
+    /** Centra los límites dados en la tarjeta con la mayor escala que quepa (hasta {@code maxima}). */
+    private double encuadrar(double[] l, double maxima) {
         double ancho = l[2] - l[0];
         double alto = l[3] - l[1];
-        escalaAjuste = Math.min(1, Math.min((ANCHO_MAPA - 2 * MARGEN) / ancho, (ALTO_MAPA - 2 * MARGEN) / alto));
-        zoom.setX(escalaAjuste);
-        zoom.setY(escalaAjuste);
-        desplazamiento.setX((ANCHO_MAPA - ancho * escalaAjuste) / 2 - l[0] * escalaAjuste);
-        desplazamiento.setY((ALTO_MAPA - alto * escalaAjuste) / 2 - l[1] * escalaAjuste);
+        double escala = Math.min(maxima, Math.min((ANCHO_MAPA - 2 * MARGEN) / ancho, (ALTO_MAPA - 2 * MARGEN) / alto));
+        zoom.setX(escala);
+        zoom.setY(escala);
+        desplazamiento.setX((ANCHO_MAPA - ancho * escala) / 2 - l[0] * escala);
+        desplazamiento.setY((ALTO_MAPA - alto * escala) / 2 - l[1] * escala);
+        return escala;
     }
 
     /** Al cambiar el edificio (bloque o aparta-suite nuevo) se vuelve a ver completo. */
@@ -683,13 +720,17 @@ public class VistaEdificio extends VistaBase {
         }
     }
 
-    /** {minX, minY, maxX, maxY} de las cajas de los nodos, o {@code null} si no hay nodos. */
     private double[] limitesDelDibujo() {
-        if (nodos.isEmpty()) {
+        return limitesDe(nodos.values());
+    }
+
+    /** {minX, minY, maxX, maxY} de las cajas de esos nodos, o {@code null} si no hay ninguno. */
+    private double[] limitesDe(java.util.Collection<NodoEdificioDTO> lista) {
+        if (lista.isEmpty()) {
             return null;
         }
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
-        for (NodoEdificioDTO n : nodos.values()) {
+        for (NodoEdificioDTO n : lista) {
             minX = Math.min(minX, x(n) - ANCHO_NODO / 2);
             maxX = Math.max(maxX, x(n) + ANCHO_NODO / 2);
             minY = Math.min(minY, y(n) - ALTO_NODO / 2 - 10); // espacio para la insignia de orden
@@ -732,11 +773,20 @@ public class VistaEdificio extends VistaBase {
         }
     }
 
-    private static double x(NodoEdificioDTO n) {
-        return n.x();
+    private double x(NodoEdificioDTO n) {
+        double[] p = posiciones.get(n.codigo());
+        return p != null ? p[0] : n.x();
     }
 
-    private static double y(NodoEdificioDTO n) {
-        return n.y();
+    private double y(NodoEdificioDTO n) {
+        double[] p = posiciones.get(n.codigo());
+        return p != null ? p[1] : n.y();
+    }
+
+    // ---------- Disposición del dibujo ----------
+
+    /** Límites de los nodos de un bloque (pasillo, escalera y sus aparta-suites). */
+    private double[] limitesDeBloque(String b) {
+        return limitesDe(nodos.values().stream().filter(n -> b.equals(n.bloque())).toList());
     }
 }
