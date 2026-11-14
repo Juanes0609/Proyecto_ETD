@@ -74,6 +74,16 @@ public interface ConectorSGA {
     }
 
     /** Tipo de temporada (BAJA, MEDIA, ALTA) que aplica en una fecha. */
+    /**
+     * Búsqueda de disponibilidad: aparta-suites reservables con cupo para el grupo y,
+     * si se indican fechas, libres en ese rango.
+     *
+     * @param orden PRECIO, CAPACIDAD o DORMITORIOS (cualquier otro valor: por código)
+     */
+    default List<ApartaSuiteDTO> buscarDisponibles(LocalDate entrada, LocalDate salida, int personas, String orden) {
+        throw pendiente("buscarDisponibles");
+    }
+
     default String temporadaEn(LocalDate fecha) {
         throw pendiente("temporadaEn");
     }
@@ -146,6 +156,26 @@ public interface ConectorSGA {
     }
 
     /** Reservas pendientes, confirmadas y en curso. */
+    /** Marca como no-show una reserva confirmada cuyo huésped no llegó. */
+    default void marcarNoShow(String codigoReserva) {
+        throw pendiente("marcarNoShow");
+    }
+
+    /**
+     * Cancela las reservas pendientes cuyo plazo de anticipo (24 horas) ya pasó y
+     * libera sus noches.
+     *
+     * @return cuántas se cancelaron
+     */
+    default int procesarVencimientos() {
+        return 0;
+    }
+
+    /** Reservas que ocupan o retienen noches en el rango, para el calendario de ocupación. */
+    default List<ReservaDTO> reservasEntre(LocalDate desde, LocalDate hasta) {
+        throw pendiente("reservasEntre");
+    }
+
     default List<ReservaDTO> reservasActivas() {
         throw pendiente("reservasActivas");
     }
@@ -243,6 +273,12 @@ public interface ConectorSGA {
     // ---------- Administración ----------
 
     default ReporteDTO generarReporte() {
+        LocalDate inicio = LocalDate.now().withDayOfMonth(1);
+        return generarReporte(inicio, inicio.plusMonths(1));
+    }
+
+    /** Reporte del periodo que va de {@code desde} (incluido) a {@code hasta} (excluido). */
+    default ReporteDTO generarReporte(LocalDate desde, LocalDate hasta) {
         throw pendiente("generarReporte");
     }
 

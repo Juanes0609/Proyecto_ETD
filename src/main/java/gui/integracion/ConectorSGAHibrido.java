@@ -1,5 +1,9 @@
 package gui.integracion;
 
+import estructuras.ArbolBinarioBusqueda;
+import estructuras.Cola;
+import estructuras.ColaPrioridad;
+import estructuras.ListaDoblementeEnlazada;
 import estructuras.Pila;
 import excepciones.CapacidadExcedidaException;
 import excepciones.EstructuraVaciaException;
@@ -25,10 +29,22 @@ import gui.integracion.dto.SolicitudExternaDTO;
 import gui.integracion.dto.TemporadaDTO;
 import gui.integracion.dto.UsuarioDTO;
 import modelo.Apartamento;
+import modelo.Canal;
+import modelo.ComparadoresApartamento;
+import modelo.ConstructorEdificio;
+import modelo.ConteoEstadistica;
+import modelo.DetalleNoche;
 import modelo.EstadoOperativo;
+import modelo.EstadoReserva;
+import modelo.Estancia;
 import modelo.Huesped;
+import modelo.Ocupante;
 import modelo.OrdenPreparacion;
+import modelo.ReporteEstadisticas;
 import modelo.SistemaGestionAlojamiento;
+import modelo.Temporada;
+import modelo.TipoTemporada;
+import servicio.ServicioFacturacion;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -37,10 +53,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,11 +67,22 @@ import java.util.Optional;
  * <p>
  * Lo que el núcleo del equipo ya implementa (catálogo, tarifas, huéspedes,
  * favoritos, mapa, preparación y turnos) lo resuelve {@link ConectorSGAProveedor}
- * sobre {@code SistemaGestionAlojamiento}. Lo que aún no existe en el núcleo
- * (sesión, temporadas, reservas, folios, canal externo y reporte) se cubre aquí
- * en memoria, leyendo los aparta-suites y huéspedes del modelo real para que
- * todo cuadre. Cuando el equipo implemente una de esas funciones, basta con
- * borrar aquí el método para que se use la del núcleo.
+ * sobre {@code SistemaGestionAlojamiento}. Aquí se cubren la sesión, las
+ * reservas, los folios, el canal externo y el reporte, siempre apoyados en las
+ * estructuras y servicios del núcleo:
+ * <ul>
+ *   <li>cada reserva se refleja en el modelo ({@code modelo.Reserva}) y queda en el
+ *       árbol por fecha de entrada de su apartamento: el solapamiento lo decide
+ *       {@code Apartamento.tieneSolapamiento};</li>
+ *   <li>los cambios de estado respetan {@code EstadoReserva.puedeTransicionarA};</li>
+ *   <li>el valor se liquida con {@code ServicioFacturacion} (recursivo, noche por
+ *       noche, recorriendo la {@code Estancia} con su iterador);</li>
+ *   <li>el canal externo usa la {@code Cola} propia, los vencimientos la
+ *       {@code ColaPrioridad}, deshacer la {@code Pila} y los empleados el
+ *       {@code ArbolBinarioBusqueda}.</li>
+ * </ul>
+ * Lo que se guarda en disco es una copia plana de esos datos (las estructuras
+ * propias no son serializables).
  * <p>
  * Todo cambio se guarda en disco ({@link AlmacenSGA}); la primera vez, o al
  * pulsar «Cargar escenario», se parte de {@link EscenarioInicialSGA}.
@@ -66,11 +91,18 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
 
     private static final double PORCENTAJE_ANTICIPO = 0.30;
 
-    /** Reserva simulada mientras el núcleo no gestiona reservas. */
+    /** Horas que una reserva del portal espera el anticipo antes de cancelarse sola. */
+    private static final int HORAS_VENCIMIENTO = 24;
+    /** Fecha de nacimiento que se asume cuando no se conoce: un adulto, que paga. */
+    private static final LocalDate NACIMIENTO_ADULTO = LocalDate.of(1990, 1, 1);
+
+    /** Datos guardables de una reserva; su par en el modelo se arma con {@link #reflejarEnModelo}. */
     static final class Reserva implements Serializable {
         String codigo, documentoTitular, codigoSuite, canal, estado;
         LocalDate entrada, salida;
         LocalTime horaLlegada;
+        /** Momento en que se creó: de aquí sale el vencimiento de las pendientes. */
+        LocalDateTime creada;
         final List<OcupanteDTO> ocupantes = new ArrayList<>();
         /** Negativo mientras no se haya calculado (reservas del escenario inicial). */
         double total = -1;
@@ -86,15 +118,27 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
             }
             return deshacer;
         }
+
+        LocalDateTime vence() {
+            return creada.plusHours(HORAS_VENCIMIENTO);
+        }
     }
 
     private final Path archivo;
     private final Map<String, Cuenta> cuentas = new LinkedHashMap<>();
     private final Map<String, String> descripciones = new HashMap<>();
     private final Map<String, Reserva> reservas = new LinkedHashMap<>();
+    /** Par de cada reserva en el modelo real, por código. */
+    private final Map<String, modelo.Reserva> enModelo = new HashMap<>();
     private final List<TemporadaDTO> temporadas = new ArrayList<>();
-    private final List<EmpleadoDTO> empleados = new ArrayList<>();
-    private final Deque<SolicitudExternaDTO> colaExterna = new ArrayDeque<>();
+    /** Las mismas temporadas como las entiende {@link ServicioFacturacion}. */
+    private ListaDoblementeEnlazada<Temporada> temporadasModelo = new ListaDoblementeEnlazada<>();
+    /** Empleados por documento, en el árbol binario de búsqueda del proyecto. */
+    private ArbolBinarioBusqueda<EmpleadoDTO> empleados = new ArbolBinarioBusqueda<>();
+    /** Solicitudes del canal externo en orden de llegada (cola FIFO del proyecto). */
+    private Cola<SolicitudExternaDTO> colaExterna = new Cola<>();
+    /** Reservas pendientes de anticipo; primero la que vence antes. */
+    private ColaPrioridad<Reserva> vencimientos = nuevaColaVencimientos();
     private final List<String> conflictos = new ArrayList<>();
     private final List<Long> minutosPreparacion = new ArrayList<>();
     private int consecutivoReserva;
@@ -209,34 +253,98 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
             throw new FechasInvalidasException("La temporada se cruza con otra ya definida.");
         }
         temporadas.add(temporada);
+        temporadasModelo.agregarFinal(aModelo(temporada));
         guardar();
+    }
+
+    private static Temporada aModelo(TemporadaDTO t) {
+        return new Temporada(t.inicio(), t.fin(), TipoTemporada.valueOf(t.tipo()));
+    }
+
+    /** Facturación con las tarifas propias del aparta-suite y las temporadas vigentes. */
+    private ServicioFacturacion facturacion(Apartamento a) {
+        return new ServicioFacturacion(temporadasModelo, a.getTarifaBaja(), a.getTarifaMedia(), a.getTarifaAlta());
     }
 
     @Override
     public String temporadaEn(LocalDate fecha) {
-        return temporadas.stream().filter(t -> t.incluye(fecha)).map(TemporadaDTO::tipo).findFirst().orElse("BAJA");
+        return new ServicioFacturacion(temporadasModelo, 0, 0, 0).temporadaDe(fecha).name();
     }
 
+    /**
+     * El solapamiento lo resuelve el árbol de reservas (por fecha de entrada) del
+     * apartamento, recorriéndolo de forma recursiva.
+     */
     @Override
     public boolean estaDisponible(String codigoApartaSuite, LocalDate entrada, LocalDate salida) {
-        return reservas.values().stream().noneMatch(r -> r.codigoSuite.equals(codigoApartaSuite)
-                && bloquea(r) && seSolapan(r.entrada, r.salida, entrada, salida));
+        if (entrada == null || salida == null || !salida.isAfter(entrada)) {
+            return false;
+        }
+        return !apartamento(codigoApartaSuite).tieneSolapamiento(new Estancia(entrada, salida, null));
+    }
+
+    /**
+     * Aparta-suites libres en el rango (si se indica) con cupo para el grupo, en el
+     * orden elegido. Se ordenan pasando por la {@link ColaPrioridad} propia con los
+     * comparadores del modelo: salen de la cola ya ordenados.
+     */
+    @Override
+    public List<ApartaSuiteDTO> buscarDisponibles(LocalDate entrada, LocalDate salida, int personas, String orden) {
+        boolean conFechas = entrada != null && salida != null && salida.isAfter(entrada);
+        TipoTemporada temporada = TipoTemporada.valueOf(temporadaEn(conFechas ? entrada : LocalDate.now()));
+        Comparator<Apartamento> comparador = switch (orden == null ? "" : orden) {
+            case "PRECIO" -> ComparadoresApartamento.porPrecio(temporada);
+            case "CAPACIDAD" -> ComparadoresApartamento.POR_CAPACIDAD;
+            case "DORMITORIOS" -> ComparadoresApartamento.POR_DORMITORIOS;
+            default -> Comparator.naturalOrder();
+        };
+        ColaPrioridad<Apartamento> ordenados = new ColaPrioridad<>(comparador);
+        for (Apartamento a : getSistema().listarApartamentos()) {
+            if (a.getEstadoOperativo() != EstadoOperativo.FUERASERVICIO
+                    && a.getCapacidadMaxima() >= personas
+                    && (!conFechas || !a.tieneSolapamiento(new Estancia(entrada, salida, null)))) {
+                ordenados.encolar(a);
+            }
+        }
+        List<ApartaSuiteDTO> lista = new ArrayList<>();
+        while (!ordenados.estaVacia()) {
+            lista.add(aDto(ordenados.desencolar()));
+        }
+        return lista;
     }
 
     @Override
     public CotizacionDTO cotizar(String codigoApartaSuite, LocalDate entrada, LocalDate salida, int personasQuePagan) {
         validarFechas(entrada, salida, false);
-        ApartaSuiteDTO suite = aDto(apartamento(codigoApartaSuite));
-        List<NocheDTO> noches = new ArrayList<>();
-        double total = 0;
-        for (LocalDate noche = entrada; noche.isBefore(salida); noche = noche.plusDays(1)) {
-            String temporada = temporadaEn(noche);
-            double tarifa = suite.tarifa(temporada);
-            double subtotal = tarifa * personasQuePagan;
-            noches.add(new NocheDTO(noche, temporada, personasQuePagan, tarifa, subtotal));
-            total += subtotal;
+        ServicioFacturacion facturacion = facturacion(apartamento(codigoApartaSuite));
+        Estancia estancia = new Estancia(entrada, salida, null);
+        ListaDoblementeEnlazada<Ocupante> pagan = new ListaDoblementeEnlazada<>();
+        for (int i = 0; i < personasQuePagan; i++) {
+            pagan.agregarFinal(new Ocupante("Ocupante " + (i + 1), NACIMIENTO_ADULTO));
         }
-        return new CotizacionDTO(noches, personasQuePagan, total);
+        // El desglose recorre la estancia con su iterador; el total es la liquidación recursiva.
+        List<NocheDTO> noches = new ArrayList<>();
+        for (DetalleNoche d : facturacion.desglosar(estancia, pagan)) {
+            noches.add(new NocheDTO(d.getFecha(), d.getTemporada().name(), d.getCantidadPersonasPagas(),
+                    d.getTarifaPorPersona(), d.getSubtotal()));
+        }
+        return new CotizacionDTO(noches, personasQuePagan, facturacion.liquidar(estancia, pagan));
+    }
+
+    /** Ocupantes como los espera el modelo; sin fecha de nacimiento se cobra como adulto. */
+    private static ListaDoblementeEnlazada<Ocupante> ocupantesModelo(List<OcupanteDTO> ocupantes) {
+        ListaDoblementeEnlazada<Ocupante> lista = new ListaDoblementeEnlazada<>();
+        for (OcupanteDTO o : ocupantes) {
+            lista.agregarFinal(new Ocupante(o.nombre(),
+                    o.fechaNacimiento() == null ? NACIMIENTO_ADULTO : o.fechaNacimiento()));
+        }
+        return lista;
+    }
+
+    /** Valor de la estancia: menores de 6 años ocupan cupo pero no pagan (edad en cada noche). */
+    private double liquidar(Reserva r) {
+        return facturacion(apartamento(r.codigoSuite))
+                .liquidar(new Estancia(r.entrada, r.salida, null), ocupantesModelo(r.ocupantes));
     }
 
     // ---------- Huéspedes y favoritos (modelo real + guardado) ----------
@@ -309,14 +417,116 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         reserva.salida = salida;
         reserva.canal = canal;
         reserva.horaLlegada = horaLlegada;
+        reserva.creada = LocalDateTime.now();
         reserva.estado = "PORTAL".equals(canal) ? "PENDIENTE" : "CONFIRMADA";
         reserva.ocupantes.add(new OcupanteDTO(titular.nombre(), titular.documento(), titular.fechaNacimiento()));
         reserva.ocupantes.addAll(acompanantes);
-        int quePagan = (int) reserva.ocupantes.stream().filter(o -> o.paga(entrada)).count();
-        reserva.total = cotizar(codigoApartaSuite, entrada, salida, quePagan).total();
+        reserva.total = liquidar(reserva);
         movimiento(reserva, "CARGO", "Alojamiento · " + reserva.ocupantes.size() + " personas", reserva.total, false);
         reservas.put(reserva.codigo, reserva);
+        reflejarEnModelo(reserva);
+        if ("PENDIENTE".equals(reserva.estado)) {
+            vencimientos.encolar(reserva);
+        }
         return reserva;
+    }
+
+    // ---------- Reservas en el modelo real ----------
+
+    /**
+     * Crea el par de la reserva en el modelo: queda en el historial del apartamento
+     * y del huésped y, si está activa, en el árbol por fecha de entrada.
+     */
+    private void reflejarEnModelo(Reserva r) {
+        Apartamento apartamento = getSistema().buscarApartamento(r.codigoSuite);
+        if (apartamento == null) {
+            return; // el aparta-suite ya no existe: la reserva solo queda en el historial guardado
+        }
+        Huesped titular = getSistema().buscarHuesped(r.documentoTitular);
+        Estancia estancia = new Estancia(r.entrada, r.salida, null);
+        modelo.Reserva par = new modelo.Reserva(r.codigo, r.creada,
+                "PENDIENTE".equals(r.estado) ? r.vence() : null, estadoReserva(r.estado),
+                Canal.valueOf(r.canal), apartamento, titular, estancia);
+        estancia.setReserva(par);
+        for (Ocupante o : ocupantesModelo(r.ocupantes)) {
+            par.getListOcupantes().agregarFinal(o);
+        }
+        apartamento.registrarReserva(par);
+        if (titular != null) {
+            titular.agregarReserva(par);
+        }
+        enModelo.put(r.codigo, par);
+    }
+
+    /**
+     * Único punto donde cambia el estado de una reserva: valida la transición con
+     * las reglas del modelo y, si deja de estar activa, libera sus noches en el árbol.
+     */
+    private void cambiarEstado(Reserva r, String destino) {
+        EstadoReserva actual = estadoReserva(r.estado);
+        EstadoReserva nuevo = estadoReserva(destino);
+        if (!actual.puedeTransicionarA(nuevo)) {
+            throw new TransicionEstadoInvalidaException("La reserva " + r.codigo + " está "
+                    + nombreEstado(r.estado) + " y no puede pasar a " + nombreEstado(destino) + ".");
+        }
+        r.estado = destino;
+        modelo.Reserva par = enModelo.get(r.codigo);
+        if (par != null) {
+            par.setEstadoReserva(nuevo);
+            if (actual.esActiva() && !nuevo.esActiva()) {
+                par.getApartamento().retirarReservaActiva(par);
+            }
+        }
+    }
+
+    private static EstadoReserva estadoReserva(String estado) {
+        return switch (estado) {
+            case "EN_CURSO" -> EstadoReserva.ENCURSO;
+            case "NO_SHOW" -> EstadoReserva.NOSHOW;
+            default -> EstadoReserva.valueOf(estado);
+        };
+    }
+
+    private static String estadoDto(EstadoReserva estado) {
+        return switch (estado) {
+            case ENCURSO -> "EN_CURSO";
+            case NOSHOW -> "NO_SHOW";
+            default -> estado.name();
+        };
+    }
+
+    private static String nombreEstado(String estado) {
+        return estado.replace('_', ' ').toLowerCase(Locale.ROOT);
+    }
+
+    private static ColaPrioridad<Reserva> nuevaColaVencimientos() {
+        return new ColaPrioridad<>(Comparator.comparing(Reserva::vence));
+    }
+
+    /**
+     * Cancela las reservas pendientes cuyo plazo de anticipo ya pasó. La cola de
+     * prioridad está ordenada por vencimiento: se detiene en la primera que aún no vence.
+     */
+    private int vencerPendientes() {
+        LocalDateTime ahora = LocalDateTime.now();
+        int canceladas = 0;
+        while (!vencimientos.estaVacia() && !vencimientos.consultarPrioridad().vence().isAfter(ahora)) {
+            Reserva r = vencimientos.desencolar();
+            if ("PENDIENTE".equals(r.estado)) { // si ya pagó o canceló, se descarta
+                cambiarEstado(r, "CANCELADA");
+                canceladas++;
+            }
+        }
+        return canceladas;
+    }
+
+    @Override
+    public int procesarVencimientos() {
+        int canceladas = vencerPendientes();
+        if (canceladas > 0) {
+            guardar();
+        }
+        return canceladas;
     }
 
     @Override
@@ -325,8 +535,8 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         if (!"PENDIENTE".equals(reserva.estado)) {
             throw new TransicionEstadoInvalidaException("La reserva " + codigoReserva + " no está pendiente de anticipo.");
         }
+        cambiarEstado(reserva, "CONFIRMADA");
         movimiento(reserva, "PAGO", "Anticipo por el portal", Math.round(reserva.total * PORCENTAJE_ANTICIPO), false);
-        reserva.estado = "CONFIRMADA";
         guardar();
     }
 
@@ -348,11 +558,35 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
             throw new TransicionEstadoInvalidaException("Solo se pueden cancelar reservas pendientes o confirmadas.");
         }
         double devolucion = calcularDevolucion(codigoReserva);
+        cambiarEstado(reserva, "CANCELADA");
         if (devolucion > 0) {
             movimiento(reserva, "ANULACION_PAGO", "Devolución por cancelación", devolucion, false);
         }
-        reserva.estado = "CANCELADA";
         guardar();
+    }
+
+    /** El huésped no llegó: la reserva termina como No-show y sus noches quedan libres. */
+    @Override
+    public void marcarNoShow(String codigoReserva) {
+        Reserva reserva = reserva(codigoReserva);
+        if (!"CONFIRMADA".equals(reserva.estado)) {
+            throw new TransicionEstadoInvalidaException("Solo una reserva confirmada puede marcarse como no-show.");
+        }
+        if (reserva.entrada.isAfter(LocalDate.now())) {
+            throw new TransicionEstadoInvalidaException("La llegada de " + codigoReserva + " es el "
+                    + reserva.entrada + ": aún no se puede marcar como no-show.");
+        }
+        cambiarEstado(reserva, "NO_SHOW");
+        guardar();
+    }
+
+    /** Reservas que ocupan o retienen alguna noche entre {@code desde} (incluida) y {@code hasta} (excluida). */
+    @Override
+    public List<ReservaDTO> reservasEntre(LocalDate desde, LocalDate hasta) {
+        return reservas.values().stream()
+                .filter(r -> !"CANCELADA".equals(r.estado) && !"NO_SHOW".equals(r.estado))
+                .filter(r -> seSolapan(r.entrada, r.salida, desde, hasta))
+                .sorted(Comparator.comparing((Reserva r) -> r.entrada)).map(this::dto).toList();
     }
 
     @Override
@@ -376,7 +610,7 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         if (apartamento.getEstadoOperativo() != EstadoOperativo.PREPARADO) {
             throw new TransicionEstadoInvalidaException(apartamento.getNombre() + " aún no está preparado.");
         }
-        reserva.estado = "EN_CURSO";
+        cambiarEstado(reserva, "EN_CURSO");
         apartamento.setEstadoOperativo(EstadoOperativo.OCUPADO);
         guardar();
     }
@@ -388,7 +622,7 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         if (!"EN_CURSO".equals(reserva.estado)) {
             throw new TransicionEstadoInvalidaException("Solo se puede hacer check-out de una estancia en curso.");
         }
-        reserva.estado = "FINALIZADA";
+        cambiarEstado(reserva, "FINALIZADA");
         encolarPreparacion(reserva.codigoSuite);
         guardar();
     }
@@ -397,22 +631,26 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
 
     @Override
     public List<SolicitudExternaDTO> colaCanalExterno() {
-        return List.copyOf(colaExterna);
+        List<SolicitudExternaDTO> lista = new ArrayList<>();
+        for (SolicitudExternaDTO s : colaExterna) {
+            lista.add(s);
+        }
+        return lista;
     }
 
+    /**
+     * Atiende la solicitud más antigua. Si no se puede convertir en reserva (choca
+     * con otra, no cabe el grupo, fechas inválidas, aparta-suite inexistente o fuera
+     * de servicio) se rechaza y queda como conflicto de canal: la cola nunca se bloquea.
+     */
     @Override
     public String procesarSiguienteSolicitudExterna() {
-        SolicitudExternaDTO solicitud = colaExterna.peekFirst();
-        if (solicitud == null) {
+        if (colaExterna.estaVacia()) {
             throw new EstructuraVaciaException("No hay solicitudes externas en espera.");
         }
-        String nombreSuite = apartamento(solicitud.codigoApartaSuite()).getNombre();
+        SolicitudExternaDTO solicitud = colaExterna.desencolar();
         String mensaje;
-        if (!estaDisponible(solicitud.codigoApartaSuite(), solicitud.entrada(), solicitud.salida())) {
-            conflictos.add(solicitud.id());
-            mensaje = "Conflicto de canal: " + nombreSuite + " ya estaba reservado. La solicitud "
-                    + solicitud.id() + " quedó registrada como conflicto.";
-        } else {
+        try {
             List<OcupanteDTO> acompanantes = new ArrayList<>();
             for (int i = 2; i <= solicitud.personas(); i++) {
                 acompanantes.add(new OcupanteDTO("Acompañante " + i, null, null));
@@ -423,8 +661,11 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
             Reserva reserva = nuevaReserva(solicitud.codigoApartaSuite(), solicitud.entrada(), solicitud.salida(),
                     titular, acompanantes, "EXTERNA", null);
             mensaje = "Solicitud " + solicitud.id() + " convertida en la reserva " + reserva.codigo + ".";
+        } catch (ReservaSolapadaException | CapacidadExcedidaException | FechasInvalidasException
+                 | TransicionEstadoInvalidaException | IllegalArgumentException e) {
+            conflictos.add(solicitud.id());
+            mensaje = "Conflicto de canal: la solicitud " + solicitud.id() + " fue rechazada. " + e.getMessage();
         }
-        colaExterna.pollFirst(); // sale de la cola solo si se procesó sin errores
         guardar();
         return mensaje;
     }
@@ -475,15 +716,16 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
 
     @Override
     public void terminarPreparacion(String codigoApartaSuite) {
-        LocalDateTime ingreso = null;
+        // El tiempo de preparación corre desde que se despacha la orden, no desde que entra a la cola.
+        LocalDateTime inicio = null;
         for (OrdenPreparacion o : getSistema().getPreparacion().listarEnPreparacion()) {
             if (o.getCodigo().equals(codigoApartaSuite)) {
-                ingreso = o.getFechaCreacion();
+                inicio = o.getHoraInicioPreparacion() != null ? o.getHoraInicioPreparacion() : o.getFechaCreacion();
             }
         }
         super.terminarPreparacion(codigoApartaSuite);
-        if (ingreso != null) {
-            minutosPreparacion.add(Math.max(1, ChronoUnit.MINUTES.between(ingreso, LocalDateTime.now())));
+        if (inicio != null) {
+            minutosPreparacion.add(Math.max(1, ChronoUnit.MINUTES.between(inicio, LocalDateTime.now())));
         }
         guardar();
     }
@@ -534,24 +776,27 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
 
     @Override
     public List<EmpleadoDTO> listarEmpleados() {
-        return empleados.stream().sorted(Comparator.comparing(EmpleadoDTO::documento)).toList();
+        List<EmpleadoDTO> lista = new ArrayList<>();
+        for (EmpleadoDTO e : empleados) { // el árbol se recorre en orden de documento
+            lista.add(e);
+        }
+        return lista;
     }
 
     /** Todo recepcionista nuevo entra al final de la rotación. */
     @Override
     public void registrarEmpleado(EmpleadoDTO empleado) {
-        if (empleados.stream().anyMatch(e -> e.documento().equals(empleado.documento()))) {
+        if (!empleados.insertar(empleado)) { // el árbol no admite dos empleados con el mismo documento
             throw new IllegalArgumentException("Ya existe un empleado con el documento " + empleado.documento() + ".");
         }
-        empleados.add(empleado);
         super.registrarEmpleado(empleado);
         guardar();
     }
 
     /** El modelo guarda solo el nombre; documento y horario salen de la lista de empleados. */
     private EmpleadoDTO empleado(String nombre) {
-        return empleados.stream().filter(e -> e.nombre().equals(nombre)).findFirst()
-                .orElse(new EmpleadoDTO("-", nombre, "-"));
+        EmpleadoDTO encontrado = empleados.existeSi(e -> e.nombre().equals(nombre));
+        return encontrado != null ? encontrado : new EmpleadoDTO("-", nombre, "-");
     }
 
     // ---------- Mapa y reporte ----------
@@ -562,24 +807,30 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         guardar();
     }
 
+    /**
+     * Ocupación, reservas por canal y por estado salen de {@code GestorEstadisticas},
+     * que recorre los apartamentos del árbol y sus reservas. Ingresos, conflictos y
+     * tiempos de preparación se toman de los folios y registros que lleva este conector.
+     */
     @Override
-    public ReporteDTO generarReporte() {
-        List<ApartaSuiteDTO> suites = listarApartaSuites();
-        Map<String, Integer> porCanal = new LinkedHashMap<>();
-        for (String canal : List.of("PORTAL", "DIRECTA", "EXTERNA")) {
-            porCanal.put(canal, (int) reservas.values().stream().filter(r -> r.canal.equals(canal)).count());
+    public ReporteDTO generarReporte(LocalDate desde, LocalDate hasta) {
+        ReporteEstadisticas r = getSistema().getEstadisticas().generar(desde, hasta, temporadasModelo,
+                ConstructorEdificio.RECEPCION);
+        double ingresos = 0;
+        for (Reserva reserva : reservas.values()) {
+            for (MovimientoFolioDTO m : reserva.movimientos) {
+                LocalDate dia = m.fechaHora().toLocalDate();
+                if (!dia.isBefore(desde) && dia.isBefore(hasta)) {
+                    ingresos += switch (m.tipo()) {
+                        case "PAGO" -> m.monto();
+                        case "ANULACION_PAGO" -> -m.monto();
+                        default -> 0;
+                    };
+                }
+            }
         }
-        Map<String, Integer> porEstado = new LinkedHashMap<>();
-        for (String estado : List.of("PREPARADO", "OCUPADO", "PENDIENTE_PREPARACION", "EN_PREPARACION",
-                "FUERA_DE_SERVICIO")) {
-            porEstado.put(estado, (int) suites.stream().filter(s -> s.estadoOperativo().equals(estado)).count());
-        }
-        int ocupados = porEstado.get("OCUPADO");
-        int operativos = suites.size() - porEstado.get("FUERA_DE_SERVICIO");
-        double ingresos = reservas.values().stream().mapToDouble(this::pagado).sum();
         double promedio = minutosPreparacion.stream().mapToLong(Long::longValue).average().orElse(0);
-        return new ReporteDTO(suites.size(), ocupados, operativos == 0 ? 0 : ocupados * 100.0 / operativos,
-                ingresos, porCanal, porEstado, conflictos.size(), promedio);
+        return aReporte(r, desde, hasta, ingresos, conflictos.size(), promedio);
     }
 
     // ---------- Guardado ----------
@@ -615,9 +866,14 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         }
         List<ConexionDTO> cerrados = conexionesEdificio().stream().filter(c -> !c.habilitada()).toList();
         String turno = sistema.getTurnos().estaVacio() ? null : sistema.getTurnos().turnoActual();
+        // Los empleados se guardan en el orden de la rotación de turnos (lista circular).
+        List<EmpleadoDTO> enRotacion = new ArrayList<>();
+        for (String nombre : sistema.getTurnos().listarOrdenTurnos()) {
+            enRotacion.add(empleado(nombre));
+        }
         return new Instantanea(new ArrayList<>(listarApartaSuites()), new ArrayList<>(listarHuespedes()), favoritos,
                 new LinkedHashMap<>(cuentas), new ArrayList<>(reservas.values()), new ArrayList<>(temporadas),
-                new ArrayList<>(empleados), turno, new ArrayList<>(colaExterna), new ArrayList<>(conflictos),
+                enRotacion, turno, new ArrayList<>(colaCanalExterno()), new ArrayList<>(conflictos),
                 pendientes, enCurso, new ArrayList<>(minutosPreparacion), new ArrayList<>(cerrados),
                 consecutivoReserva);
     }
@@ -629,9 +885,12 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         cuentas.clear();
         descripciones.clear();
         reservas.clear();
+        enModelo.clear();
         temporadas.clear();
-        empleados.clear();
-        colaExterna.clear();
+        temporadasModelo = new ListaDoblementeEnlazada<>();
+        empleados = new ArbolBinarioBusqueda<>();
+        colaExterna = new Cola<>();
+        vencimientos = nuevaColaVencimientos();
         conflictos.clear();
         minutosPreparacion.clear();
 
@@ -659,11 +918,23 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         cuentas.putAll(d.cuentas());
         d.reservas().forEach(r -> reservas.put(r.codigo, r));
         consecutivoReserva = d.consecutivoReserva();
-        temporadas.addAll(d.temporadas());
-        reservas.values().forEach(this::completarReservaInicial);
+        for (TemporadaDTO t : d.temporadas()) {
+            temporadas.add(t);
+            temporadasModelo.agregarFinal(aModelo(t));
+        }
+        for (Reserva r : reservas.values()) {
+            if (r.creada == null) {
+                r.creada = LocalDateTime.now();
+            }
+            completarReservaInicial(r);
+            reflejarEnModelo(r);
+            if ("PENDIENTE".equals(r.estado)) {
+                vencimientos.encolar(r);
+            }
+        }
 
         for (EmpleadoDTO e : d.empleados()) {
-            empleados.add(e);
+            empleados.insertar(e);
             super.registrarEmpleado(e);
         }
         if (d.turnoActual() != null) {
@@ -671,7 +942,9 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
                 sistema.getTurnos().avanzarTurno();
             }
         }
-        colaExterna.addAll(d.colaExterna());
+        for (SolicitudExternaDTO solicitud : d.colaExterna()) {
+            colaExterna.encolar(solicitud);
+        }
         conflictos.addAll(d.conflictos());
         minutosPreparacion.addAll(d.minutosPreparacion());
 
@@ -687,6 +960,7 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         for (ConexionDTO c : d.pasillosCerrados()) {
             super.alternarPasillo(c.origen(), c.destino());
         }
+        vencerPendientes(); // lo que venció mientras la aplicación estaba cerrada
     }
 
     /** Las reservas del escenario inicial llegan sin total: se cotizan y se cargan al folio. */
@@ -694,11 +968,12 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         if (r.total >= 0) {
             return;
         }
-        r.total = cotizar(r.codigoSuite, r.entrada, r.salida, r.ocupantes.size()).total();
+        r.total = liquidar(r);
         r.movimientos.addFirst(new MovimientoFolioDTO("CARGO", "Alojamiento · " + r.ocupantes.size() + " personas",
-                r.total, LocalDateTime.now()));
+                r.total, r.creada));
         if ("FINALIZADA".equals(r.estado)) {
-            movimiento(r, "PAGO", "Pago total", r.total, false);
+            // Se pagó al salir: así los ingresos caen en el periodo de la estancia.
+            r.movimientos.add(new MovimientoFolioDTO("PAGO", "Pago total", r.total, r.salida.atTime(11, 0)));
         }
     }
 
@@ -738,10 +1013,6 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         }
     }
 
-    private static boolean bloquea(Reserva r) {
-        return r.estado.equals("PENDIENTE") || r.estado.equals("CONFIRMADA") || r.estado.equals("EN_CURSO");
-    }
-
     private static boolean seSolapan(LocalDate e1, LocalDate s1, LocalDate e2, LocalDate s2) {
         return e1.isBefore(s2) && e2.isBefore(s1);
     }
@@ -774,6 +1045,7 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         return new ReservaDTO(r.codigo, r.documentoTitular, titular == null ? r.documentoTitular : titular.getNombre(),
                 r.codigoSuite, suite == null ? r.codigoSuite : suite.getNombre(), r.entrada, r.salida,
                 r.ocupantes.size(), r.canal, r.estado, r.horaLlegada, r.total,
-                Math.round(r.total * PORCENTAJE_ANTICIPO), pagado(r), "CANCELADA".equals(r.estado) ? 0 : saldo);
+                Math.round(r.total * PORCENTAJE_ANTICIPO), pagado(r), "CANCELADA".equals(r.estado) ? 0 : saldo,
+                "PENDIENTE".equals(r.estado) ? r.vence() : null);
     }
 }

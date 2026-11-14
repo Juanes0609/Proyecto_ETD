@@ -1,6 +1,7 @@
 package gui.integracion.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 
@@ -20,7 +21,9 @@ public record ReservaDTO(
         double total,
         double anticipoRequerido,
         double pagado,
-        double saldo) {
+        double saldo,
+        /** Hasta cuándo se espera el anticipo; {@code null} si la reserva no está pendiente. */
+        LocalDateTime vence) {
 
     public long noches() {
         return ChronoUnit.DAYS.between(entrada, salida);

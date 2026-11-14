@@ -433,25 +433,41 @@ public class ConectorSGAProveedor implements ConectorSGA {
     // ---------- Estadísticas ----------
 
     @Override
-    public ReporteDTO generarReporte() {
+    public ReporteDTO generarReporte(LocalDate desde, LocalDate hasta) {
         asegurarEdificio();
-        LocalDate hoy = LocalDate.now();
-        ReporteEstadisticas r = sistema.getEstadisticas().generar(
-                hoy.withDayOfMonth(1), hoy.withDayOfMonth(1).plusMonths(1), null,
-                ConstructorEdificio.RECEPCION);
+        ReporteEstadisticas r = sistema.getEstadisticas().generar(desde, hasta, null, ConstructorEdificio.RECEPCION);
+        return aReporte(r, desde, hasta, r.getIngresos(), r.getConflictosDeCanal(), r.getTiempoPromedioPreparacion());
+    }
 
-        Map<String, Integer> porCanal = new LinkedHashMap<>();
-        for (modelo.ConteoEstadistica c : r.getReservasPorCanal()) {
-            porCanal.put(c.etiqueta(), (int) c.valor());
+    /** Pasa a la GUI lo que {@code GestorEstadisticas} calculó recorriendo las estructuras. */
+    protected ReporteDTO aReporte(ReporteEstadisticas r, LocalDate desde, LocalDate hasta, double ingresos,
+                                  int conflictos, double minutosPreparacion) {
+        Map<String, Integer> reservasPorEstado = new LinkedHashMap<>();
+        for (modelo.EstadoReserva e : modelo.EstadoReserva.values()) {
+            String nombre = switch (e) {
+                case ENCURSO -> "EN_CURSO";
+                case NOSHOW -> "NO_SHOW";
+                default -> e.name();
+            };
+            reservasPorEstado.put(nombre, (int) ReporteEstadisticas.valorDe(r.getReservasPorEstado(), e.name()));
         }
-        Map<String, Integer> porEstado = new LinkedHashMap<>();
+        Map<String, Integer> suitesPorEstado = new LinkedHashMap<>();
         for (EstadoOperativo e : EstadoOperativo.values()) {
-            porEstado.put(estadoDto(e),
+            suitesPorEstado.put(estadoDto(e),
                     (int) ReporteEstadisticas.valorDe(r.getApartamentosPorEstado(), e.name()));
         }
-        return new ReporteDTO(r.getTotalApartamentos(), r.getOcupadosAhora(),
-                r.getPorcentajeOcupacionActual(), r.getIngresos(), porCanal, porEstado,
-                r.getConflictosDeCanal(), r.getTiempoPromedioPreparacion());
+        return new ReporteDTO(desde, hasta, r.getTotalApartamentos(), r.getOcupadosAhora(),
+                r.getPorcentajeOcupacionActual(), ingresos, conteos(r.getReservasPorCanal()), reservasPorEstado,
+                suitesPorEstado, conteos(r.getOcupacionPorApartamento()), conteos(r.getOcupacionPorTemporada()),
+                conflictos, minutosPreparacion);
+    }
+
+    private static Map<String, Integer> conteos(ListaDoblementeEnlazada<modelo.ConteoEstadistica> lista) {
+        Map<String, Integer> mapa = new LinkedHashMap<>();
+        for (modelo.ConteoEstadistica c : lista) {
+            mapa.put(c.etiqueta(), (int) c.valor());
+        }
+        return mapa;
     }
 
     protected static String estadoDto(EstadoOperativo e) {
