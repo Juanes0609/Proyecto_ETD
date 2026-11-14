@@ -8,7 +8,15 @@ public final class ComparadoresApartamento {
 
     /** Por tarifa por persona/noche de la temporada dada. */
     public static Comparator<Apartamento> porPrecio(TipoTemporada t) {
-        return Comparator.comparingDouble((Apartamento a) -> a.getTarifa(t)).thenComparing(Comparator.naturalOrder());
+        return Comparator.comparingDouble((Apartamento a) -> tarifa(a, t)).thenComparing(Comparator.naturalOrder());
+    }
+
+    private static double tarifa(Apartamento a, TipoTemporada t) {
+        return switch (t) {
+            case BAJA -> a.getTarifaBaja();
+            case MEDIA -> a.getTarifaMedia();
+            case ALTA -> a.getTarifaAlta();
+        };
     }
 
     /** Por tarifa de temporada Baja (base). */
@@ -18,8 +26,8 @@ public final class ComparadoresApartamento {
             Comparator.comparingInt(Apartamento::getCapacidadMaxima).thenComparing(Comparator.naturalOrder());
 
     public static final Comparator<Apartamento> POR_DORMITORIOS =
-            Comparator.comparingInt(Apartamento::getDormitorios).thenComparing(Comparator.naturalOrder());
+            Comparator.comparingInt(Apartamento::getNumeroDormitorios).thenComparing(Comparator.naturalOrder());
 
     public static final Comparator<Apartamento> POR_NUMERO_RESERVAS =
-            Comparator.comparingInt(Apartamento::getNumeroReservas).thenComparing(Comparator.naturalOrder());
+            Comparator.comparingInt(Apartamento::getCantidadReservas).thenComparing(Comparator.naturalOrder());
 }

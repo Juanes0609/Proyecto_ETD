@@ -29,7 +29,7 @@ public class GestorEstadisticas {
      * @param codigoRecepcion   nodo desde el que se hacen los recorridos BFS y DFS
      */
     public ReporteEstadisticas generar(LocalDate desde, LocalDate hasta,
-                                       Iterable<TipoTemporada> temporadas,
+                                       Iterable<Temporada> temporadas,
                                        String codigoRecepcion) {
         if (desde == null || hasta == null || !hasta.isAfter(desde)) {
             throw new IllegalArgumentException("El periodo del reporte no es válido");
@@ -51,7 +51,7 @@ public class GestorEstadisticas {
 
     private void calcularApartamentosYOcupacion(ReporteEstadisticas reporte,
                                                 LocalDate desde, LocalDate hasta,
-                                                Iterable<TipoTemporada> temporadas) {
+                                                Iterable<Temporada> temporadas) {
         int total = 0;
         int ocupados = 0;
         int fueraDeServicio = 0;
@@ -109,9 +109,9 @@ public class GestorEstadisticas {
                 && estado != EstadoReserva.NOSHOW;
     }
 
-    private TipoTemporada tipoDeTemporada(LocalDate noche, Iterable<TipoTemporada> temporadas) {
+    private TipoTemporada tipoDeTemporada(LocalDate noche, Iterable<Temporada> temporadas) {
         if (temporadas != null) {
-            for (TipoTemporada t : temporadas) {
+            for (Temporada t : temporadas) {
                 if (!noche.isBefore(t.getFechaInicio()) && !noche.isAfter(t.getFechaFin())) {
                     return t.getTipoTemporada();
                 }
