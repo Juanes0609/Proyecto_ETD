@@ -9,14 +9,14 @@ public class Conjunto<T> implements Iterable<T> {
     /** @return true si se agregó; false si ya estaba. */
     public boolean agregar(T elemento) {
         if (elemento == null || elementos.contiene(elemento)) return false;
-        elementos.agregarAlFinal(elemento);
+        elementos.agregarFinal(elemento);
         return true;
     }
 
     public boolean eliminar(T elemento) { return elementos.eliminar(elemento); }
     public boolean contiene(T elemento) { return elementos.contiene(elemento); }
-    public int tamanio() { return elementos.tamanio(); }
-    public boolean estaVacio() { return elementos.estaVacia(); }
+    public int tamanio() { return elementos.getTam(); }
+    public boolean estaVacio() { return elementos.estaVacio(); }
 
     public Conjunto<T> union(Conjunto<T> otro) {
         Conjunto<T> r = new Conjunto<>();

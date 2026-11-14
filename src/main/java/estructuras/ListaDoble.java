@@ -3,7 +3,7 @@ package estructuras;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import sga.excepciones.EstructuraVaciaException;
+import excepciones.EstructuraVaciaException;
 
 /** Lista doblemente enlazada genérica, independiente del dominio. */
 public class ListaDoble<T> implements Iterable<T> {

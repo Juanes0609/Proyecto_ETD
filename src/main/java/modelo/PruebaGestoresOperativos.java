@@ -457,8 +457,8 @@ public class PruebaGestoresOperativos {
 
         Temporada alta = new Temporada(LocalDate.of(2026, 12, 1),
                 LocalDate.of(2026, 12, 31), TipoTemporada.ALTA);
-        ListaDoblementeEnlazada<Temporada> temporadas = new ListaDoblementeEnlazada<>();
-        temporadas.agregarFinal(alta);
+        ListaDoblementeEnlazada<TipoTemporada> temporadas = new ListaDoblementeEnlazada<>();
+        temporadas.agregarFinal(TipoTemporada.ALTA);
 
         GestorEstadisticas estadisticas = new GestorEstadisticas(sistema, preparacion, canal, mapa);
         ReporteEstadisticas r = estadisticas.generar(

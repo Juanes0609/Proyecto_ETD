@@ -7,9 +7,9 @@ public class DetalleNoche {
     private int cantidadPersonasPagas;
     private double tarifaPorPersona;
     private double subtotal;
-    private Temporada temporada;
+    private TipoTemporada temporada;
 
-    public DetalleNoche(LocalDate fecha, int cantidadPersonasPagas, double tarifaPorPersona,  double subtotal, Temporada temporada) {
+    public DetalleNoche(LocalDate fecha, int cantidadPersonasPagas, double tarifaPorPersona,  double subtotal, TipoTemporada temporada) {
         this.fecha = fecha;
         this.cantidadPersonasPagas = cantidadPersonasPagas;
         this.tarifaPorPersona = tarifaPorPersona;
@@ -49,11 +49,11 @@ public class DetalleNoche {
         this.subtotal = subtotal;
     }
 
-    public Temporada getTemporada() {
+    public TipoTemporada getTemporada() {
         return temporada;
     }
 
-    public void setTemporada(Temporada temporada) {
+    public void setTemporada(TipoTemporada temporada) {
         this.temporada = temporada;
     }
 }
