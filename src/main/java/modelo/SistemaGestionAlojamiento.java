@@ -47,7 +47,9 @@ public class SistemaGestionAlojamiento {
 
     public Huesped buscarHuesped(String documento) {
         validarTexto(documento, "documento");
-        return huespedes.buscar(new Huesped("", documento, "", LocalDate.of(2000, 1, 1), "", null));
+        // Huésped "llave": solo importa el documento (el árbol compara por documento),
+        // pero el constructor exige un nombre no vacío.
+        return huespedes.buscar(new Huesped("búsqueda", documento, "", LocalDate.of(2000, 1, 1), "", null));
     }
 
     public void actualizarHuesped(Huesped actualizado) {

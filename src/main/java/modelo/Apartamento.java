@@ -2,7 +2,6 @@ package modelo;
 
 import estructuras.ArbolBinarioBusqueda;
 import estructuras.ListaDoblementeEnlazada;
-import gui.integracion.ConectorSGADemo;
 
 import java.util.Objects;
 
