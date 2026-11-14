@@ -4,7 +4,6 @@ import estructuras.ArbolBinarioBusqueda;
 import estructuras.ListaDoblementeEnlazada;
 import gui.integracion.ConectorSGADemo;
 
-import java.util.List;
 import java.util.Objects;
 
 public class Apartamento implements Comparable<Apartamento> {

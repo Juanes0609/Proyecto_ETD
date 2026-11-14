@@ -4,6 +4,8 @@ import excepciones.ReservaSolapadaException;
 import excepciones.TransicionEstadoInvalidaException;
 import excepciones.CapacidadExcedidaException;
 import excepciones.FechasInvalidasException;
+import excepciones.ReservaSolapadaException;
+import estructuras.ColaPrioridad;
 import modelo.EstadoReserva;
 import modelo.Reserva;
 import modelo.Apartamento;
@@ -13,6 +15,7 @@ import modelo.Huesped;
 import modelo.Ocupante;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 
 public class ServicioReservas {
     private static final int HORAS_VENCIMIENTO = 24;
