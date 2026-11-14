@@ -15,6 +15,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,7 +26,11 @@ import java.util.Map;
  */
 public class VistaReportes extends VistaBase {
 
+    /** Periodos que se pueden consultar: las noches ocupadas y los ingresos se calculan sobre el elegido. */
+    private static final List<String> PERIODOS = List.of("Este mes", "Últimos 30 días", "Este año");
+
     private final VBox contenido = new VBox(20);
+    private int periodo;
 
     public VistaReportes(VentanaPrincipalSGA ventana) {
         super(ventana);
@@ -32,37 +38,65 @@ public class VistaReportes extends VistaBase {
 
     @Override
     protected Node construir() {
+        HBox segmentado = FabricaComponentesUI.crearSegmentado(PERIODOS, 0, indice -> {
+            periodo = indice;
+            cargar();
+        });
         ScrollPane scroll = new ScrollPane(contenido);
         scroll.setFitToWidth(true);
         scroll.getStyleClass().add("scroll-transparente");
-        return scroll;
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        return new VBox(16, segmentado, scroll);
     }
 
     @Override
     public void alMostrar() {
-        notificador().ejecutarConManejo(() -> pintar(conector().generarReporte()), null);
+        cargar();
+    }
+
+    private void cargar() {
+        LocalDate hoy = LocalDate.now();
+        LocalDate desde = switch (periodo) {
+            case 1 -> hoy.minusDays(29);
+            case 2 -> hoy.withDayOfYear(1);
+            default -> hoy.withDayOfMonth(1);
+        };
+        LocalDate hasta = switch (periodo) { // el final no se incluye
+            case 1 -> hoy.plusDays(1);
+            case 2 -> hoy.withDayOfYear(1).plusYears(1);
+            default -> hoy.withDayOfMonth(1).plusMonths(1);
+        };
+        notificador().ejecutarConManejo(() -> pintar(conector().generarReporte(desde, hasta)), null);
     }
 
     private void pintar(ReporteDTO r) {
         int reservas = r.reservasPorCanal().values().stream().mapToInt(Integer::intValue).sum();
+        String rango = Formato.rango(r.desde(), r.hasta().minusDays(1));
+
         // Fila de indicadores que reparte el ancho por igual: todas las tarjetas
         // miden lo mismo y, si la ventana es angosta, el detalle se ajusta en 2 líneas.
         HBox indicadores = new HBox(14,
-                indicador("Ocupación", Math.round(r.porcentajeOcupacion()) + " %",
+                indicador("Ocupación ahora", Math.round(r.porcentajeOcupacion()) + " %",
                         r.ocupados() + " de " + r.totalApartaSuites() + " ocupados"),
-                indicador("Ingresos registrados", Formato.moneda(r.ingresos()), "Pagos netos en los folios"),
-                indicador("Reservas", String.valueOf(reservas), null),
+                indicador("Ingresos del periodo", Formato.moneda(r.ingresos()), "Pagos netos · " + rango),
+                indicador("Reservas", String.valueOf(reservas), "Incluye canceladas y no-show"),
                 indicador("Conflictos de canal", String.valueOf(r.conflictosCanal()), "Externas rechazadas"),
                 indicador("Preparación promedio", Math.round(r.minutosPromedioPreparacion()) + " min",
-                        "Desde que entra a la cola"));
+                        "Desde que se despacha"));
         indicadores.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
 
-        HBox graficas = new HBox(20,
-                tarjetaBarras("Reservas por canal", null, r.reservasPorCanal()),
-                tarjetaBarras("Estado de los aparta-suites", null,
-                        r.apartaSuitesPorEstado()));
-        graficas.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
-        contenido.getChildren().setAll(indicadores, graficas);
+        contenido.getChildren().setAll(indicadores,
+                fila(tarjetaBarras("Reservas por canal", "Todas las registradas.", r.reservasPorCanal()),
+                        tarjetaBarras("Reservas por estado", "Incluye canceladas y no-show.", r.reservasPorEstado())),
+                fila(tarjetaBarras("Noches ocupadas por temporada", rango, r.nochesPorTemporada()),
+                        tarjetaBarras("Estado de los aparta-suites", "En este momento.", r.apartaSuitesPorEstado())),
+                tarjetaBarras("Noches ocupadas por aparta-suite", rango, r.nochesPorApartaSuite()));
+    }
+
+    private static HBox fila(VBox izquierda, VBox derecha) {
+        HBox fila = new HBox(20, izquierda, derecha);
+        fila.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
+        return fila;
     }
 
     private static VBox indicador(String etiqueta, String valor, String detalle) {
@@ -104,6 +138,7 @@ public class VistaReportes extends VistaBase {
         VBox tarjeta = FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado(titulo, descripcion), filas);
         tarjeta.setSpacing(16);
         tarjeta.setMinWidth(360);
+        tarjeta.setMaxWidth(Double.MAX_VALUE);
         return tarjeta;
     }
 }
