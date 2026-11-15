@@ -9,7 +9,7 @@ public class Folio {
     private double saldoActual;
     private Reserva reserva;
     private ListaDoblementeEnlazada<MovimientoFolio> listMovimientosFolio;
-    private final Pila<MovimientoFolio> operaciones = new Pila<>();          // NUEVO
+    private final Pila<MovimientoFolio> operaciones = new Pila<>();
     private int consecutivo;
 
     public Folio(double saldoActual, Reserva reserva) {
@@ -20,21 +20,32 @@ public class Folio {
 
 
     public void registrarCargo(String concepto, double valor) {
-        registrar(TipoMovimientoFolio.CARGO, concepto, valor);
+        registrarCargo(concepto, valor, true);
+    }
+
+    public void registrarCargo(String concepto, double valor, boolean deshacible) {
+        registrar(TipoMovimientoFolio.CARGO, concepto, valor, deshacible);
     }
 
     public void registrarPago(String concepto, double valor) {
-        registrar(TipoMovimientoFolio.PAGO, concepto, valor);
+        registrarPago(concepto, valor, true);
     }
 
-    private void registrar(TipoMovimientoFolio tipo, String concepto, double valor) {
+    public void registrarPago(String concepto, double valor, boolean deshacible) {
+        registrar(TipoMovimientoFolio.PAGO, concepto, valor, deshacible);
+    }
+
+
+    private void registrar(TipoMovimientoFolio tipo, String concepto, double valor, boolean deshacible) {
         if (valor <= 0) {
             throw new IllegalArgumentException("El valor del movimiento debe ser mayor que cero");
         }
         MovimientoFolio movimiento = new MovimientoFolio(
                 generarCodigo(), concepto, valor, LocalDateTime.now(), tipo);
         listMovimientosFolio.agregarFinal(movimiento);
-        operaciones.push(movimiento);
+        if (deshacible) {                 // solo se apila lo que recepción puede deshacer
+            operaciones.push(movimiento);
+        }
         aplicarAlSaldo(movimiento);
     }
 
@@ -50,7 +61,8 @@ public class Folio {
                 "Reverso de " + original.getCodigo() + ": " + original.getConcepto(),
                 original.getValor(),
                 LocalDateTime.now(),
-                tipoContrario);
+                tipoContrario,
+                true);
 
         listMovimientosFolio.agregarFinal(reverso);     // el original NO se borra
         aplicarAlSaldo(reverso);
