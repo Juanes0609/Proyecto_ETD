@@ -2,6 +2,7 @@ package modelo;
 
 import java.time.LocalDateTime;
 import estructuras.ListaDoblementeEnlazada;
+import java.time.LocalTime;
 
 public class Reserva implements Comparable<Reserva> {
     private String codigo;
@@ -15,6 +16,7 @@ public class Reserva implements Comparable<Reserva> {
     private Folio folio;
     private Apartamento apartamento;
     private Estancia estancia;
+    private LocalTime horaLlegadaEstimada;
 
 
     public Reserva(String codigo, LocalDateTime fechaCreacion, LocalDateTime horaVencimiento, EstadoReserva estadoReserva, Canal canal, Apartamento apartamento, Huesped titular, Estancia estancia) {
@@ -30,10 +32,11 @@ public class Reserva implements Comparable<Reserva> {
         this.folio = new Folio(0, this);
     }
 
-    // Orden natural: por fecha de entrada
+    // Orden natural: por fecha de entrada, si coinciden, desempata por código
     @Override
     public int compareTo (Reserva otra) {
-        return  this.estancia.getFechaEntrada().compareTo(otra.estancia.getFechaEntrada());
+        int c = this.estancia.getFechaEntrada().compareTo(otra.estancia.getFechaEntrada());   // CAMBIO: se guarda en una variable
+        return c != 0 ? c : this.codigo.compareTo(otra.codigo);
     }
 
 
@@ -117,6 +120,14 @@ public class Reserva implements Comparable<Reserva> {
 
     public void setEstancia(Estancia estancia) {
         this.estancia = estancia;
+    }
+
+    public LocalTime getHoraLlegadaEstimada() {
+        return horaLlegadaEstimada;
+    }
+
+    public void setHoraLlegadaEstimada(LocalTime horaLlegadaEstimada) {
+        this.horaLlegadaEstimada = horaLlegadaEstimada;
     }
 
     @Override

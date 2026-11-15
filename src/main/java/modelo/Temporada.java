@@ -1,7 +1,7 @@
 package modelo;
 
 import java.time.LocalDate;
-import estructuras.ListaDoblementeEnlazada
+import estructuras.ListaDoblementeEnlazada;
 
 public class Temporada {
     private LocalDate fechaInicio;
