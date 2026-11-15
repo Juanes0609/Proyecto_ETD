@@ -1,18 +1,19 @@
 package modelo;
 
 import java.time.LocalDate;
-import java.util.List;
+import estructuras.ListaDoblementeEnlazada
 
 public class Temporada {
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
     private TipoTemporada tipoTemporada;
-    private List<DetalleNoche> listaDetalleNoche;
+    private ListaDoblementeEnlazada<DetalleNoche> listaDetalleNoche;
 
     public Temporada(LocalDate fechaInicio, LocalDate fechaFin, TipoTemporada tipoTemporada) {
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
         this.tipoTemporada = tipoTemporada;
+        listaDetalleNoche = new ListaDoblementeEnlazada<>();
     }
 
     public LocalDate getFechaInicio() {
@@ -39,11 +40,11 @@ public class Temporada {
         this.tipoTemporada = tipoTemporada;
     }
 
-    public List<DetalleNoche> getListaDetalleNoche() {
+    public ListaDoblementeEnlazada<DetalleNoche> getListaDetalleNoche() {
         return listaDetalleNoche;
     }
 
-    public void setListaDetalleNoche(List<DetalleNoche> listaDetalleNoche) {
+    public void setListaDetalleNoche(ListaDoblementeEnlazada<DetalleNoche> listaDetalleNoche) {
         this.listaDetalleNoche = listaDetalleNoche;
     }
 }

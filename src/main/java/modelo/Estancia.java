@@ -2,16 +2,15 @@ package modelo;
 
 import java.time.LocalDate;
 import java.util.Iterator;
-import java.util.List;
+import estructuras.ListaDoblementeEnlazada;
 import java.util.NoSuchElementException;
-
 import excepciones.FechasInvalidasException;
 
 public class Estancia implements Iterable<LocalDate> {
     private LocalDate fechaEntrada;
     private LocalDate fechaSalida;
     private Reserva reserva;
-    private List<DetalleNoche> listDetalleNoche;
+    private ListaDoblementeEnlazada<DetalleNoche> listDetalleNoche;
 
     public Estancia(LocalDate fechaEntrada, LocalDate fechaSalida, Reserva reserva) {
         if (fechaEntrada == null || fechaSalida == null) {
@@ -23,6 +22,7 @@ public class Estancia implements Iterable<LocalDate> {
         this.fechaEntrada = fechaEntrada;
         this.fechaSalida = fechaSalida;
         this.reserva = reserva;
+        this.listDetalleNoche = new ListaDoblementeEnlazada<>();
     }
 
     public LocalDate getFechaEntrada() {
@@ -49,11 +49,11 @@ public class Estancia implements Iterable<LocalDate> {
         this.reserva = reserva;
     }
 
-    public List<DetalleNoche> getListDetalleNoche() {
+    public ListaDoblementeEnlazada<DetalleNoche> getListDetalleNoche() {
         return listDetalleNoche;
     }
 
-    public void setListDetalleNoche(List<DetalleNoche> listDetalleNoche) {
+    public void setListDetalleNoche(ListaDoblementeEnlazada<DetalleNoche> listDetalleNoche) {
         this.listDetalleNoche = listDetalleNoche;
     }
 
