@@ -4,8 +4,8 @@ import excepciones.ReservaSolapadaException;
 import excepciones.TransicionEstadoInvalidaException;
 import excepciones.CapacidadExcedidaException;
 import excepciones.FechasInvalidasException;
-import excepciones.ReservaSolapadaException;
 import estructuras.ColaPrioridad;
+import estructuras.ListaDoblementeEnlazada;
 import modelo.EstadoReserva;
 import modelo.Reserva;
 import modelo.Apartamento;
@@ -21,8 +21,10 @@ public class ServicioReservas {
     private static final int HORAS_VENCIMIENTO = 24;
     private final ServicioFacturacion facturacion;
     private int consecutivo;
-    private final ColaPrioridad<Reserva> vencimientos =
-            new ColaPrioridad<>(Comparator.comparing(Reserva::getHoraVencimiento));
+    // reservas pendientes del portal, ordenadas por hora de vencimiento
+    private final ColaPrioridad<Reserva> vencimientos = new ColaPrioridad<>(Comparator.comparing(Reserva::getHoraVencimiento));
+    // todas las reservas creadas, para poder buscarlas y listarlas
+    private final ListaDoblementeEnlazada<Reserva> reservas = new ListaDoblementeEnlazada<>();
 
 
     public ServicioReservas(ServicioFacturacion facturacion) {
@@ -86,13 +88,14 @@ public class ServicioReservas {
 
 
         // 6. Cargo inicial en el folio: el valor total de la estancia
-        double total = facturacion.liquidar(estancia, reserva.getListOcupantes());
+        double total = facturacion.paraApartamento(apartamento).liquidar(estancia, reserva.getListOcupantes());
         if (total > 0) {
-            reserva.getFolio().registrarCargo("Estancia " + entrada + " a " + salida, total);
+            reserva.getFolio().registrarCargo("Estancia " + entrada + " a " + salida, total, false);
         }
         // 7. Registrar al final, cuando ya nada puede fallar
         apartamento.registrarReserva(reserva);
         titular.agregarReserva(reserva);
+        reservas.agregarFinal(reserva);
         if (canal == Canal.PORTAL) {
             vencimientos.encolar(reserva);
         }
@@ -110,7 +113,7 @@ public class ServicioReservas {
                 .liquidar(reserva.getEstancia(), reserva.getListOcupantes());
         double anticipo = facturacion.calcularAnticipo(total);
         if (anticipo > 0) {
-            reserva.getFolio().registrarPago("Anticipo 30%", anticipo);
+            reserva.getFolio().registrarPago("Anticipo 30%", anticipo, false);
         }
         confirmar(reserva);
     }
@@ -130,6 +133,21 @@ public class ServicioReservas {
             }
         }
         return canceladas;
+    }
+
+    // NUEVO: buscar una reserva por su código (null si no existe)
+    public Reserva buscarReserva(String codigo) {
+        for (Reserva r : reservas) {
+            if (r.getCodigo().equalsIgnoreCase(codigo)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+    // NUEVO: todas las reservas creadas por este servicio
+    public ListaDoblementeEnlazada<Reserva> listarReservas() {
+        return reservas;
     }
 
     // liberar noches significa sacar la reserva del árbol de reservas activas del apartamento
@@ -164,6 +182,7 @@ public class ServicioReservas {
 
     public void finalizar(Reserva reserva) {
         cambiarEstado(reserva, EstadoReserva.FINALIZADA);
+        liberarNoches(reserva);   // una reserva terminada no debe ocupar su fecha en el árbol
     }
 
     public void marcarNoShow(Reserva reserva) {
