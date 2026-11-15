@@ -131,6 +131,22 @@ public class SistemaGestionAlojamiento {
         }
         return resultado;
     }
+    public ListaDoblementeEnlazada<Apartamento> asignarGrupoGrande(
+            LocalDate entrada, LocalDate salida, int personas) {
+        if (entrada == null || salida == null || !salida.isAfter(entrada)) {
+            throw new IllegalArgumentException("El rango de fechas no es válido");
+        }
+
+        ListaDoblementeEnlazada<Apartamento> libres = new ListaDoblementeEnlazada<>();
+        Estancia estancia = new Estancia(entrada, salida, null);
+        for (Apartamento apartamento : apartamentos) {
+            if (apartamento.getEstadoOperativo() == EstadoOperativo.PREPARADO
+                    && !apartamento.tieneSolapamiento(estancia)) {
+                libres.agregarFinal(apartamento);
+            }
+        }
+        return AsignadorGrupos.asignar(libres, personas);
+    }
 
     private void insertarOrdenado(ListaDoblementeEnlazada<Apartamento> lista,
                                   Apartamento nuevo, Comparator<Apartamento> comparador) {
