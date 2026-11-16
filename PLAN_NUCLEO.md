@@ -9,6 +9,25 @@ Orden sugerido: primero la sección 1 (es lo único que falta por completo), lue
 
 ---
 
+## Estado al 16 de noviembre
+
+**Hecho** (commits del 15 de noviembre):
+- 1.1 Grupos grandes: `modelo/AsignadorGrupos` (Yael). La GUI ya lo usa en Reservar → "Repartir el grupo".
+- 1.3 en parte: `ServicioReservas.buscarReserva` y `listarReservas`, `Reserva.horaLlegadaEstimada` (Juan Manuel).
+- 2.2, 2.3, 2.5 y 2.9 en parte (`Folio` con `deshacible` y `MovimientoFolio.esReverso`) (Juan Manuel).
+- 3.1 en parte: `Estancia` y `Temporada` ya no usan `java.util.List` (Juan Manuel).
+
+**Falta** (todo lo demás de este documento):
+- 1.2 empleados en árbol; 1.3 `getReservas()` y temporadas en `SistemaGestionAlojamiento`, `Ocupante.documento`.
+- 2.1, 2.4, 2.6, 2.7, 2.8 y 2.10 completos.
+- 2.9: `GestorEstadisticas` todavía reconoce los reversos con `startsWith("Reverso")`; usar `esReverso()`.
+- 3.1: `java.util.List` sigue en `Huesped`, `Vertice`, `GestorSolicitudesExternas` y `PruebasGestorMapaEdificio`.
+- 3.2, 3.3 y 3.4 completos.
+- Ojo: `SistemaGestionAlojamiento.asignarGrupoGrande` filtra solo apartamentos `PREPARADO` (mismo error
+  que 2.1); la GUI filtra por su cuenta y llama directo a `AsignadorGrupos.asignar`.
+
+---
+
 ## 1. Lo que falta por crear
 
 ### 1.1 Asignación de grupos grandes con backtracking (obligatorio, no existe)
