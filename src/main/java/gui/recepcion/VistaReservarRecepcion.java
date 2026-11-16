@@ -4,6 +4,7 @@ import gui.VentanaPrincipalSGA;
 import gui.componentes.FabricaComponentesUI;
 import gui.componentes.FiltroApartaSuites;
 import gui.componentes.FormularioReserva;
+import gui.componentes.FormularioReservaGrupo;
 import gui.componentes.Formato;
 import gui.componentes.Iconos;
 import gui.componentes.TarjetaApartaSuite;
@@ -72,7 +73,8 @@ public class VistaReservarRecepcion extends VistaBase {
         procesar.setDisable(tablaExterna.getItems().isEmpty());
         actualizarSegmentado();
         if (filtro == null && !suites.isEmpty()) {
-            filtro = new FiltroApartaSuites(suites.stream().mapToInt(ApartaSuiteDTO::capacidad).max().orElse(1),
+            // Hasta la capacidad de todo el complejo: un grupo grande se reparte en varios aparta-suites.
+            filtro = new FiltroApartaSuites(suites.stream().mapToInt(ApartaSuiteDTO::capacidad).sum(),
                     suites.stream().mapToDouble(s -> s.tarifa(temporada)).min().orElse(0),
                     suites.stream().mapToDouble(s -> s.tarifa(temporada)).max().orElse(0), this::pintarSuites);
             ScrollPane scroll = new ScrollPane(grilla);
@@ -124,7 +126,18 @@ public class VistaReservarRecepcion extends VistaBase {
         filtro.setResultado(visibles.size());
         grilla.getChildren().clear();
         grilla.setAlignment(visibles.isEmpty() ? javafx.geometry.Pos.TOP_CENTER : javafx.geometry.Pos.TOP_LEFT);
-        if (visibles.isEmpty()) {
+        int mayorCapacidad = suites.stream().mapToInt(ApartaSuiteDTO::capacidad).max().orElse(0);
+        if (visibles.isEmpty() && filtro.personas() > 1) {
+            // Ningún aparta-suite libre aloja al grupo completo: se ofrece repartirlo en varios.
+            boolean conFechas = filtro.entrada() != null;
+            grilla.getChildren().add(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.GRUPO,
+                    filtro.personas() > mayorCapacidad ? "El grupo no cabe en un solo aparta-suite"
+                            : "Ningún aparta-suite libre aloja al grupo completo",
+                    conFechas ? "Se puede repartir en los aparta-suites libres de esas fechas, usando los menos posibles."
+                            : "Elige las fechas para repartir el grupo en varios aparta-suites.",
+                    conFechas ? FabricaComponentesUI.crearBotonPrimario("Repartir el grupo", this::abrirReservaGrupo)
+                            : null));
+        } else if (visibles.isEmpty()) {
             grilla.getChildren().add(FabricaComponentesUI.crearEstadoVacio(Iconos.Icono.FILTRO,
                     "Ningún aparta-suite coincide", "Ajusta las fechas, el número de personas o el precio.",
                     FabricaComponentesUI.crearBotonSecundario("Limpiar filtros", filtro::limpiar)));
@@ -145,6 +158,26 @@ public class VistaReservarRecepcion extends VistaBase {
             ocultarHoja();
             notificador().mostrarExito("Reserva " + reserva.codigo() + " confirmada a nombre de "
                     + reserva.nombreTitular() + " (" + Formato.rango(reserva.entrada(), reserva.salida()) + ").");
+        }));
+    }
+
+    /** Grupo grande: el núcleo elige la combinación con menos aparta-suites (backtracking). */
+    private void abrirReservaGrupo() {
+        LocalDate entrada = filtro.entrada();
+        LocalDate salida = filtro.salida();
+        int personas = filtro.personas();
+        List<ApartaSuiteDTO> combinacion = new java.util.ArrayList<>();
+        if (!notificador().ejecutarConManejo(() -> combinacion.addAll(
+                conector().asignarGrupo(entrada, salida, personas)), null)) {
+            return;
+        }
+        mostrarHoja("Reserva de grupo", new FormularioReservaGrupo(conector(), combinacion, entrada, salida,
+                personas, "DIRECTA", reservas -> {
+            ocultarHoja();
+            notificador().mostrarExito("Grupo de " + personas + " personas reservado en "
+                    + reservas.stream().map(r -> r.codigoApartaSuite()).collect(java.util.stream.Collectors.joining(", "))
+                    + " a nombre de " + reservas.getFirst().nombreTitular() + ".");
+            pintarSuites();
         }));
     }
 

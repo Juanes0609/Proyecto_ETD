@@ -12,6 +12,8 @@ import gui.integracion.dto.RutaDTO;
 import gui.integracion.dto.SolicitudExternaDTO;
 import modelo.Apartamento;
 import modelo.Arista;
+import modelo.AsignadorGrupos;
+import modelo.Estancia;
 import modelo.ConflictoCanal;
 import modelo.ConstructorEdificio;
 import modelo.EstadoOperativo;
@@ -154,6 +156,28 @@ public class ConectorSGAProveedor implements ConectorSGA {
     @Override
     public void actualizarTarifas(String codigoApartaSuite, double baja, double media, double alta) {
         apartamento(codigoApartaSuite).actualizarTarifas(baja, media, alta);
+    }
+
+    /**
+     * Grupo grande con el backtracking de {@code AsignadorGrupos}. Los candidatos se
+     * filtran aquí y no con {@code SistemaGestionAlojamiento.asignarGrupoGrande},
+     * que hoy solo acepta aparta-suites Preparados (un aparta-suite ocupado hoy
+     * puede estar libre en las fechas del grupo; ver PLAN_NUCLEO 2.1).
+     */
+    @Override
+    public List<ApartaSuiteDTO> asignarGrupo(LocalDate entrada, LocalDate salida, int personas) {
+        Estancia estancia = new Estancia(entrada, salida, null); // valida el rango de fechas
+        ListaDoblementeEnlazada<Apartamento> libres = new ListaDoblementeEnlazada<>();
+        for (Apartamento a : sistema.listarApartamentos()) {
+            if (a.getEstadoOperativo() != EstadoOperativo.FUERASERVICIO && !a.tieneSolapamiento(estancia)) {
+                libres.agregarFinal(a);
+            }
+        }
+        List<ApartaSuiteDTO> combinacion = new ArrayList<>();
+        for (Apartamento a : AsignadorGrupos.asignar(libres, personas)) {
+            combinacion.add(aDto(a));
+        }
+        return combinacion;
     }
 
     protected ApartaSuiteDTO aDto(Apartamento a) {

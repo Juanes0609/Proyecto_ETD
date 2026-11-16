@@ -142,6 +142,30 @@ public interface ConectorSGA {
         throw pendiente("crearReserva");
     }
 
+    /**
+     * Para un grupo que no cabe en un solo aparta-suite: la combinación de
+     * aparta-suites libres en esas fechas que aloja a todos con el menor número
+     * de aparta-suites (backtracking), de mayor a menor capacidad.
+     *
+     * @throws excepciones.CapacidadExcedidaException si ni con todos los libres cabe el grupo
+     */
+    default List<ApartaSuiteDTO> asignarGrupo(LocalDate entrada, LocalDate salida, int personas) {
+        throw pendiente("asignarGrupo");
+    }
+
+    /**
+     * Reserva de grupo: una reserva por aparta-suite, todas a nombre del titular.
+     * Si alguno no se puede reservar, no se crea ninguna.
+     *
+     * @param codigos          aparta-suites del grupo
+     * @param personasPorSuite cuántas personas van en cada uno (mismo orden; el titular cuenta en el primero)
+     */
+    default List<ReservaDTO> crearReservasGrupo(List<String> codigos, List<Integer> personasPorSuite,
+                                                LocalDate entrada, LocalDate salida, HuespedDTO titular,
+                                                String canal, LocalTime horaLlegada) {
+        throw pendiente("crearReservasGrupo");
+    }
+
     default void pagarAnticipo(String codigoReserva) {
         throw pendiente("pagarAnticipo");
     }

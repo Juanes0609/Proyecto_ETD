@@ -101,6 +101,8 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         String codigo, documentoTitular, codigoSuite, canal, estado;
         LocalDate entrada, salida;
         LocalTime horaLlegada;
+        /** Titular mientras la reserva se arma; no se guarda (queda el documento). */
+        transient HuespedDTO titular;
         /** Momento en que se creó: de aquí sale el vencimiento de las pendientes. */
         LocalDateTime creada;
         final List<OcupanteDTO> ocupantes = new ArrayList<>();
@@ -392,12 +394,54 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
     private Reserva nuevaReserva(String codigoApartaSuite, LocalDate entrada, LocalDate salida,
                                  HuespedDTO titular, List<OcupanteDTO> acompanantes,
                                  String canal, LocalTime horaLlegada) {
+        Reserva reserva = prepararReserva(codigoApartaSuite, entrada, salida, titular, true, acompanantes,
+                canal, horaLlegada);
+        registrar(reserva);
+        return reserva;
+    }
+
+    /**
+     * Grupo grande: primero se validan todos los aparta-suites y solo si todos se
+     * pueden reservar se crean las reservas (o todas o ninguna). El titular ocupa
+     * cupo en el primero; en los demás figura como titular sin ocupar cupo.
+     */
+    @Override
+    public List<ReservaDTO> crearReservasGrupo(List<String> codigos, List<Integer> personasPorSuite,
+                                               LocalDate entrada, LocalDate salida, HuespedDTO titular,
+                                               String canal, LocalTime horaLlegada) {
+        if (codigos.isEmpty() || codigos.size() != personasPorSuite.size()) {
+            throw new IllegalArgumentException("Indica cuántas personas van en cada aparta-suite.");
+        }
+        List<Reserva> preparadas = new ArrayList<>();
+        int integrante = 2; // el titular es el integrante 1
+        for (int i = 0; i < codigos.size(); i++) {
+            boolean conTitular = i == 0;
+            int acompanantes = personasPorSuite.get(i) - (conTitular ? 1 : 0);
+            if (acompanantes < 0 || (!conTitular && acompanantes == 0)) {
+                throw new IllegalArgumentException("Cada aparta-suite del grupo debe alojar al menos a una persona.");
+            }
+            List<OcupanteDTO> ocupantes = new ArrayList<>();
+            for (int k = 0; k < acompanantes; k++) {
+                ocupantes.add(new OcupanteDTO("Integrante " + (integrante++) + " del grupo", null, null));
+            }
+            preparadas.add(prepararReserva(codigos.get(i), entrada, salida, titular, conTitular, ocupantes,
+                    canal, horaLlegada));
+        }
+        preparadas.forEach(this::registrar);
+        guardar();
+        return preparadas.stream().map(this::dto).toList();
+    }
+
+    /** Valida y arma la reserva sin registrarla todavía. */
+    private Reserva prepararReserva(String codigoApartaSuite, LocalDate entrada, LocalDate salida,
+                                    HuespedDTO titular, boolean titularOcupa, List<OcupanteDTO> acompanantes,
+                                    String canal, LocalTime horaLlegada) {
         validarFechas(entrada, salida, true);
         ApartaSuiteDTO suite = aDto(apartamento(codigoApartaSuite));
         if (!suite.reservable()) {
             throw new TransicionEstadoInvalidaException(suite.nombre() + " está fuera de servicio.");
         }
-        int personas = 1 + acompanantes.size();
+        int personas = (titularOcupa ? 1 : 0) + acompanantes.size();
         if (personas > suite.capacidad()) {
             throw new CapacidadExcedidaException(suite.nombre() + " admite hasta " + suite.capacidad()
                     + " personas y la reserva tiene " + personas + ".");
@@ -405,12 +449,8 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         if (!estaDisponible(codigoApartaSuite, entrada, salida)) {
             throw new ReservaSolapadaException(suite.nombre() + " ya está reservado en parte de esas fechas.");
         }
-        if (getSistema().buscarHuesped(titular.documento()) == null) {
-            super.registrarHuesped(titular);
-        }
 
         Reserva reserva = new Reserva();
-        reserva.codigo = "R-" + (++consecutivoReserva);
         reserva.documentoTitular = titular.documento();
         reserva.codigoSuite = codigoApartaSuite;
         reserva.entrada = entrada;
@@ -419,16 +459,27 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         reserva.horaLlegada = horaLlegada;
         reserva.creada = LocalDateTime.now();
         reserva.estado = "PORTAL".equals(canal) ? "PENDIENTE" : "CONFIRMADA";
-        reserva.ocupantes.add(new OcupanteDTO(titular.nombre(), titular.documento(), titular.fechaNacimiento()));
+        if (titularOcupa) {
+            reserva.ocupantes.add(new OcupanteDTO(titular.nombre(), titular.documento(), titular.fechaNacimiento()));
+        }
         reserva.ocupantes.addAll(acompanantes);
         reserva.total = liquidar(reserva);
+        reserva.titular = titular;
+        return reserva;
+    }
+
+    /** Le da código, registra al titular si es nuevo y deja la reserva en el sistema y en el modelo. */
+    private void registrar(Reserva reserva) {
+        if (getSistema().buscarHuesped(reserva.titular.documento()) == null) {
+            super.registrarHuesped(reserva.titular);
+        }
+        reserva.codigo = "R-" + (++consecutivoReserva);
         movimiento(reserva, "CARGO", "Alojamiento · " + reserva.ocupantes.size() + " personas", reserva.total, false);
         reservas.put(reserva.codigo, reserva);
         reflejarEnModelo(reserva);
         if ("PENDIENTE".equals(reserva.estado)) {
             vencimientos.encolar(reserva);
         }
-        return reserva;
     }
 
     // ---------- Reservas en el modelo real ----------
@@ -451,6 +502,7 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         for (Ocupante o : ocupantesModelo(r.ocupantes)) {
             par.getListOcupantes().agregarFinal(o);
         }
+        par.setHoraLlegadaEstimada(r.horaLlegada);
         apartamento.registrarReserva(par);
         if (titular != null) {
             titular.agregarReserva(par);
