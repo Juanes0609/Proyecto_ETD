@@ -5,7 +5,6 @@ import modelo.*;
 import estructuras.Arista;
 import estructuras.Vertice;
 
-import estructuras.ListaDoblementeEnlazada;
 
 public class PruebasGestorMapaEdificio {
     private static int pruebasPasadas = 0;

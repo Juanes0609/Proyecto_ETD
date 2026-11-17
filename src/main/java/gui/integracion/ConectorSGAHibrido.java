@@ -33,7 +33,6 @@ import modelo.GestorCanalExterno;
 import modelo.SolicitudExterna;
 import modelo.ComparadoresApartamento;
 import modelo.ConstructorEdificio;
-import modelo.ConteoEstadistica;
 import modelo.DetalleNoche;
 import modelo.EstadoOperativo;
 import modelo.EstadoReserva;
@@ -43,7 +42,6 @@ import modelo.Ocupante;
 import modelo.OrdenPreparacion;
 import modelo.ReporteEstadisticas;
 import modelo.SistemaGestionAlojamiento;
-import modelo.Temporada;
 import modelo.TipoTemporada;
 import servicio.ServicioFacturacion;
 
