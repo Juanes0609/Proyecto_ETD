@@ -10,10 +10,22 @@ public class SolicitudExterna {
     private LocalDate fechaSalida;
     private int cantidadPersonas;
     private String codigoApartamentoSolicitado;
+    /** Datos del huésped que envía la plataforma externa (quedará como titular). */
+    private String nombreHuesped;
+    private String documentoHuesped;
     private Reserva reserva;
     private ConflictoCanal conflictoCanal;
 
     public SolicitudExterna(String codigo, LocalDateTime fechaSolicitud, LocalDate fechaEntrada, LocalDate fechaSalida, int cantidadPersonas,  String codigoApartamentoSolicitado) {
+        this(codigo, fechaSolicitud, fechaEntrada, fechaSalida, cantidadPersonas, codigoApartamentoSolicitado,
+                null, null);
+    }
+
+    public SolicitudExterna(String codigo, LocalDateTime fechaSolicitud, LocalDate fechaEntrada,
+                            LocalDate fechaSalida, int cantidadPersonas, String codigoApartamentoSolicitado,
+                            String nombreHuesped, String documentoHuesped) {
+        this.nombreHuesped = nombreHuesped;
+        this.documentoHuesped = documentoHuesped;
         this.codigo = codigo;
         this.fechaSolicitud = fechaSolicitud;
         this.fechaEntrada = fechaEntrada;
@@ -84,5 +96,21 @@ public class SolicitudExterna {
 
     public void setConflictoCanal(ConflictoCanal conflictoCanal) {
         this.conflictoCanal = conflictoCanal;
+    }
+
+    public String getNombreHuesped() {
+        return nombreHuesped;
+    }
+
+    public void setNombreHuesped(String nombreHuesped) {
+        this.nombreHuesped = nombreHuesped;
+    }
+
+    public String getDocumentoHuesped() {
+        return documentoHuesped;
+    }
+
+    public void setDocumentoHuesped(String documentoHuesped) {
+        this.documentoHuesped = documentoHuesped;
     }
 }

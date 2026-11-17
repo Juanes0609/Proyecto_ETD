@@ -103,6 +103,9 @@ public class PruebaGestoresOperativos {
 
     // ============ CANAL EXTERNO ============
 
+    /** Fechas relativas a hoy: el canal externo rechaza entradas en el pasado. */
+    private static final LocalDate BASE = LocalDate.now().plusDays(30);
+
     private static SolicitudExterna solicitud(String codigo, String apartamento,
                                               LocalDate entrada, LocalDate salida) {
         return new SolicitudExterna(codigo, LocalDateTime.now(),
@@ -115,9 +118,9 @@ public class PruebaGestoresOperativos {
         GestorCanalExterno gestor = new GestorCanalExterno(sistema);
 
         SolicitudExterna s1 = solicitud("S1", "A101",
-                LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 3));
+                BASE.plusDays(1), BASE.plusDays(3));
         SolicitudExterna s2 = solicitud("S2", "A101",
-                LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 12));
+                BASE.plusDays(10), BASE.plusDays(12));
 
         gestor.recibirSolicitud(s1);
         gestor.recibirSolicitud(s2);
@@ -143,12 +146,12 @@ public class PruebaGestoresOperativos {
 
         // Primera solicitud: 1 al 5 de diciembre (se acepta)
         gestor.recibirSolicitud(solicitud("S1", "A101",
-                LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 5)));
+                BASE.plusDays(1), BASE.plusDays(5)));
         gestor.procesarSiguiente();
 
         // Segunda solicitud: 3 al 7 de diciembre, comparte noches (conflicto)
         SolicitudExterna s2 = solicitud("S2", "A101",
-                LocalDate.of(2026, 12, 3), LocalDate.of(2026, 12, 7));
+                BASE.plusDays(3), BASE.plusDays(7));
         gestor.recibirSolicitud(s2);
         ConflictoCanal conflicto = gestor.procesarSiguiente();
 
@@ -162,7 +165,7 @@ public class PruebaGestoresOperativos {
 
         // Salida el 5 y entrada el 5: no comparten noche, NO es conflicto
         gestor.recibirSolicitud(solicitud("S3", "A101",
-                LocalDate.of(2026, 12, 5), LocalDate.of(2026, 12, 8)));
+                BASE.plusDays(5), BASE.plusDays(8)));
         verificar(
                 gestor.procesarSiguiente() == null,
                 "Canal externo: la noche de salida no choca con la siguiente entrada"
@@ -182,35 +185,42 @@ public class PruebaGestoresOperativos {
 
     // ============ TURNOS ============
 
+    private static int documentoRecepcionista = 1000;
+
+    private static Recepcionista recepcionista(String nombre) {
+        documentoRecepcionista++;
+        return new Recepcionista(nombre, String.valueOf(documentoRecepcionista), "300", "R-" + documentoRecepcionista);
+    }
+
     private static void probarTurnosRotacion() {
         GestorTurnos gestor = new GestorTurnos();
-        gestor.agregarRecepcionista("Ana");
-        gestor.agregarRecepcionista("Luis");
-        gestor.agregarRecepcionista("Marta");
+        gestor.agregarRecepcionista(recepcionista("Ana"));
+        gestor.agregarRecepcionista(recepcionista("Luis"));
+        gestor.agregarRecepcionista(recepcionista("Marta"));
 
         verificar(
-                gestor.turnoActual().equals("Ana"),
+                gestor.turnoActual().getNombre().equals("Ana"),
                 "Turnos: inicia con el primer recepcionista"
         );
 
         verificar(
-                gestor.avanzarTurno().equals("Luis"),
+                gestor.avanzarTurno().getNombre().equals("Luis"),
                 "Turnos: avanza al siguiente"
         );
 
         verificar(
-                gestor.avanzarTurno().equals("Marta"),
+                gestor.avanzarTurno().getNombre().equals("Marta"),
                 "Turnos: avanza al tercero"
         );
     }
 
     private static void probarTurnosVuelveAlInicio() {
         GestorTurnos gestor = new GestorTurnos();
-        gestor.agregarRecepcionista("Ana");
-        gestor.agregarRecepcionista("Luis");
+        gestor.agregarRecepcionista(recepcionista("Ana"));
+        gestor.agregarRecepcionista(recepcionista("Luis"));
 
         gestor.avanzarTurno(); // Luis
-        String vuelve = gestor.avanzarTurno(); // debe volver a Ana
+        String vuelve = gestor.avanzarTurno().getNombre(); // debe volver a Ana
 
         verificar(
                 vuelve.equals("Ana"),

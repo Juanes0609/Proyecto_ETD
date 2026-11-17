@@ -1,7 +1,5 @@
 package gui.integracion;
 
-import estructuras.ArbolBinarioBusqueda;
-import estructuras.Cola;
 import estructuras.ColaPrioridad;
 import estructuras.ListaDoblementeEnlazada;
 import estructuras.Pila;
@@ -30,6 +28,9 @@ import gui.integracion.dto.TemporadaDTO;
 import gui.integracion.dto.UsuarioDTO;
 import modelo.Apartamento;
 import modelo.Canal;
+import modelo.ConflictoCanal;
+import modelo.GestorCanalExterno;
+import modelo.SolicitudExterna;
 import modelo.ComparadoresApartamento;
 import modelo.ConstructorEdificio;
 import modelo.ConteoEstadistica;
@@ -78,8 +79,7 @@ import java.util.Optional;
  *   <li>el valor se liquida con {@code ServicioFacturacion} (recursivo, noche por
  *       noche, recorriendo la {@code Estancia} con su iterador);</li>
  *   <li>el canal externo usa la {@code Cola} propia, los vencimientos la
- *       {@code ColaPrioridad}, deshacer la {@code Pila} y los empleados el
- *       {@code ArbolBinarioBusqueda}.</li>
+ *       {@code ColaPrioridad} y deshacer la {@code Pila}.</li>
  * </ul>
  * Lo que se guarda en disco es una copia plana de esos datos (las estructuras
  * propias no son serializables).
@@ -132,13 +132,6 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
     private final Map<String, Reserva> reservas = new LinkedHashMap<>();
     /** Par de cada reserva en el modelo real, por código. */
     private final Map<String, modelo.Reserva> enModelo = new HashMap<>();
-    private final List<TemporadaDTO> temporadas = new ArrayList<>();
-    /** Las mismas temporadas como las entiende {@link ServicioFacturacion}. */
-    private ListaDoblementeEnlazada<Temporada> temporadasModelo = new ListaDoblementeEnlazada<>();
-    /** Empleados por documento, en el árbol binario de búsqueda del proyecto. */
-    private ArbolBinarioBusqueda<EmpleadoDTO> empleados = new ArbolBinarioBusqueda<>();
-    /** Solicitudes del canal externo en orden de llegada (cola FIFO del proyecto). */
-    private Cola<SolicitudExternaDTO> colaExterna = new Cola<>();
     /** Reservas pendientes de anticipo; primero la que vence antes. */
     private ColaPrioridad<Reserva> vencimientos = nuevaColaVencimientos();
     private final List<String> conflictos = new ArrayList<>();
@@ -240,37 +233,17 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
     }
 
     @Override
-    public List<TemporadaDTO> listarTemporadas() {
-        return temporadas.stream().sorted(Comparator.comparing(TemporadaDTO::inicio)).toList();
-    }
-
-    @Override
     public void agregarTemporada(TemporadaDTO temporada) {
         if (!temporada.fin().isAfter(temporada.inicio())) {
             throw new FechasInvalidasException("La fecha final debe ser posterior a la inicial.");
         }
-        boolean cruza = temporadas.stream().anyMatch(t -> !temporada.fin().isBefore(t.inicio())
-                && !temporada.inicio().isAfter(t.fin()));
-        if (cruza) {
-            throw new FechasInvalidasException("La temporada se cruza con otra ya definida.");
-        }
-        temporadas.add(temporada);
-        temporadasModelo.agregarFinal(aModelo(temporada));
+        super.agregarTemporada(temporada);
         guardar();
     }
 
-    private static Temporada aModelo(TemporadaDTO t) {
-        return new Temporada(t.inicio(), t.fin(), TipoTemporada.valueOf(t.tipo()));
-    }
-
-    /** Facturación con las tarifas propias del aparta-suite y las temporadas vigentes. */
+    /** Facturación del sistema con las tarifas propias del aparta-suite. */
     private ServicioFacturacion facturacion(Apartamento a) {
-        return new ServicioFacturacion(temporadasModelo, a.getTarifaBaja(), a.getTarifaMedia(), a.getTarifaAlta());
-    }
-
-    @Override
-    public String temporadaEn(LocalDate fecha) {
-        return new ServicioFacturacion(temporadasModelo, 0, 0, 0).temporadaDe(fecha).name();
+        return getSistema().getFacturacion().paraApartamento(a);
     }
 
     /**
@@ -681,45 +654,52 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
 
     // ---------- Canal externo ----------
 
-    @Override
-    public List<SolicitudExternaDTO> colaCanalExterno() {
-        List<SolicitudExternaDTO> lista = new ArrayList<>();
-        for (SolicitudExternaDTO s : colaExterna) {
-            lista.add(s);
-        }
-        return lista;
-    }
-
     /**
-     * Atiende la solicitud más antigua. Si no se puede convertir en reserva (choca
-     * con otra, no cabe el grupo, fechas inválidas, aparta-suite inexistente o fuera
-     * de servicio) se rechaza y queda como conflicto de canal: la cola nunca se bloquea.
+     * La solicitud más antigua de la {@code Cola} del modelo la procesa
+     * {@code GestorCanalExterno} con {@code ServicioReservas}; si se acepta, la
+     * reserva del modelo se adopta aquí para que aparezca en recepción y en el folio.
      */
     @Override
     public String procesarSiguienteSolicitudExterna() {
-        if (colaExterna.estaVacia()) {
+        GestorCanalExterno canal = getSistema().getCanalExterno();
+        if (canal.estaVacia()) {
             throw new EstructuraVaciaException("No hay solicitudes externas en espera.");
         }
-        SolicitudExternaDTO solicitud = colaExterna.desencolar();
+        SolicitudExterna solicitud = canal.consultarSiguiente();
+        ConflictoCanal conflicto = canal.procesarSiguiente();
         String mensaje;
-        try {
-            List<OcupanteDTO> acompanantes = new ArrayList<>();
-            for (int i = 2; i <= solicitud.personas(); i++) {
-                acompanantes.add(new OcupanteDTO("Acompañante " + i, null, null));
-            }
-            Huesped existente = getSistema().buscarHuesped(solicitud.documentoHuesped());
-            HuespedDTO titular = existente != null ? aDto(existente)
-                    : new HuespedDTO(solicitud.documentoHuesped(), solicitud.nombreHuesped(), null, null, null);
-            Reserva reserva = nuevaReserva(solicitud.codigoApartaSuite(), solicitud.entrada(), solicitud.salida(),
-                    titular, acompanantes, "EXTERNA", null);
-            mensaje = "Solicitud " + solicitud.id() + " convertida en la reserva " + reserva.codigo + ".";
-        } catch (ReservaSolapadaException | CapacidadExcedidaException | FechasInvalidasException
-                 | TransicionEstadoInvalidaException | IllegalArgumentException e) {
-            conflictos.add(solicitud.id());
-            mensaje = "Conflicto de canal: la solicitud " + solicitud.id() + " fue rechazada. " + e.getMessage();
+        if (conflicto != null) {
+            conflictos.add(solicitud.getCodigo());
+            mensaje = "Conflicto de canal: la solicitud " + solicitud.getCodigo() + " fue rechazada. "
+                    + conflicto.getMotivo() + ".";
+        } else {
+            Reserva reserva = adoptar(solicitud.getReserva());
+            mensaje = "Solicitud " + solicitud.getCodigo() + " convertida en la reserva " + reserva.codigo + ".";
         }
         guardar();
         return mensaje;
+    }
+
+    /** Copia guardable de una reserva que ya creó el modelo (queda enlazada a ella, sin duplicarla). */
+    private Reserva adoptar(modelo.Reserva m) {
+        Reserva r = new Reserva();
+        r.codigo = "R-" + (++consecutivoReserva);
+        m.setCodigo(r.codigo); // un solo código en la GUI y en el modelo
+        r.documentoTitular = m.getTitular().getDocumento();
+        r.codigoSuite = m.getApartamento().getCodigo();
+        r.entrada = m.getEstancia().getFechaEntrada();
+        r.salida = m.getEstancia().getFechaSalida();
+        r.canal = "EXTERNA";
+        r.estado = estadoDto(m.getEstadoReserva());
+        r.creada = m.getFechaCreacion();
+        for (Ocupante o : m.getListOcupantes()) {
+            r.ocupantes.add(new OcupanteDTO(o.getNombre(), o.getDocumento(), o.getFechaNacimiento()));
+        }
+        r.total = liquidar(r);
+        movimiento(r, "CARGO", "Alojamiento · " + r.ocupantes.size() + " personas", r.total, false);
+        reservas.put(r.codigo, r);
+        enModelo.put(r.codigo, m);
+        return r;
     }
 
     // ---------- Folio ----------
@@ -797,25 +777,11 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
                 .findFirst();
     }
 
-    // ---------- Turnos (lista circular del modelo + datos del empleado) ----------
-
-    @Override
-    public EmpleadoDTO turnoActual() {
-        return empleado(getSistema().getTurnos().turnoActual());
-    }
-
-    @Override
-    public List<EmpleadoDTO> ordenTurnos() {
-        List<EmpleadoDTO> orden = new ArrayList<>();
-        for (String nombre : getSistema().getTurnos().listarOrdenTurnos()) {
-            orden.add(empleado(nombre));
-        }
-        return orden;
-    }
+    // ---------- Turnos y empleados (árbol y lista circular del modelo + guardado) ----------
 
     @Override
     public EmpleadoDTO avanzarTurno() {
-        EmpleadoDTO siguiente = empleado(getSistema().getTurnos().avanzarTurno());
+        EmpleadoDTO siguiente = super.avanzarTurno();
         guardar();
         return siguiente;
     }
@@ -827,28 +793,9 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
     }
 
     @Override
-    public List<EmpleadoDTO> listarEmpleados() {
-        List<EmpleadoDTO> lista = new ArrayList<>();
-        for (EmpleadoDTO e : empleados) { // el árbol se recorre en orden de documento
-            lista.add(e);
-        }
-        return lista;
-    }
-
-    /** Todo recepcionista nuevo entra al final de la rotación. */
-    @Override
     public void registrarEmpleado(EmpleadoDTO empleado) {
-        if (!empleados.insertar(empleado)) { // el árbol no admite dos empleados con el mismo documento
-            throw new IllegalArgumentException("Ya existe un empleado con el documento " + empleado.documento() + ".");
-        }
         super.registrarEmpleado(empleado);
         guardar();
-    }
-
-    /** El modelo guarda solo el nombre; documento y horario salen de la lista de empleados. */
-    private EmpleadoDTO empleado(String nombre) {
-        EmpleadoDTO encontrado = empleados.existeSi(e -> e.nombre().equals(nombre));
-        return encontrado != null ? encontrado : new EmpleadoDTO("-", nombre, "-");
     }
 
     // ---------- Mapa y reporte ----------
@@ -866,7 +813,7 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
      */
     @Override
     public ReporteDTO generarReporte(LocalDate desde, LocalDate hasta) {
-        ReporteEstadisticas r = getSistema().getEstadisticas().generar(desde, hasta, temporadasModelo,
+        ReporteEstadisticas r = getSistema().getEstadisticas().generar(desde, hasta, getSistema().listarTemporadas(),
                 ConstructorEdificio.RECEPCION);
         double ingresos = 0;
         for (Reserva reserva : reservas.values()) {
@@ -917,14 +864,11 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
             enCurso.add(new Orden(o.getCodigo(), o.getFechaCreacion()));
         }
         List<ConexionDTO> cerrados = conexionesEdificio().stream().filter(c -> !c.habilitada()).toList();
-        String turno = sistema.getTurnos().estaVacio() ? null : sistema.getTurnos().turnoActual();
-        // Los empleados se guardan en el orden de la rotación de turnos (lista circular).
-        List<EmpleadoDTO> enRotacion = new ArrayList<>();
-        for (String nombre : sistema.getTurnos().listarOrdenTurnos()) {
-            enRotacion.add(empleado(nombre));
-        }
+        // Se guarda el documento de quien tiene el turno y los empleados en el orden de la rotación.
+        String turno = sistema.getTurnos().estaVacio() ? null : sistema.getTurnos().turnoActual().getDocumento();
+        List<EmpleadoDTO> enRotacion = ordenTurnos();
         return new Instantanea(new ArrayList<>(listarApartaSuites()), new ArrayList<>(listarHuespedes()), favoritos,
-                new LinkedHashMap<>(cuentas), new ArrayList<>(reservas.values()), new ArrayList<>(temporadas),
+                new LinkedHashMap<>(cuentas), new ArrayList<>(reservas.values()), new ArrayList<>(listarTemporadas()),
                 enRotacion, turno, new ArrayList<>(colaCanalExterno()), new ArrayList<>(conflictos),
                 pendientes, enCurso, new ArrayList<>(minutosPreparacion), new ArrayList<>(cerrados),
                 consecutivoReserva);
@@ -938,10 +882,6 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         descripciones.clear();
         reservas.clear();
         enModelo.clear();
-        temporadas.clear();
-        temporadasModelo = new ListaDoblementeEnlazada<>();
-        empleados = new ArbolBinarioBusqueda<>();
-        colaExterna = new Cola<>();
         vencimientos = nuevaColaVencimientos();
         conflictos.clear();
         minutosPreparacion.clear();
@@ -971,8 +911,7 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         d.reservas().forEach(r -> reservas.put(r.codigo, r));
         consecutivoReserva = d.consecutivoReserva();
         for (TemporadaDTO t : d.temporadas()) {
-            temporadas.add(t);
-            temporadasModelo.agregarFinal(aModelo(t));
+            super.agregarTemporada(t);
         }
         for (Reserva r : reservas.values()) {
             if (r.creada == null) {
@@ -986,16 +925,18 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
         }
 
         for (EmpleadoDTO e : d.empleados()) {
-            empleados.insertar(e);
             super.registrarEmpleado(e);
         }
         if (d.turnoActual() != null) {
-            for (int i = 0; i < empleados.size() && !d.turnoActual().equals(sistema.getTurnos().turnoActual()); i++) {
+            int cantidad = sistema.getTurnos().cantidadRecepcionistas();
+            for (int i = 0; i < cantidad
+                    && !d.turnoActual().equals(sistema.getTurnos().turnoActual().getDocumento()); i++) {
                 sistema.getTurnos().avanzarTurno();
             }
         }
-        for (SolicitudExternaDTO solicitud : d.colaExterna()) {
-            colaExterna.encolar(solicitud);
+        for (SolicitudExternaDTO s : d.colaExterna()) {
+            sistema.getCanalExterno().recibirSolicitud(new SolicitudExterna(s.id(), s.recepcion(), s.entrada(),
+                    s.salida(), s.personas(), s.codigoApartaSuite(), s.nombreHuesped(), s.documentoHuesped()));
         }
         conflictos.addAll(d.conflictos());
         minutosPreparacion.addAll(d.minutosPreparacion());

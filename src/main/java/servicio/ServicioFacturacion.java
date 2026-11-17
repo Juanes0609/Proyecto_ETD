@@ -65,7 +65,9 @@ public class ServicioFacturacion {
     public int personasQuePagan(Iterable<Ocupante> ocupantes, LocalDate noche) {
         int pagan = 0;
         for (Ocupante o : ocupantes) {
-            int edad = Period.between(o.getFechaNacimiento(), noche).getYears();
+            // Sin fecha de nacimiento conocida se cobra como adulto.
+            int edad = o.getFechaNacimiento() == null ? EDAD_MINIMA_PAGO
+                    : Period.between(o.getFechaNacimiento(), noche).getYears();
         if (edad >= EDAD_MINIMA_PAGO) {
             pagan ++;
 

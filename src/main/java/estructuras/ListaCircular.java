@@ -55,33 +55,33 @@ public class ListaCircular<T> implements Iterable<T> {
         return inicio.getDato();
     }
 
-    // Consultar quién tiene el turno actual
+    // Consultar el elemento en el que está el cursor
     public T getActual() {
         if (estaVacia()) {
             throw new EstructuraVaciaException(
-                    "No hay recepcionistas registrados"
+                    "La lista circular está vacía"
             );
         }
 
         return actual.getDato();
     }
 
-    // Pasar al siguiente turno
-    public void avanzarTurno() {
+    // Mover el cursor al siguiente elemento (después del último vuelve al primero)
+    public void avanzar() {
         if (estaVacia()) {
             throw new EstructuraVaciaException(
-                    "No hay recepcionistas registrados"
+                    "La lista circular está vacía"
             );
         }
 
         actual = actual.getSiguiente();
     }
 
-    // Volver al primer elemento
-    public void reiniciarTurno() {
+    // Volver el cursor al primer elemento
+    public void reiniciar() {
         if (estaVacia()) {
             throw new EstructuraVaciaException(
-                    "No hay recepcionistas registrados"
+                    "La lista circular está vacía"
             );
         }
 

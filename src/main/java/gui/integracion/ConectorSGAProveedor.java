@@ -10,6 +10,7 @@ import gui.integracion.dto.OrdenPreparacionDTO;
 import gui.integracion.dto.ReporteDTO;
 import gui.integracion.dto.RutaDTO;
 import gui.integracion.dto.SolicitudExternaDTO;
+import gui.integracion.dto.TemporadaDTO;
 import modelo.Apartamento;
 import modelo.Arista;
 import modelo.AsignadorGrupos;
@@ -20,6 +21,9 @@ import modelo.EstadoOperativo;
 import modelo.Huesped;
 import modelo.NodoEdificio;
 import modelo.OrdenPreparacion;
+import modelo.Recepcionista;
+import modelo.Temporada;
+import modelo.TipoTemporada;
 import modelo.ReporteEstadisticas;
 import modelo.SistemaGestionAlojamiento;
 import modelo.SolicitudExterna;
@@ -423,7 +427,9 @@ public class ConectorSGAProveedor implements ConectorSGA {
     public List<SolicitudExternaDTO> colaCanalExterno() {
         List<SolicitudExternaDTO> lista = new ArrayList<>();
         for (SolicitudExterna s : sistema.getCanalExterno().listarPendientes()) {
-            lista.add(new SolicitudExternaDTO(s.getCodigo(), "Plataforma externa", "-",
+            lista.add(new SolicitudExternaDTO(s.getCodigo(),
+                    s.getNombreHuesped() == null ? "Plataforma externa" : s.getNombreHuesped(),
+                    s.getDocumentoHuesped() == null ? "-" : s.getDocumentoHuesped(),
                     s.getCodigoApartamentoSolicitado(), s.getFechaEntrada(), s.getFechaSalida(),
                     s.getCantidadPersonas(), s.getFechaSolicitud()));
         }
@@ -440,27 +446,52 @@ public class ConectorSGAProveedor implements ConectorSGA {
                 : "Solicitud " + codigo + " rechazada. " + conflicto.getMotivo();
     }
 
-    // ---------- Turnos ----------
+    // ---------- Temporadas ----------
 
     @Override
-    public EmpleadoDTO turnoActual() {
-        return new EmpleadoDTO("-", sistema.getTurnos().turnoActual(), "Turno actual");
+    public List<TemporadaDTO> listarTemporadas() {
+        List<TemporadaDTO> lista = new ArrayList<>();
+        for (Temporada t : sistema.listarTemporadas()) {
+            lista.add(new TemporadaDTO(t.getTipoTemporada().name(), t.getFechaInicio(), t.getFechaFin()));
+        }
+        lista.sort(java.util.Comparator.comparing(TemporadaDTO::inicio));
+        return lista;
     }
 
-    /** El modelo guarda solo nombres: el "turno" del DTO es la posición en la rotación. */
+    /** El sistema valida que no se cruce con otra temporada. */
+    @Override
+    public void agregarTemporada(TemporadaDTO temporada) {
+        sistema.agregarTemporada(new Temporada(temporada.inicio(), temporada.fin(),
+                TipoTemporada.valueOf(temporada.tipo())));
+    }
+
+    /** Las noches que no caen en ninguna temporada definida son BAJA. */
+    @Override
+    public String temporadaEn(LocalDate fecha) {
+        return sistema.temporadaDe(fecha).name();
+    }
+
+    // ---------- Empleados y turnos ----------
+
+    /** Turno vigente: el recepcionista donde está el cursor de la lista circular. */
+    @Override
+    public EmpleadoDTO turnoActual() {
+        return aDto(sistema.getTurnos().turnoActual());
+    }
+
+    /** Una vuelta de la rotación, empezando por el primero. */
     @Override
     public List<EmpleadoDTO> ordenTurnos() {
         List<EmpleadoDTO> orden = new ArrayList<>();
-        int posicion = 1;
-        for (String nombre : sistema.getTurnos().listarOrdenTurnos()) {
-            orden.add(new EmpleadoDTO("-", nombre, "Turno " + posicion++));
+        for (Recepcionista r : sistema.getTurnos().listarOrdenTurnos()) {
+            orden.add(aDto(r));
         }
         return orden;
     }
 
     @Override
     public EmpleadoDTO avanzarTurno() {
-        return new EmpleadoDTO("-", sistema.getTurnos().avanzarTurno(), "Turno actual");
+        return aDto(sistema.getTurnos().avanzarTurno());
     }
 
     @Override
@@ -468,9 +499,25 @@ public class ConectorSGAProveedor implements ConectorSGA {
         sistema.getTurnos().reiniciarTurno();
     }
 
+    /** Empleados en orden de documento (recorrido in-orden del árbol de empleados). */
+    @Override
+    public List<EmpleadoDTO> listarEmpleados() {
+        List<EmpleadoDTO> lista = new ArrayList<>();
+        for (Recepcionista r : sistema.listarEmpleados()) {
+            lista.add(aDto(r));
+        }
+        return lista;
+    }
+
+    /** Lo guarda en el árbol de empleados y lo pone al final de la rotación. */
     @Override
     public void registrarEmpleado(EmpleadoDTO empleado) {
-        sistema.getTurnos().agregarRecepcionista(empleado.nombre());
+        sistema.registrarEmpleado(new Recepcionista(empleado.nombre(), empleado.documento(), null, null,
+                empleado.turno()));
+    }
+
+    protected EmpleadoDTO aDto(Recepcionista r) {
+        return new EmpleadoDTO(r.getDocumento(), r.getNombre(), r.getHorario() == null ? "-" : r.getHorario());
     }
 
     // ---------- Estadísticas ----------

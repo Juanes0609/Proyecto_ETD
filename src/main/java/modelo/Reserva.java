@@ -122,6 +122,14 @@ public class Reserva implements Comparable<Reserva> {
         this.estancia = estancia;
     }
 
+    public Huesped getTitular() {
+        return titular;
+    }
+
+    public void setTitular(Huesped titular) {
+        this.titular = titular;
+    }
+
     public LocalTime getHoraLlegadaEstimada() {
         return horaLlegadaEstimada;
     }

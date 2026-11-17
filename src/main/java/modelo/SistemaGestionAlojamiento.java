@@ -2,17 +2,30 @@ package modelo;
 
 import estructuras.ArbolBinarioBusqueda;
 import estructuras.ListaDoblementeEnlazada;
+import excepciones.FechasInvalidasException;
+import excepciones.RegistroDuplicadoException;
+import excepciones.RegistroNoEncontradoException;
+import servicio.ServicioFacturacion;
+import servicio.ServicioReservas;
 
 import java.time.LocalDate;
 import java.util.Comparator;
 
 /**
- * Catálogo principal del SGA para la gestión de huéspedes y apartamentos.
- * Mantiene los registros indexados por sus claves naturales.
+ * Catálogo principal del SGA. Huéspedes, apartamentos y empleados viven en
+ * árboles binarios de búsqueda indexados por su clave natural (documento o
+ * código), así que buscarlos es O(altura del árbol). También reúne las
+ * temporadas, las reservas y los gestores operativos.
  */
 public class SistemaGestionAlojamiento {
     private final ArbolBinarioBusqueda<Huesped> huespedes;
     private final ArbolBinarioBusqueda<Apartamento> apartamentos;
+    private final ArbolBinarioBusqueda<Recepcionista> empleados;
+
+    /** Temporadas definidas; las noches que no caen en ninguna son BAJA (temporada base). */
+    private final ListaDoblementeEnlazada<Temporada> temporadas;
+    private final ServicioFacturacion facturacion;
+    private final ServicioReservas reservas;
 
     // Gestores operativos (grafo, colas y lista circular)
     private final GestorMapaEdificio mapa;
@@ -24,6 +37,11 @@ public class SistemaGestionAlojamiento {
     public SistemaGestionAlojamiento() {
         huespedes = new ArbolBinarioBusqueda<>();
         apartamentos = new ArbolBinarioBusqueda<>();
+        empleados = new ArbolBinarioBusqueda<>();
+        temporadas = new ListaDoblementeEnlazada<>();
+        // La facturación lee la lista viva de temporadas: las nuevas se aplican de inmediato.
+        facturacion = new ServicioFacturacion(temporadas, 0, 0, 0);
+        reservas = new ServicioReservas(facturacion);
         mapa = new GestorMapaEdificio();
         preparacion = new GestorPreparacion(this);
         canalExterno = new GestorCanalExterno(this);
@@ -36,11 +54,77 @@ public class SistemaGestionAlojamiento {
     public GestorCanalExterno getCanalExterno() { return canalExterno; }
     public GestorTurnos getTurnos() { return turnos; }
     public GestorEstadisticas getEstadisticas() { return estadisticas; }
+    public ServicioReservas getReservas() { return reservas; }
+    public ServicioFacturacion getFacturacion() { return facturacion; }
+
+    // ---------- Temporadas ----------
+
+    /**
+     * Agrega una temporada. Las fechas son inclusivas y no puede cruzarse con
+     * otra ya definida.
+     */
+    public void agregarTemporada(Temporada temporada) {
+        if (temporada == null || temporada.getFechaInicio() == null || temporada.getFechaFin() == null
+                || temporada.getTipoTemporada() == null) {
+            throw new IllegalArgumentException("La temporada necesita tipo, inicio y fin");
+        }
+        if (temporada.getFechaFin().isBefore(temporada.getFechaInicio())) {
+            throw new FechasInvalidasException("La fecha final de la temporada es anterior a la inicial");
+        }
+        for (Temporada t : temporadas) {
+            boolean cruza = !temporada.getFechaFin().isBefore(t.getFechaInicio())
+                    && !temporada.getFechaInicio().isAfter(t.getFechaFin());
+            if (cruza) {
+                throw new FechasInvalidasException("La temporada se cruza con otra ya definida ("
+                        + t.getFechaInicio() + " a " + t.getFechaFin() + ")");
+            }
+        }
+        temporadas.agregarFinal(temporada);
+    }
+
+    public ListaDoblementeEnlazada<Temporada> listarTemporadas() {
+        return temporadas;
+    }
+
+    public void limpiarTemporadas() {
+        temporadas.limpiar();
+    }
+
+    /** Tipo de temporada de una noche (BAJA si no cae en ninguna definida). */
+    public TipoTemporada temporadaDe(LocalDate noche) {
+        return facturacion.temporadaDe(noche);
+    }
+
+    // ---------- Empleados ----------
+
+    /** Registra al recepcionista en el árbol y lo agrega al final de la rotación de turnos. */
+    public void registrarEmpleado(Recepcionista empleado) {
+        if (empleado == null) throw new IllegalArgumentException("El empleado es obligatorio");
+        if (buscarEmpleado(empleado.getDocumento()) != null) {
+            throw new RegistroDuplicadoException("Ya existe un empleado con documento " + empleado.getDocumento());
+        }
+        empleados.insertar(empleado);
+        turnos.agregarRecepcionista(empleado);
+    }
+
+    public Recepcionista buscarEmpleado(String documento) {
+        validarTexto(documento, "documento");
+        return empleados.buscar(new Recepcionista("búsqueda", documento, "", ""));
+    }
+
+    /** Empleados ordenados por documento (recorrido in-orden del árbol). */
+    public ListaDoblementeEnlazada<Recepcionista> listarEmpleados() {
+        ListaDoblementeEnlazada<Recepcionista> lista = new ListaDoblementeEnlazada<>();
+        empleados.recorridoInOrden(lista::agregarFinal);
+        return lista;
+    }
+
+    // ---------- Huéspedes ----------
 
     public void registrarHuesped(Huesped huesped) {
         if (huesped == null) throw new IllegalArgumentException("El huésped es obligatorio");
         if (buscarHuesped(huesped.getDocumento()) != null) {
-            throw new IllegalArgumentException("Ya existe un huésped con documento " + huesped.getDocumento());
+            throw new RegistroDuplicadoException("Ya existe un huésped con documento " + huesped.getDocumento());
         }
         huespedes.insertar(huesped);
     }
@@ -55,7 +139,7 @@ public class SistemaGestionAlojamiento {
     public void actualizarHuesped(Huesped actualizado) {
         if (actualizado == null) throw new IllegalArgumentException("El huésped es obligatorio");
         Huesped existente = buscarHuesped(actualizado.getDocumento());
-        if (existente == null) throw new IllegalArgumentException("No existe el huésped " + actualizado.getDocumento());
+        if (existente == null) throw new RegistroNoEncontradoException("No existe el huésped " + actualizado.getDocumento());
         huespedes.eliminar(existente);
         huespedes.insertar(actualizado);
     }
@@ -73,10 +157,12 @@ public class SistemaGestionAlojamiento {
         return lista;
     }
 
+    // ---------- Apartamentos ----------
+
     public void registrarApartamento(Apartamento apartamento) {
         if (apartamento == null) throw new IllegalArgumentException("El apartamento es obligatorio");
         if (buscarApartamento(apartamento.getCodigo()) != null) {
-            throw new IllegalArgumentException("Ya existe un apartamento con código " + apartamento.getCodigo());
+            throw new RegistroDuplicadoException("Ya existe un apartamento con código " + apartamento.getCodigo());
         }
         if (apartamento.getCapacidadMaxima() <= 0) {
             throw new IllegalArgumentException("La capacidad máxima debe ser mayor que cero");
@@ -93,7 +179,7 @@ public class SistemaGestionAlojamiento {
     public void actualizarApartamento(Apartamento actualizado) {
         if (actualizado == null) throw new IllegalArgumentException("El apartamento es obligatorio");
         Apartamento existente = buscarApartamento(actualizado.getCodigo());
-        if (existente == null) throw new IllegalArgumentException("No existe el apartamento " + actualizado.getCodigo());
+        if (existente == null) throw new RegistroNoEncontradoException("No existe el apartamento " + actualizado.getCodigo());
         if (actualizado.getCapacidadMaxima() <= 0) {
             throw new IllegalArgumentException("La capacidad máxima debe ser mayor que cero");
         }
@@ -150,24 +236,14 @@ public class SistemaGestionAlojamiento {
         return AsignadorGrupos.asignar(libres, personas);
     }
 
+    /** Sin comparador queda en orden de código; con él, ordenada por ese criterio. */
     private void insertarOrdenado(ListaDoblementeEnlazada<Apartamento> lista,
                                   Apartamento nuevo, Comparator<Apartamento> comparador) {
-        if (comparador == null || lista.estaVacio()) {
+        if (comparador == null) {
             lista.agregarFinal(nuevo);
-            return;
+        } else {
+            lista.insertarOrdenado(nuevo, comparador);
         }
-        ListaDoblementeEnlazada<Apartamento> auxiliar = new ListaDoblementeEnlazada<>();
-        boolean insertado = false;
-        for (Apartamento actual : lista) {
-            if (!insertado && comparador.compare(nuevo, actual) < 0) {
-                auxiliar.agregarFinal(nuevo);
-                insertado = true;
-            }
-            auxiliar.agregarFinal(actual);
-        }
-        if (!insertado) auxiliar.agregarFinal(nuevo);
-        while (!lista.estaVacio()) lista.eliminarInicio();
-        for (Apartamento apartamento : auxiliar) lista.agregarFinal(apartamento);
     }
 
     private void validarTexto(String valor, String campo) {
@@ -178,5 +254,6 @@ public class SistemaGestionAlojamiento {
 
     public int cantidadHuespedes() { return huespedes.size(); }
     public int cantidadApartamentos() { return apartamentos.size(); }
+    public int cantidadEmpleados() { return empleados.size(); }
 }
 

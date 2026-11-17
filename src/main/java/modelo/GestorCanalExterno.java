@@ -2,7 +2,9 @@ package modelo;
 
 import estructuras.Cola;
 import estructuras.ListaDoblementeEnlazada;
+import excepciones.CapacidadExcedidaException;
 import excepciones.FechasInvalidasException;
+import excepciones.ReservaSolapadaException;
 
 import java.time.LocalDateTime;
 
@@ -11,7 +13,6 @@ public class GestorCanalExterno {
     private final Cola<SolicitudExterna> cola;
     private final ListaDoblementeEnlazada<Reserva> aceptadas;
     private final ListaDoblementeEnlazada<ConflictoCanal> conflictos;
-    private int consecutivoReserva;
     private int consecutivoConflicto;
 
     public GestorCanalExterno(SistemaGestionAlojamiento sistema) {
@@ -40,7 +41,10 @@ public class GestorCanalExterno {
     }
 
     /**
-     * Procesa UNA solicitud: la primera que llegó.
+     * Procesa UNA solicitud: la primera que llegó. La reserva se crea con
+     * {@code ServicioReservas} (las mismas reglas que los demás canales: fechas,
+     * capacidad, solapamiento, cargo inicial en el folio). Si alguna regla falla,
+     * la solicitud se rechaza y queda registrada como conflicto de canal.
      *
      * @return null si la solicitud fue aceptada; el {@link ConflictoCanal}
      *         registrado si fue rechazada.
@@ -51,52 +55,52 @@ public class GestorCanalExterno {
 
         Apartamento apartamento = sistema.buscarApartamento(
                 solicitud.getCodigoApartamentoSolicitado());
-
         if (apartamento == null) {
             return registrarConflicto(solicitud,
-                    "El apartamento " + solicitud.getCodigoApartamentoSolicitado()
-                            + " no existe");
+                    "El apartamento " + solicitud.getCodigoApartamentoSolicitado() + " no existe");
         }
-
-        if (solicitud.getCantidadPersonas() > apartamento.getCapacidadMaxima()) {
+        if (apartamento.getEstadoOperativo() == EstadoOperativo.FUERASERVICIO) {
             return registrarConflicto(solicitud,
-                    "El apartamento " + apartamento.getCodigo() + " admite máximo "
-                            + apartamento.getCapacidadMaxima() + " personas");
+                    "El apartamento " + apartamento.getCodigo() + " está fuera de servicio");
+        }
+        if (solicitud.getCantidadPersonas() <= 0) {
+            return registrarConflicto(solicitud, "La solicitud no indica cuántas personas llegan");
         }
 
-        Estancia estancia;
+        Huesped titular = titularDe(solicitud);
+        ListaDoblementeEnlazada<Ocupante> ocupantes = new ListaDoblementeEnlazada<>();
+        // La plataforma no envía fechas de nacimiento: sin fecha se cobra como adulto.
+        ocupantes.agregarFinal(new Ocupante(titular.getNombre(), titular.getDocumento(),
+                titular.getFechaNacimiento()));
+        for (int i = 2; i <= solicitud.getCantidadPersonas(); i++) {
+            ocupantes.agregarFinal(new Ocupante("Acompañante " + i, null));
+        }
+
         try {
-            estancia = new Estancia(solicitud.getFechaEntrada(),
-                    solicitud.getFechaSalida(), null);
-        } catch (FechasInvalidasException e) {
+            Reserva reserva = sistema.getReservas().crearReserva(Canal.EXTERNA, apartamento, titular,
+                    solicitud.getFechaEntrada(), solicitud.getFechaSalida(), ocupantes, LocalDateTime.now());
+            reserva.setSolicitudExterna(solicitud);
+            solicitud.setReserva(reserva);
+            aceptadas.agregarFinal(reserva);
+            return null;
+        } catch (ReservaSolapadaException | CapacidadExcedidaException | FechasInvalidasException e) {
             return registrarConflicto(solicitud, e.getMessage());
         }
+    }
 
-        if (apartamento.tieneSolapamiento(estancia)) {
-            return registrarConflicto(solicitud,
-                    "El apartamento " + apartamento.getCodigo()
-                            + " ya tiene una reserva activa que comparte alguna "
-                            + "noche con " + solicitud.getFechaEntrada()
-                            + " a " + solicitud.getFechaSalida());
+    /** El titular es el huésped con ese documento; si no existe, se registra con los datos de la solicitud. */
+    private Huesped titularDe(SolicitudExterna solicitud) {
+        String documento = solicitud.getDocumentoHuesped() == null || solicitud.getDocumentoHuesped().isBlank()
+                ? "EXT-" + solicitud.getCodigo() : solicitud.getDocumentoHuesped();
+        Huesped existente = sistema.buscarHuesped(documento);
+        if (existente != null) {
+            return existente;
         }
-
-        consecutivoReserva++;
-        Reserva reserva = new Reserva(
-                "EXT-" + consecutivoReserva,
-                LocalDateTime.now(),
-                null,
-                EstadoReserva.CONFIRMADA,
-                Canal.EXTERNA,
-                apartamento,
-                null,           // la plataforma externa no envía un perfil de huésped
-                estancia);
-        estancia.setReserva(reserva);
-        reserva.setSolicitudExterna(solicitud);
-        solicitud.setReserva(reserva);
-
-        apartamento.registrarReserva(reserva);
-        aceptadas.agregarFinal(reserva);
-        return null;
+        String nombre = solicitud.getNombreHuesped() == null || solicitud.getNombreHuesped().isBlank()
+                ? "Huésped de la plataforma externa" : solicitud.getNombreHuesped();
+        Huesped nuevo = new Huesped(nombre, documento, null, null, null, null);
+        sistema.registrarHuesped(nuevo);
+        return nuevo;
     }
 
     /** Procesa toda la cola en orden de llegada. */
