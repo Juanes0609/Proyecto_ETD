@@ -68,6 +68,7 @@ public class GestorCanalExterno {
         }
 
         Huesped titular = titularDe(solicitud);
+        boolean titularNuevo = sistema.buscarHuesped(titular.getDocumento()) == null;
         ListaDoblementeEnlazada<Ocupante> ocupantes = new ListaDoblementeEnlazada<>();
         // La plataforma no envía fechas de nacimiento: sin fecha se cobra como adulto.
         ocupantes.agregarFinal(new Ocupante(titular.getNombre(), titular.getDocumento(),
@@ -79,6 +80,9 @@ public class GestorCanalExterno {
         try {
             Reserva reserva = sistema.getReservas().crearReserva(Canal.EXTERNA, apartamento, titular,
                     solicitud.getFechaEntrada(), solicitud.getFechaSalida(), ocupantes, LocalDateTime.now());
+            if (titularNuevo) {
+                sistema.registrarHuesped(titular); // solo si la solicitud se aceptó
+            }
             reserva.setSolicitudExterna(solicitud);
             solicitud.setReserva(reserva);
             aceptadas.agregarFinal(reserva);
@@ -88,7 +92,10 @@ public class GestorCanalExterno {
         }
     }
 
-    /** El titular es el huésped con ese documento; si no existe, se registra con los datos de la solicitud. */
+    /**
+     * El titular es el huésped con ese documento; si no existe, se arma con los
+     * datos de la solicitud (se registra solo si la reserva se acepta).
+     */
     private Huesped titularDe(SolicitudExterna solicitud) {
         String documento = solicitud.getDocumentoHuesped() == null || solicitud.getDocumentoHuesped().isBlank()
                 ? "EXT-" + solicitud.getCodigo() : solicitud.getDocumentoHuesped();
@@ -98,9 +105,7 @@ public class GestorCanalExterno {
         }
         String nombre = solicitud.getNombreHuesped() == null || solicitud.getNombreHuesped().isBlank()
                 ? "Huésped de la plataforma externa" : solicitud.getNombreHuesped();
-        Huesped nuevo = new Huesped(nombre, documento, null, null, null, null);
-        sistema.registrarHuesped(nuevo);
-        return nuevo;
+        return new Huesped(nombre, documento, null, null, null, null);
     }
 
     /** Procesa toda la cola en orden de llegada. */
