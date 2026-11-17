@@ -264,49 +264,53 @@ public class GestorMapaEdificio {
     }
 
     /**
-     * 3. Agrupar apartamentos por bloque.
-     * Lo pide el rol Administrador: "agrupar por bloque".
+     * 3. Agrupar apartamentos por bloque (rol Administrador).
+     * Recorre el edificio con DFS desde {@code codigoInicio} y va metiendo cada
+     * apartamento en la lista de su bloque, en el orden en que el recorrido lo
+     * alcanza. Los que el DFS no alcanza (pasillo cerrado) se agregan al final
+     * de su bloque para que ningún apartamento quede por fuera.
      */
-    public ListaDoblementeEnlazada<ListaDoblementeEnlazada<NodoEdificio>>
-    agruparPorBloque() {
-
-        ListaDoblementeEnlazada<ListaDoblementeEnlazada<NodoEdificio>> grupos =
-                new ListaDoblementeEnlazada<>();
-
-        ListaDoblementeEnlazada<String> bloquesVistos =
-                new ListaDoblementeEnlazada<>();
-
-        for (Vertice<NodoEdificio> vertice : grafo.getVertices()) {
-            NodoEdificio nodo = vertice.getDato();
-
-            if (nodo.getApartamento() == null) {
-                continue; // solo apartamentos, no recepción / escaleras
+    public ListaDoblementeEnlazada<ListaDoblementeEnlazada<NodoEdificio>> agruparPorBloque(String codigoInicio) {
+        ListaDoblementeEnlazada<ListaDoblementeEnlazada<NodoEdificio>> grupos = new ListaDoblementeEnlazada<>();
+        ListaDoblementeEnlazada<NodoEdificio> agregados = new ListaDoblementeEnlazada<>();
+        if (codigoInicio != null && grafo.buscarVertice(codigoInicio) != null) {
+            for (NodoEdificio nodo : grafo.recorridoDFS(codigoInicio)) {
+                agregarAGrupo(grupos, agregados, nodo);
             }
-
-            String bloque = nodo.getApartamento().getBloque();
-
-            // Buscar si ya existe el grupo de ese bloque
-            ListaDoblementeEnlazada<NodoEdificio> grupo = null;
-            for (ListaDoblementeEnlazada<NodoEdificio> g : grupos) {
-                if (g.getTam() > 0
-                        && g.primero().getApartamento() != null
-                        && g.primero().getApartamento()
-                        .getBloque().equals(bloque)) {
-                    grupo = g;
-                    break;
-                }
-            }
-
-            if (grupo == null) {
-                grupo = new ListaDoblementeEnlazada<>();
-                grupos.agregarFinal(grupo);
-                bloquesVistos.agregarFinal(bloque);
-            }
-
-            grupo.agregarFinal(nodo);
         }
-
+        for (Vertice<NodoEdificio> vertice : grafo.getVertices()) {
+            if (!agregados.contiene(vertice.getDato())) {
+                agregarAGrupo(grupos, agregados, vertice.getDato());
+            }
+        }
         return grupos;
+    }
+
+    /** Agrupa desde el primer vértice registrado (normalmente la recepción). */
+    public ListaDoblementeEnlazada<ListaDoblementeEnlazada<NodoEdificio>> agruparPorBloque() {
+        return agruparPorBloque(grafo.getVertices().estaVacio() ? null
+                : grafo.getVertices().primero().getCodigo());
+    }
+
+    private void agregarAGrupo(ListaDoblementeEnlazada<ListaDoblementeEnlazada<NodoEdificio>> grupos,
+                               ListaDoblementeEnlazada<NodoEdificio> agregados, NodoEdificio nodo) {
+        if (nodo.getApartamento() == null) {
+            return; // solo apartamentos, no recepción, escaleras ni pasillos
+        }
+        String bloque = nodo.getApartamento().getBloque();
+        ListaDoblementeEnlazada<NodoEdificio> grupo = null;
+        for (ListaDoblementeEnlazada<NodoEdificio> g : grupos) {
+            if (g.primero().getApartamento().getBloque().equals(bloque)) {
+                grupo = g;
+                break;
+            }
+        }
+        if (grupo == null) {
+            grupo = new ListaDoblementeEnlazada<>();
+            grupos.agregarFinal(grupo);
+        }
+        grupo.agregarFinal(nodo);
+        agregados.agregarFinal(nodo);
     }
 
     public Grafo<NodoEdificio> getGrafo() {

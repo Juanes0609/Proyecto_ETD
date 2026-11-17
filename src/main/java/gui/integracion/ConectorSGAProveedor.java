@@ -353,6 +353,22 @@ public class ConectorSGAProveedor implements ConectorSGA {
         return codigos;
     }
 
+    /** Grupos por bloque del recorrido DFS del grafo ({@code GestorMapaEdificio.agruparPorBloque}). */
+    @Override
+    public Map<String, List<String>> apartaSuitesPorBloque() {
+        asegurarEdificio();
+        Map<String, List<String>> grupos = new LinkedHashMap<>();
+        for (ListaDoblementeEnlazada<NodoEdificio> grupo
+                : sistema.getMapa().agruparPorBloque(ConstructorEdificio.RECEPCION)) {
+            List<String> codigos = new ArrayList<>();
+            for (NodoEdificio n : grupo) {
+                codigos.add(n.getCodigo());
+            }
+            grupos.put(grupo.primero().getApartamento().getBloque(), codigos);
+        }
+        return grupos;
+    }
+
     // ---------- Preparación ----------
 
     @Override

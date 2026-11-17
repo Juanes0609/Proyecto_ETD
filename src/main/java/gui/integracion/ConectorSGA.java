@@ -319,6 +319,14 @@ public interface ConectorSGA {
         throw pendiente("alternarPasillo");
     }
 
+    /**
+     * Aparta-suites agrupados por bloque, en el orden en que los alcanza un
+     * recorrido DFS desde recepción (bloque → códigos).
+     */
+    default java.util.Map<String, List<String>> apartaSuitesPorBloque() {
+        throw pendiente("apartaSuitesPorBloque");
+    }
+
     /** Aparta-suites sin camino desde recepción con los pasillos actuales (BFS). */
     default List<String> apartaSuitesInalcanzables() {
         throw pendiente("apartaSuitesInalcanzables");

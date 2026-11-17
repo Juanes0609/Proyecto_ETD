@@ -183,7 +183,8 @@ public class VistaEdificio extends VistaBase {
                         panelInalcanzables),
                 FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Pasillos cerrados", null),
                         panelCerrados),
-                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Aparta-suites por bloque", null), panelBloque));
+                FabricaComponentesUI.crearTarjeta(FabricaComponentesUI.crearEncabezado("Aparta-suites por bloque",
+                        "En el orden en que los recorre un DFS desde recepción."), panelBloque));
         lateral.setPrefWidth(300);
         lateral.setMinWidth(260);
         HBox.setHgrow(lateral, Priority.ALWAYS);
@@ -760,17 +761,20 @@ public class VistaEdificio extends VistaBase {
             panelCerrados.getChildren().add(fila);
         }
 
+        // Grupos del recorrido DFS del grafo desde recepción (orden en que el recorrido los alcanza).
         panelBloque.getChildren().clear();
-        for (String b : bloquesDelEdificio()) {
-            if (filtroBloque != null && !filtroBloque.equals(b)) {
-                continue;
-            }
-            List<String> codigos = nodos.values().stream()
-                    .filter(n -> "APARTAMENTO".equals(n.tipo()) && b.equals(n.bloque()))
-                    .map(NodoEdificioDTO::codigo).sorted().toList();
-            panelBloque.getChildren().add(new VBox(2, FabricaComponentesUI.crearTexto("Bloque " + b, "campo-label"),
-                    FabricaComponentesUI.crearTextoSecundario(String.join(" · ", codigos))));
+        Map<String, List<String>> grupos = new java.util.TreeMap<>();
+        try {
+            grupos.putAll(conector().apartaSuitesPorBloque());
+        } catch (RuntimeException e) {
+            // sin datos del grafo: el panel queda vacío
         }
+        grupos.forEach((b, codigos) -> {
+            if (filtroBloque == null || filtroBloque.equals(b)) {
+                panelBloque.getChildren().add(new VBox(2, FabricaComponentesUI.crearTexto("Bloque " + b, "campo-label"),
+                        FabricaComponentesUI.crearTextoSecundario(String.join(" · ", codigos))));
+            }
+        });
     }
 
     private double x(NodoEdificioDTO n) {
