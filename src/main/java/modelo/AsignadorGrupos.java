@@ -41,7 +41,7 @@ public final class AsignadorGrupos {
             throw new CapacidadExcedidaException("No hay apartamentos disponibles para alojar al grupo");
         }
 
-        Apartamento[] arreglo = new Apartamento[disponibles.size()];
+        Apartamento[] arreglo = new Apartamento[disponibles.getTam()];
         int n = 0;
         for (Apartamento a : disponibles) {
             arreglo[n++] = a;

@@ -1,7 +1,6 @@
 package modelo;
 
-import java.util.ArrayList;
-import java.util.List;
+import estructuras.ListaDoblementeEnlazada;
 
 public class PruebasGestorMapaEdificio {
     private static int pruebasPasadas = 0;
@@ -68,14 +67,24 @@ public class PruebasGestorMapaEdificio {
         System.out.println("OK: " + mensaje);
     }
 
-    private static List<String> nombres(Iterable<NodoEdificio> recorrido) {
-        List<String> resultado = new ArrayList<>();
-
+    /** Nombres del recorrido separados por coma, para compararlos con lo esperado. */
+    private static String nombres(Iterable<NodoEdificio> recorrido) {
+        StringBuilder resultado = new StringBuilder();
         for (NodoEdificio nodo : recorrido) {
-            resultado.add(nodo.getNombre());
+            if (resultado.length() > 0) {
+                resultado.append(", ");
+            }
+            resultado.append(nodo.getNombre());
         }
+        return resultado.toString();
+    }
 
-        return resultado;
+    private static int cantidad(Iterable<NodoEdificio> recorrido) {
+        int n = 0;
+        for (NodoEdificio ignorado : recorrido) {
+            n++;
+        }
+        return n;
     }
 
     private static void probarAgregarUbicaciones() {
@@ -132,7 +141,7 @@ public class PruebasGestorMapaEdificio {
 
         verificar(
                 nombres(gestor.getGrafo().recorridoBFS("REC-01"))
-                        .equals(List.of("Recepción", "Escaleras", "Limpieza")),
+                        .equals("Recepción, Escaleras, Limpieza"),
                 "BFS recorre las ubicaciones por niveles"
         );
     }
@@ -142,7 +151,7 @@ public class PruebasGestorMapaEdificio {
 
         verificar(
                 nombres(gestor.getGrafo().recorridoDFS("REC-01"))
-                        .equals(List.of("Recepción", "Escaleras", "Limpieza")),
+                        .equals("Recepción, Escaleras, Limpieza"),
                 "DFS recorre las ubicaciones conectadas"
         );
     }
@@ -153,7 +162,7 @@ public class PruebasGestorMapaEdificio {
         verificar(
                 nombres(gestor.getGrafo().caminoMasCorto(
                         "REC-01", "LIM-01"))
-                        .equals(List.of("Recepción", "Escaleras", "Limpieza")),
+                        .equals("Recepción, Escaleras, Limpieza"),
                 "Dijkstra encuentra el camino más corto"
         );
     }
@@ -164,7 +173,7 @@ public class PruebasGestorMapaEdificio {
         verificar(
                 nombres(gestor.getGrafo().caminoMasCorto(
                         "REC-01", "REC-01"))
-                        .equals(List.of("Recepción")),
+                        .equals("Recepción"),
                 "Camino de un vértice hacia sí mismo"
         );
     }
@@ -218,7 +227,7 @@ public class PruebasGestorMapaEdificio {
         System.out.println("¿Se encontró la arista? " + deshabilitada);
 
         System.out.println("Camino después de deshabilitar:");
-        List<String> camino = nombres(
+        String camino = nombres(
                 gestor.getGrafo().caminoMasCorto("REC-01", "LIM-01")
         );
 
@@ -235,11 +244,10 @@ public class PruebasGestorMapaEdificio {
 
         gestor.getGrafo().eliminarArista(
                 gestor.getGrafo().buscarVertice("REC-01")
-                        .getListAristas().getInicio().getDato());
+                        .getListAristas().primero());
 
         verificar(
-                nombres(gestor.getGrafo().recorridoBFS("REC-01"))
-                        .size() < 3,
+                cantidad(gestor.getGrafo().recorridoBFS("REC-01")) < 3,
                 "Eliminar una arista modifica el recorrido"
         );
     }

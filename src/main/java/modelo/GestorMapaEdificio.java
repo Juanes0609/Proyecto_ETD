@@ -286,8 +286,8 @@ public class GestorMapaEdificio {
             ListaDoblementeEnlazada<NodoEdificio> grupo = null;
             for (ListaDoblementeEnlazada<NodoEdificio> g : grupos) {
                 if (g.getTam() > 0
-                        && g.getInicio().getDato().getApartamento() != null
-                        && g.getInicio().getDato().getApartamento()
+                        && g.primero().getApartamento() != null
+                        && g.primero().getApartamento()
                         .getBloque().equals(bloque)) {
                     grupo = g;
                     break;
