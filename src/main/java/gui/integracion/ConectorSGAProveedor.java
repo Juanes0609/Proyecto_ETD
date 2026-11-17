@@ -134,23 +134,17 @@ public class ConectorSGAProveedor implements ConectorSGA {
 
     /**
      * Fuera de servicio exige registrar el motivo y solo se permite si el aparta-suite
-     * no está ocupado ni en la cola de preparación.
+     * no está ocupado ni en preparación. Esas reglas viven en el modelo ({@code Apartamento}).
      */
     private void cambiarEstadoOperativo(Apartamento a, EstadoOperativo nuevo, String motivo) {
         if (nuevo == EstadoOperativo.FUERASERVICIO) {
-            if (motivo == null || motivo.isBlank()) {
-                throw new IllegalArgumentException("Indica el motivo por el que queda fuera de servicio.");
-            }
-            EstadoOperativo actual = a.getEstadoOperativo();
-            if (actual != EstadoOperativo.PREPARADO && actual != EstadoOperativo.FUERASERVICIO) {
-                throw new excepciones.TransicionEstadoInvalidaException(a.getNombre()
-                        + " está ocupado o en preparación: no puede quedar fuera de servicio todavía.");
-            }
-            a.setMotivoFueraServicio(motivo.trim());
+            a.ponerFueraDeServicio(motivo);
+        } else if (a.getEstadoOperativo() == EstadoOperativo.FUERASERVICIO) {
+            a.volverAServicio();
+            a.setEstadoOperativo(nuevo);
         } else {
-            a.setMotivoFueraServicio("");
+            a.setEstadoOperativo(nuevo);
         }
-        a.setEstadoOperativo(nuevo);
     }
 
     @Override

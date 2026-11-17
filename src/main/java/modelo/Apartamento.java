@@ -2,6 +2,8 @@ package modelo;
 
 import estructuras.ArbolBinarioBusqueda;
 import estructuras.ListaDoblementeEnlazada;
+import estructuras.NodoArbol;
+import excepciones.TransicionEstadoInvalidaException;
 
 import java.util.Objects;
 
@@ -189,26 +191,69 @@ public class Apartamento implements Comparable<Apartamento> {
     public ArbolBinarioBusqueda<Reserva> getReservasPorFecha() { return reservasPorFecha; }
     public int getCantidadReservas() { return reservas.getTam(); }
 
-    /** Detecta recursivamente, en el árbol por fecha, si se cruza alguna reserva activa. */
+    /**
+     * Detecta si la estancia choca con alguna reserva activa recorriendo de forma
+     * recursiva el árbol de reservas (ordenado por fecha de entrada), sin revisar
+     * todas las reservas: a la derecha de un nodo solo hay reservas que entran
+     * después que él, así que si ese nodo ya entra cuando la nueva estancia
+     * terminó, todo su subárbol derecho se descarta (poda).
+     */
     public boolean tieneSolapamiento(Estancia estancia) {
         if (estancia == null) {
             throw new IllegalArgumentException("La estancia es obligatoria");
         }
+        return choca(reservasPorFecha.getRaiz(), estancia);
+    }
 
-        Reserva existente = reservasPorFecha.existeSi(reserva -> {
-            if (reserva.getEstadoReserva() == null
-                    || !reserva.getEstadoReserva().esActiva()) {
-                return false;
-            }
+    private boolean choca(NodoArbol<Reserva> nodo, Estancia nueva) {
+        if (nodo == null) {
+            return false; // caso base: subárbol vacío
+        }
+        Reserva reserva = nodo.getDato();
+        Estancia otra = reserva.getEstancia();
+        boolean activa = reserva.getEstadoReserva() != null && reserva.getEstadoReserva().esActiva();
+        // Dos estancias comparten una noche si cada una entra antes de que la otra salga
+        // (la noche de salida no se ocupa).
+        if (activa && otra != null
+                && nueva.getFechaEntrada().isBefore(otra.getFechaSalida())
+                && nueva.getFechaSalida().isAfter(otra.getFechaEntrada())) {
+            return true;
+        }
+        // A la izquierda entran antes: una estancia larga todavía puede chocar.
+        if (choca(nodo.getIzquierdo(), nueva)) {
+            return true;
+        }
+        // Poda: si este nodo ya entra el día de salida (o después), los de la derecha también.
+        if (otra != null && !otra.getFechaEntrada().isBefore(nueva.getFechaSalida())) {
+            return false;
+        }
+        return choca(nodo.getDerecho(), nueva);
+    }
 
-            Estancia otra = reserva.getEstancia();
+    /**
+     * Deja el apartamento fuera de servicio. El motivo es obligatorio y no se
+     * puede hacer mientras hay huéspedes o se está preparando.
+     */
+    public void ponerFueraDeServicio(String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException("Indica el motivo por el que queda fuera de servicio");
+        }
+        if (estadoOperativo == EstadoOperativo.OCUPADO || estadoOperativo == EstadoOperativo.ENPREPARACION) {
+            throw new TransicionEstadoInvalidaException("El apartamento " + codigo + " está "
+                    + (estadoOperativo == EstadoOperativo.OCUPADO ? "ocupado" : "en preparación")
+                    + " y no puede quedar fuera de servicio");
+        }
+        this.estadoOperativo = EstadoOperativo.FUERASERVICIO;
+        this.motivoFueraServicio = motivo.trim();
+    }
 
-            return otra != null
-                    && estancia.getFechaEntrada().isBefore(otra.getFechaSalida())
-                    && estancia.getFechaSalida().isAfter(otra.getFechaEntrada());
-        });
-
-        return existente != null;
+    /** Vuelve a ponerlo en servicio: queda Preparado y se borra el motivo. */
+    public void volverAServicio() {
+        if (estadoOperativo != EstadoOperativo.FUERASERVICIO) {
+            throw new TransicionEstadoInvalidaException("El apartamento " + codigo + " no está fuera de servicio");
+        }
+        this.estadoOperativo = EstadoOperativo.PREPARADO;
+        this.motivoFueraServicio = null;
     }
 
     @Override

@@ -123,8 +123,10 @@ public class SistemaGestionAlojamiento {
 
         ListaDoblementeEnlazada<Apartamento> resultado = new ListaDoblementeEnlazada<>();
         for (Apartamento apartamento : apartamentos) {
+            // El estado operativo es el de hoy: un apartamento ocupado o en preparación
+            // hoy puede estar libre en otras fechas. Solo se descartan los fuera de servicio.
             if (apartamento.getCapacidadMaxima() >= personas
-                    && apartamento.getEstadoOperativo() == EstadoOperativo.PREPARADO
+                    && apartamento.getEstadoOperativo() != EstadoOperativo.FUERASERVICIO
                     && !apartamento.tieneSolapamiento(new Estancia(entrada, salida, null))) {
                 insertarOrdenado(resultado, apartamento, orden);
             }
@@ -140,7 +142,7 @@ public class SistemaGestionAlojamiento {
         ListaDoblementeEnlazada<Apartamento> libres = new ListaDoblementeEnlazada<>();
         Estancia estancia = new Estancia(entrada, salida, null);
         for (Apartamento apartamento : apartamentos) {
-            if (apartamento.getEstadoOperativo() == EstadoOperativo.PREPARADO
+            if (apartamento.getEstadoOperativo() != EstadoOperativo.FUERASERVICIO
                     && !apartamento.tieneSolapamiento(estancia)) {
                 libres.agregarFinal(apartamento);
             }
