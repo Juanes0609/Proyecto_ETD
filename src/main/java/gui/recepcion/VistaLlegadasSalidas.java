@@ -110,15 +110,29 @@ public class VistaLlegadasSalidas extends VistaBase {
                 FabricaComponentesUI.crearSeparador());
 
         switch (r.estado()) {
-            case "CONFIRMADA" -> agregarCheckIn(detalle, r, estadoSuite);
+            case "CONFIRMADA" -> {
+                agregarCheckIn(detalle, r, estadoSuite);
+                agregarCancelacion(detalle, r);
+            }
             case "EN_CURSO" -> {
                 detalle.getChildren().add(FabricaComponentesUI.crearTextoConIcono(Iconos.Icono.INFO,
                         "Al hacer check-out, el aparta-suite entra a la cola de preparación.", "campo-ayuda"));
                 detalle.getChildren().add(boton("Registrar check-out", () -> conector().registrarCheckOut(r.codigo()),
                         "Check-out de " + r.codigo() + " registrado. " + r.nombreApartaSuite() + " pasó a preparación."));
             }
-            default -> detalle.getChildren().add(FabricaComponentesUI.crearTextoConIcono(Iconos.Icono.RELOJ,
-                    "Esperando el pago del anticipo por el portal para confirmar la reserva.", "campo-ayuda"));
+            case "PENDIENTE" -> {
+                // El huésped puede pagar el anticipo en recepción en vez de hacerlo por el portal.
+                detalle.getChildren().add(FabricaComponentesUI.crearTextoConIcono(Iconos.Icono.RELOJ,
+                        "Pendiente del anticipo del 30 % (" + Formato.moneda(r.anticipoRequerido()) + ")"
+                                + (r.vence() == null ? "." : ". Si no se paga, se cancela sola el "
+                                + Formato.fechaHora(r.vence()) + "."), "campo-ayuda"));
+                detalle.getChildren().add(boton("Registrar anticipo y confirmar",
+                        () -> conector().pagarAnticipo(r.codigo()),
+                        "Anticipo registrado. La reserva " + r.codigo() + " quedó confirmada."));
+                agregarCancelacion(detalle, r);
+            }
+            default -> {
+            }
         }
         mostrarHoja("Reserva " + r.codigo(), detalle);
     }
@@ -145,6 +159,41 @@ public class VistaLlegadasSalidas extends VistaBase {
             noShow.setOnAction(e -> confirmarNoShow(detalle, noShow, r));
             detalle.getChildren().add(noShow);
         }
+    }
+
+    /** Cancelar es secundario y destructivo: primero muestra cuánto se devuelve y pide confirmar aquí mismo. */
+    private void agregarCancelacion(VBox detalle, ReservaDTO r) {
+        Button enlace = FabricaComponentesUI.crearEnlace("Cancelar la reserva", null);
+        enlace.setOnAction(e -> {
+            double[] devolucion = {0};
+            if (!notificador().ejecutarConManejo(() -> devolucion[0] = conector().calcularDevolucion(r.codigo()),
+                    null)) {
+                return;
+            }
+            Button confirmar = FabricaComponentesUI.crearBotonPeligro("Cancelar reserva", () -> {
+                if (notificador().ejecutarConManejo(() -> conector().cancelarReserva(r.codigo()),
+                        "Reserva " + r.codigo() + " cancelada. " + r.nombreApartaSuite()
+                                + " quedó libre para esas noches.")) {
+                    ocultarHoja();
+                    cargar();
+                }
+            });
+            VBox confirmacion = new VBox(10);
+            Button volver = FabricaComponentesUI.crearEnlace("No cancelar", () -> {
+                detalle.getChildren().set(detalle.getChildren().indexOf(confirmacion), enlace);
+                enlace.requestFocus();
+            });
+            HBox botones = new HBox(8, confirmar, volver);
+            botones.setAlignment(Pos.CENTER_LEFT);
+            String texto = devolucion[0] > 0
+                    ? "Se le devolverán " + Formato.moneda(devolucion[0]) + " de lo pagado y las noches quedan libres."
+                    : "No hay devolución (faltan menos de 2 días o no se ha pagado nada). Las noches quedan libres.";
+            confirmacion.getChildren().addAll(FabricaComponentesUI.crearTextoConIcono(Iconos.Icono.ALERTA, texto,
+                    "campo-ayuda"), botones);
+            detalle.getChildren().set(detalle.getChildren().indexOf(enlace), confirmacion);
+            confirmar.requestFocus();
+        });
+        detalle.getChildren().add(enlace);
     }
 
     /** Reemplaza el enlace por la confirmación inline (sin ventanas emergentes). */
