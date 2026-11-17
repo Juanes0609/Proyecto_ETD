@@ -154,7 +154,15 @@ public class VentanaPrincipalSGA extends BorderPane implements ContenedorVistas 
         lblDescripcion.getStyleClass().add("texto-secundario");
         VBox titulos = new VBox(0, lblTitulo, lblDescripcion);
 
-        HBox barra = new HBox(titulos, FabricaComponentesUI.crearEspaciador());
+        // "Atrás" desapila la vista anterior de la Pila del GestorNavegacion; solo aparece si hay historial.
+        Button atras = FabricaComponentesUI.crearBotonIcono(Iconos.Icono.ATRAS, "Volver a la sección anterior",
+                navegacion::retroceder);
+        atras.visibleProperty().bind(navegacion.puedeRetrocederProperty());
+        atras.managedProperty().bind(atras.visibleProperty());
+        HBox encabezado = new HBox(8, atras, titulos);
+        encabezado.setAlignment(Pos.CENTER_LEFT);
+
+        HBox barra = new HBox(encabezado, FabricaComponentesUI.crearEspaciador());
         barra.getStyleClass().add("barra-superior");
         barra.getChildren().addAll(crearUsuario(), FabricaComponentesUI.conIcono(
                 FabricaComponentesUI.crearEnlace("Cerrar sesión", contexto::cerrarSesion), Iconos.Icono.SALIR));
