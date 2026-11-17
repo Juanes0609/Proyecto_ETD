@@ -1,0 +1,81 @@
+# ============================================================================
+# Escenario de prueba inicial del SGA — Aparta-Suites UQ
+# ============================================================================
+# Archivo plano: una línea por registro, campos separados por "|".
+# Las líneas que empiezan por "#" y las vacías se ignoran.
+#
+# Las fechas de reservas, solicitudes y preparación son RELATIVAS A HOY
+# (+20 = dentro de 20 días, -30 = hace 30 días, 0 = hoy) para que el
+# escenario siempre tenga llegadas hoy, estancias en curso y reservas futuras.
+# Las demás fechas van en formato aaaa-mm-dd.
+#
+# Los pasillos del edificio no se escriben aquí: ConstructorEdificio arma el
+# grafo a partir de los bloques y pisos de los apartamentos (recepción, cuarto
+# de aseo, un pasillo y una escalera por bloque). Con PASILLO_CERRADO se pueden
+# dejar pasillos cerrados desde el inicio.
+# ============================================================================
+
+# APARTAMENTO|código|nombre|bloque|piso|dormitorios|capacidad|tarifa baja|tarifa media|tarifa alta|estado|motivo fuera de servicio|descripción|características (separadas por coma)
+APARTAMENTO|A-101|Suite Cocora|A|1|1|2|85000|98000|125000|PREPARADO||Vista al valle de Cocora, cama queen y cocineta equipada.|Vista al valle,Cama queen,Cocineta,Wi-Fi,Agua caliente
+APARTAMENTO|A-102|Suite Palma de Cera|A|1|2|4|78000|90000|115000|PREPARADO||Dos habitaciones con baño privado y sala con chimenea.|Chimenea,2 baños,Cocina completa,Wi-Fi
+APARTAMENTO|A-201|Suite Barbas|A|2|2|5|72000|84000|108000|PREPARADO||Ideal para familias: litera para niños y balcón amplio.|Balcón,Litera,Cocina completa,Wi-Fi,Parqueadero
+APARTAMENTO|A-202|Suite Mirador|A|2|1|3|90000|104000|132000|PENDIENTE_PREPARACION||Ventanal panorámico hacia las montañas y bañera.|Ventanal panorámico,Bañera,Cama king,Wi-Fi
+APARTAMENTO|B-101|Suite Bosque de Niebla|B|1|2|4|75000|88000|110000|OCUPADO||Rodeada de jardín, con terraza privada y hamaca.|Terraza privada,Hamaca,Cocineta,Wi-Fi
+APARTAMENTO|B-102|Suite Quindío|B|1|3|6|68000|80000|102000|PREPARADO||La más amplia del bloque B, pensada para grupos.|3 habitaciones,2 baños,Comedor para 6,Parqueadero,Wi-Fi
+APARTAMENTO|B-201|Suite Cafetal|B|2|1|2|82000|95000|120000|PREPARADO||Decoración con maderas locales y vista a los cafetales.|Vista a cafetales,Cama queen,Cafetera,Wi-Fi
+APARTAMENTO|B-202|Suite Arriero|B|2|2|4|76000|89000|112000|FUERA_DE_SERVICIO|Mantenimiento del calentador de agua|Estilo tradicional paisa con balcón de madera.|Balcón,Cocina completa,Wi-Fi
+APARTAMENTO|C-101|Suite Guadua|C|1|3|7|65000|78000|99000|PENDIENTE_PREPARACION||Construida en guadua, con zona de BBQ y jardín propio.|Zona BBQ,Jardín,3 habitaciones,Parqueadero,Wi-Fi
+APARTAMENTO|C-201|Suite Colibrí|C|2|1|2|88000|101000|128000|PREPARADO||Pequeña y luminosa, perfecta para parejas.|Jacuzzi,Cama queen,Desayuno incluido,Wi-Fi
+
+# TEMPORADA|tipo (BAJA, MEDIA o ALTA)|inicio|fin   (las noches sin temporada se cobran como BAJA)
+TEMPORADA|MEDIA|2026-10-01|2026-11-30
+TEMPORADA|ALTA|2026-12-15|2027-01-15
+TEMPORADA|MEDIA|2027-02-01|2027-03-15
+TEMPORADA|ALTA|2027-03-20|2027-04-05
+TEMPORADA|ALTA|2027-06-15|2027-07-31
+
+# HUESPED|documento|nombre|fecha de nacimiento|teléfono|correo
+HUESPED|1094000001|Ana María Gómez|1995-03-12|300 123 4567|huesped@demo.co
+HUESPED|1094000002|Juan Pablo Pérez|1988-07-02|311 222 3344|juan.perez@correo.com
+HUESPED|1094000003|María José López|1992-11-20|320 555 1212|mjlopez@correo.com
+HUESPED|1094000004|Pedro Antonio Ruiz|1979-01-05|315 777 8899|pedro.ruiz@correo.com
+
+# FAVORITO|documento del huésped|código del apartamento
+FAVORITO|1094000001|A-202
+FAVORITO|1094000001|C-201
+
+# EMPLEADO|documento|nombre|horario   (el orden de las líneas es el orden de la rotación de turnos)
+EMPLEADO|41900001|Laura Ríos|06:00 – 14:00
+EMPLEADO|41900002|Andrés Castaño|14:00 – 22:00
+EMPLEADO|41900003|Sofía Marín|22:00 – 06:00
+
+# CUENTA|correo|clave|rol (HUESPED, RECEPCIONISTA o ADMINISTRADOR)|nombre visible|documento
+CUENTA|huesped@demo.co|1234|HUESPED|Ana María Gómez|1094000001
+CUENTA|recepcion@demo.co|1234|RECEPCIONISTA|Laura Ríos|41900001
+CUENTA|admin@demo.co|1234|ADMINISTRADOR|Carlos Mejía|41900099
+
+# RESERVA|documento del titular|apartamento|entrada (días)|salida (días)|canal|estado|personas|hora de llegada (HH:mm, opcional)
+# MOVIMIENTO|tipo (CARGO o PAGO)|concepto|monto   -> se agrega al folio de la RESERVA anterior y se puede deshacer
+RESERVA|1094000001|A-101|+20|+23|PORTAL|PENDIENTE|1|
+RESERVA|1094000001|B-201|-30|-27|PORTAL|FINALIZADA|1|
+RESERVA|1094000002|A-201|0|+3|DIRECTA|CONFIRMADA|3|15:00
+RESERVA|1094000003|B-101|-2|+1|DIRECTA|EN_CURSO|2|
+MOVIMIENTO|PAGO|Pago en recepción|200000
+MOVIMIENTO|CARGO|Restaurante · cena|86000
+RESERVA|1094000004|C-101|0|+2|EXTERNA|CONFIRMADA|5|16:30
+
+# SOLICITUD|id|nombre del huésped|documento|apartamento|entrada (días)|salida (días)|personas|recibida hace (minutos)
+SOLICITUD|EXT-01|Lucía Fernández|52800011|A-101|+21|+24|2|50
+SOLICITUD|EXT-02|Tomás Herrera|79100022|B-102|+5|+8|4|20
+
+# PREPARACION|apartamento|en cola desde hace (horas)   (deben estar en estado PENDIENTE_PREPARACION)
+PREPARACION|A-202|3
+PREPARACION|C-101|1
+
+# TIEMPO_PREPARACION|minutos   (historial de preparaciones ya terminadas, para el promedio del reporte)
+TIEMPO_PREPARACION|42
+TIEMPO_PREPARACION|55
+TIEMPO_PREPARACION|38
+TIEMPO_PREPARACION|47
+
+# PASILLO_CERRADO|nodo origen|nodo destino   (ninguno al inicio; ejemplo: PASILLO_CERRADO|P-A|ESC-A)

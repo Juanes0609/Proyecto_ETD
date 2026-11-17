@@ -4,6 +4,7 @@ import gui.integracion.AlmacenSGA.Cuenta;
 import gui.integracion.AlmacenSGA.Instantanea;
 import gui.integracion.AlmacenSGA.Orden;
 import gui.integracion.dto.ApartaSuiteDTO;
+import gui.integracion.dto.ConexionDTO;
 import gui.integracion.dto.EmpleadoDTO;
 import gui.integracion.dto.HuespedDTO;
 import gui.integracion.dto.MovimientoFolioDTO;
@@ -13,19 +14,30 @@ import gui.integracion.dto.SolicitudExternaDTO;
 import gui.integracion.dto.TemporadaDTO;
 import gui.integracion.dto.UsuarioDTO;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Datos de prueba con los que arranca la aplicación la primera vez (o al pulsar
- * «Cargar escenario»): 10 aparta-suites en 3 bloques, huéspedes, reservas en
- * distintos estados, temporadas, recepcionistas, cola de preparación y
- * solicitudes del canal externo.
+ * Escenario de prueba inicial, leído del archivo plano
+ * {@code src/main/resources/datos/escenario_inicial.txt}: apartamentos,
+ * temporadas, huéspedes, favoritos, empleados, cuentas, reservas con su folio,
+ * solicitudes del canal externo, cola de preparación y pasillos cerrados. Los
+ * pasillos del edificio los arma {@code ConstructorEdificio} a partir de los
+ * bloques y pisos.
+ * <p>
+ * Se carga la primera vez que se abre la aplicación y cada vez que se pulsa
+ * «Cargar escenario». El formato de cada línea está explicado en el propio archivo.
  * <p>
  * Cuentas de prueba, todas con la clave {@value #CLAVE_PRUEBA}:
  * {@code huesped@demo.co}, {@code recepcion@demo.co} y {@code admin@demo.co}.
@@ -33,139 +45,127 @@ import java.util.Map;
 public final class EscenarioInicialSGA {
 
     public static final String CLAVE_PRUEBA = "1234";
+    static final String RECURSO = "/datos/escenario_inicial.txt";
 
     private EscenarioInicialSGA() {
     }
 
     static Instantanea crear() {
-        LocalDate hoy = LocalDate.now();
-        LocalDateTime ahora = LocalDateTime.now();
-
-        List<ApartaSuiteDTO> suites = List.of(
-                suite("A-101", "Suite Cocora", "A", 1, 1, 2, 85_000, 98_000, 125_000, "PREPARADO",
-                        "Vista al valle de Cocora, cama queen y cocineta equipada.",
-                        "Vista al valle", "Cama queen", "Cocineta", "Wi-Fi", "Agua caliente"),
-                suite("A-102", "Suite Palma de Cera", "A", 1, 2, 4, 78_000, 90_000, 115_000, "PREPARADO",
-                        "Dos habitaciones con baño privado y sala con chimenea.",
-                        "Chimenea", "2 baños", "Cocina completa", "Wi-Fi"),
-                suite("A-201", "Suite Barbas", "A", 2, 2, 5, 72_000, 84_000, 108_000, "PREPARADO",
-                        "Ideal para familias: litera para niños y balcón amplio.",
-                        "Balcón", "Litera", "Cocina completa", "Wi-Fi", "Parqueadero"),
-                suite("A-202", "Suite Mirador", "A", 2, 1, 3, 90_000, 104_000, 132_000, "PENDIENTE_PREPARACION",
-                        "Ventanal panorámico hacia las montañas y bañera.",
-                        "Ventanal panorámico", "Bañera", "Cama king", "Wi-Fi"),
-                suite("B-101", "Suite Bosque de Niebla", "B", 1, 2, 4, 75_000, 88_000, 110_000, "OCUPADO",
-                        "Rodeada de jardín, con terraza privada y hamaca.",
-                        "Terraza privada", "Hamaca", "Cocineta", "Wi-Fi"),
-                suite("B-102", "Suite Quindío", "B", 1, 3, 6, 68_000, 80_000, 102_000, "PREPARADO",
-                        "La más amplia del bloque B, pensada para grupos.",
-                        "3 habitaciones", "2 baños", "Comedor para 6", "Parqueadero", "Wi-Fi"),
-                suite("B-201", "Suite Cafetal", "B", 2, 1, 2, 82_000, 95_000, 120_000, "PREPARADO",
-                        "Decoración con maderas locales y vista a los cafetales.",
-                        "Vista a cafetales", "Cama queen", "Cafetera", "Wi-Fi"),
-                suite("B-202", "Suite Arriero", "B", 2, 2, 4, 76_000, 89_000, 112_000, "FUERA_DE_SERVICIO",
-                        "Estilo tradicional paisa con balcón de madera.",
-                        "Balcón", "Cocina completa", "Wi-Fi"),
-                suite("C-101", "Suite Guadua", "C", 1, 3, 7, 65_000, 78_000, 99_000, "PENDIENTE_PREPARACION",
-                        "Construida en guadua, con zona de BBQ y jardín propio.",
-                        "Zona BBQ", "Jardín", "3 habitaciones", "Parqueadero", "Wi-Fi"),
-                suite("C-201", "Suite Colibrí", "C", 2, 1, 2, 88_000, 101_000, 128_000, "PREPARADO",
-                        "Pequeña y luminosa, perfecta para parejas.",
-                        "Jacuzzi", "Cama queen", "Desayuno incluido", "Wi-Fi"));
-
-        HuespedDTO ana = new HuespedDTO("1094000001", "Ana María Gómez", LocalDate.of(1995, 3, 12),
-                "300 123 4567", "huesped@demo.co");
-        List<HuespedDTO> huespedes = List.of(ana,
-                new HuespedDTO("1094000002", "Juan Pablo Pérez", LocalDate.of(1988, 7, 2), "311 222 3344",
-                        "juan.perez@correo.com"),
-                new HuespedDTO("1094000003", "María José López", LocalDate.of(1992, 11, 20), "320 555 1212",
-                        "mjlopez@correo.com"),
-                new HuespedDTO("1094000004", "Pedro Antonio Ruiz", LocalDate.of(1979, 1, 5), "315 777 8899",
-                        "pedro.ruiz@correo.com"));
-
-        Map<String, Cuenta> cuentas = new LinkedHashMap<>();
-        cuentas.put("huesped@demo.co", new Cuenta(CLAVE_PRUEBA,
-                new UsuarioDTO("huesped@demo.co", ana.nombre(), Rol.HUESPED, ana.documento())));
-        cuentas.put("recepcion@demo.co", new Cuenta(CLAVE_PRUEBA,
-                new UsuarioDTO("recepcion@demo.co", "Laura Ríos", Rol.RECEPCIONISTA, "41900001")));
-        cuentas.put("admin@demo.co", new Cuenta(CLAVE_PRUEBA,
-                new UsuarioDTO("admin@demo.co", "Carlos Mejía", Rol.ADMINISTRADOR, "41900099")));
-
-        int[] consecutivo = {1000};
-        List<ConectorSGAHibrido.Reserva> reservas = new ArrayList<>();
-        reservas.add(reserva(consecutivo, ana, "A-101", hoy.plusDays(20), hoy.plusDays(23), "PORTAL", "PENDIENTE",
-                1, null));
-        reservas.add(reserva(consecutivo, ana, "B-201", hoy.minusDays(30), hoy.minusDays(27), "PORTAL", "FINALIZADA",
-                1, null));
-        reservas.add(reserva(consecutivo, huespedes.get(1), "A-201", hoy, hoy.plusDays(3), "DIRECTA", "CONFIRMADA",
-                3, LocalTime.of(15, 0)));
-        ConectorSGAHibrido.Reserva enCurso = reserva(consecutivo, huespedes.get(2), "B-101", hoy.minusDays(2),
-                hoy.plusDays(1), "DIRECTA", "EN_CURSO", 2, null);
-        movimientoDeshacible(enCurso, "PAGO", "Pago en recepción", 200_000, ahora);
-        movimientoDeshacible(enCurso, "CARGO", "Restaurante · cena", 86_000, ahora);
-        reservas.add(enCurso);
-        reservas.add(reserva(consecutivo, huespedes.get(3), "C-101", hoy, hoy.plusDays(2), "EXTERNA", "CONFIRMADA",
-                5, LocalTime.of(16, 30)));
-
-        return new Instantanea(
-                suites,
-                huespedes,
-                Map.of(ana.documento(), List.of("A-202", "C-201")),
-                cuentas,
-                reservas,
-                List.of(new TemporadaDTO("MEDIA", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 11, 30)),
-                        new TemporadaDTO("ALTA", LocalDate.of(2026, 12, 15), LocalDate.of(2027, 1, 15)),
-                        new TemporadaDTO("MEDIA", LocalDate.of(2027, 2, 1), LocalDate.of(2027, 3, 15)),
-                        new TemporadaDTO("ALTA", LocalDate.of(2027, 3, 20), LocalDate.of(2027, 4, 5)),
-                        new TemporadaDTO("ALTA", LocalDate.of(2027, 6, 15), LocalDate.of(2027, 7, 31))),
-                List.of(new EmpleadoDTO("41900001", "Laura Ríos", "06:00 – 14:00"),
-                        new EmpleadoDTO("41900002", "Andrés Castaño", "14:00 – 22:00"),
-                        new EmpleadoDTO("41900003", "Sofía Marín", "22:00 – 06:00")),
-                null,
-                List.of(new SolicitudExternaDTO("EXT-01", "Lucía Fernández", "52800011", "A-101",
-                                hoy.plusDays(21), hoy.plusDays(24), 2, ahora.minusMinutes(50)),
-                        new SolicitudExternaDTO("EXT-02", "Tomás Herrera", "79100022", "B-102",
-                                hoy.plusDays(5), hoy.plusDays(8), 4, ahora.minusMinutes(20))),
-                List.of(),
-                List.of(new Orden("A-202", ahora.minusHours(3)), new Orden("C-101", ahora.minusHours(1))),
-                List.of(),
-                List.of(42L, 55L, 38L, 47L),
-                List.of(),
-                consecutivo[0]);
+        try (InputStream entrada = EscenarioInicialSGA.class.getResourceAsStream(RECURSO)) {
+            if (entrada == null) {
+                throw new IllegalStateException("No se encontró el escenario inicial " + RECURSO + ".");
+            }
+            return leer(new BufferedReader(new InputStreamReader(entrada, StandardCharsets.UTF_8)));
+        } catch (IOException e) {
+            throw new IllegalStateException("No se pudo leer el escenario inicial: " + e.getMessage(), e);
+        }
     }
 
-    private static ApartaSuiteDTO suite(String codigo, String nombre, String bloque, int piso, int dormitorios,
-                                        int capacidad, double baja, double media, double alta, String estado,
-                                        String descripcion, String... caracteristicas) {
-        return new ApartaSuiteDTO(codigo, nombre, bloque, piso, dormitorios, capacidad, baja, media, alta,
-                List.of(caracteristicas), descripcion, estado, null,
-                "FUERA_DE_SERVICIO".equals(estado) ? "Mantenimiento del calentador de agua" : "");
+    /** Lee el escenario línea por línea; un error indica la línea y el motivo. */
+    static Instantanea leer(BufferedReader lector) throws IOException {
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime ahora = LocalDateTime.now();
+        List<ApartaSuiteDTO> suites = new ArrayList<>();
+        List<HuespedDTO> huespedes = new ArrayList<>();
+        Map<String, List<String>> favoritos = new LinkedHashMap<>();
+        Map<String, Cuenta> cuentas = new LinkedHashMap<>();
+        List<ConectorSGAHibrido.Reserva> reservas = new ArrayList<>();
+        List<TemporadaDTO> temporadas = new ArrayList<>();
+        List<EmpleadoDTO> empleados = new ArrayList<>();
+        List<SolicitudExternaDTO> solicitudes = new ArrayList<>();
+        List<Orden> preparacion = new ArrayList<>();
+        List<Long> minutos = new ArrayList<>();
+        List<ConexionDTO> cerrados = new ArrayList<>();
+        int consecutivo = 1000;
+
+        String linea;
+        int numero = 0;
+        while ((linea = lector.readLine()) != null) {
+            numero++;
+            String texto = linea.strip();
+            if (texto.isEmpty() || texto.startsWith("#")) {
+                continue;
+            }
+            String[] c = texto.split("\\|", -1);
+            try {
+                switch (c[0]) {
+                    case "APARTAMENTO" -> suites.add(new ApartaSuiteDTO(c[1], c[2], c[3], entero(c[4]),
+                            entero(c[5]), entero(c[6]), decimal(c[7]), decimal(c[8]), decimal(c[9]),
+                            lista(c[13]), c[12], c[10], null, c[11]));
+                    case "TEMPORADA" -> temporadas.add(new TemporadaDTO(c[1], LocalDate.parse(c[2]),
+                            LocalDate.parse(c[3])));
+                    case "HUESPED" -> huespedes.add(new HuespedDTO(c[1], c[2], fecha(c[3]), vacio(c[4]),
+                            vacio(c[5])));
+                    case "FAVORITO" -> favoritos.computeIfAbsent(c[1], d -> new ArrayList<>()).add(c[2]);
+                    case "EMPLEADO" -> empleados.add(new EmpleadoDTO(c[1], c[2], c[3]));
+                    case "CUENTA" -> cuentas.put(c[1].toLowerCase(), new Cuenta(c[2],
+                            new UsuarioDTO(c[1].toLowerCase(), c[4], Rol.valueOf(c[3]), c[5])));
+                    case "RESERVA" -> reservas.add(reserva("R-" + (++consecutivo), c, hoy, huespedes));
+                    case "MOVIMIENTO" -> {
+                        if (reservas.isEmpty()) {
+                            throw new IllegalArgumentException("MOVIMIENTO sin una RESERVA antes");
+                        }
+                        MovimientoFolioDTO m = new MovimientoFolioDTO(c[1], c[2], decimal(c[3]), ahora);
+                        reservas.getLast().movimientos.add(m);
+                        reservas.getLast().deshacibles.add(m);
+                    }
+                    case "SOLICITUD" -> solicitudes.add(new SolicitudExternaDTO(c[1], c[2], c[3], c[4],
+                            hoy.plusDays(entero(c[5])), hoy.plusDays(entero(c[6])), entero(c[7]),
+                            ahora.minusMinutes(entero(c[8]))));
+                    case "PREPARACION" -> preparacion.add(new Orden(c[1], ahora.minusHours(entero(c[2]))));
+                    case "TIEMPO_PREPARACION" -> minutos.add((long) entero(c[1]));
+                    case "PASILLO_CERRADO" -> cerrados.add(new ConexionDTO(c[1], c[2], 0, false));
+                    default -> throw new IllegalArgumentException("tipo de registro desconocido «" + c[0] + "»");
+                }
+            } catch (RuntimeException e) {
+                throw new IllegalStateException("Escenario inicial, línea " + numero + ": " + e.getMessage(), e);
+            }
+        }
+        return new Instantanea(suites, huespedes, favoritos, cuentas, reservas, temporadas, empleados, null,
+                solicitudes, new ArrayList<>(), preparacion, new ArrayList<>(), minutos, cerrados, consecutivo);
     }
 
     /** El total y el cargo de alojamiento los calcula el conector al cargar (con las temporadas). */
-    private static ConectorSGAHibrido.Reserva reserva(int[] consecutivo, HuespedDTO titular, String suite,
-                                                      LocalDate entrada, LocalDate salida, String canal,
-                                                      String estado, int personas, LocalTime hora) {
+    private static ConectorSGAHibrido.Reserva reserva(String codigo, String[] c, LocalDate hoy,
+                                                      List<HuespedDTO> huespedes) {
+        HuespedDTO titular = huespedes.stream().filter(h -> h.documento().equals(c[1])).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("el titular " + c[1]
+                        + " no está registrado (escribe su línea HUESPED antes)"));
         ConectorSGAHibrido.Reserva r = new ConectorSGAHibrido.Reserva();
-        r.codigo = "R-" + (++consecutivo[0]);
+        r.codigo = codigo;
         r.documentoTitular = titular.documento();
-        r.codigoSuite = suite;
-        r.entrada = entrada;
-        r.salida = salida;
-        r.canal = canal;
-        r.estado = estado;
-        r.horaLlegada = hora;
+        r.codigoSuite = c[2];
+        r.entrada = hoy.plusDays(entero(c[3]));
+        r.salida = hoy.plusDays(entero(c[4]));
+        r.canal = c[5];
+        r.estado = c[6];
+        r.horaLlegada = c[8].isBlank() ? null : LocalTime.parse(c[8]);
         r.ocupantes.add(new OcupanteDTO(titular.nombre(), titular.documento(), titular.fechaNacimiento()));
-        for (int i = 2; i <= personas; i++) {
+        for (int i = 2; i <= entero(c[7]); i++) {
             r.ocupantes.add(new OcupanteDTO("Acompañante " + i, null, null));
         }
         return r;
     }
 
-    private static void movimientoDeshacible(ConectorSGAHibrido.Reserva r, String tipo, String concepto,
-                                             double monto, LocalDateTime fecha) {
-        MovimientoFolioDTO m = new MovimientoFolioDTO(tipo, concepto, monto, fecha);
-        r.movimientos.add(m);
-        r.deshacibles.add(m);
+    /** Acepta "+20", "-30" y "0". */
+    private static int entero(String texto) {
+        return Integer.parseInt(texto.strip().replace("+", ""));
+    }
+
+    private static double decimal(String texto) {
+        return Double.parseDouble(texto.strip());
+    }
+
+    private static LocalDate fecha(String texto) {
+        return texto.isBlank() ? null : LocalDate.parse(texto.strip());
+    }
+
+    private static String vacio(String texto) {
+        return texto.isBlank() ? null : texto.strip();
+    }
+
+    private static List<String> lista(String texto) {
+        return texto.isBlank() ? List.of()
+                : Arrays.stream(texto.split(",")).map(String::strip).filter(s -> !s.isEmpty()).toList();
     }
 }
