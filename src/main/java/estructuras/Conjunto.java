@@ -15,7 +15,7 @@ public class Conjunto<T> implements Iterable<T> {
 
     public boolean eliminar(T elemento) { return elementos.eliminar(elemento); }
     public boolean contiene(T elemento) { return elementos.contiene(elemento); }
-    public int tamanio() { return elementos.getTam(); }
+    public int getTam() { return elementos.getTam(); }
     public boolean estaVacio() { return elementos.estaVacio(); }
 
     public Conjunto<T> union(Conjunto<T> otro) {

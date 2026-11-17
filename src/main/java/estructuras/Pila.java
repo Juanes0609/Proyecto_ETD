@@ -45,7 +45,7 @@ public class Pila<T> implements Iterable<T> {
         return tope == null;
     }
 
-    public int tamanio() {
+    public int getTam() {
         return tamanio;
     }
 
