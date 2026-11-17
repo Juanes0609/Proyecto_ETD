@@ -96,6 +96,8 @@ public class ConectorSGAHibrido extends ConectorSGAProveedor {
 
     /** Datos guardables de una reserva; su par en el modelo se arma con {@link #reflejarEnModelo}. */
     static final class Reserva implements Serializable {
+        /** Fijo para que los datos guardados sigan cargando aunque la clase cambie. */
+        private static final long serialVersionUID = 1L;
         String codigo, documentoTitular, codigoSuite, canal, estado;
         LocalDate entrada, salida;
         LocalTime horaLlegada;
