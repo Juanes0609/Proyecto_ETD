@@ -252,8 +252,8 @@ public class SistemaGestionAlojamiento {
         }
     }
 
-    public int cantidadHuespedes() { return huespedes.size(); }
-    public int cantidadApartamentos() { return apartamentos.size(); }
-    public int cantidadEmpleados() { return empleados.size(); }
+    public int cantidadHuespedes() { return huespedes.getTam(); }
+    public int cantidadApartamentos() { return apartamentos.getTam(); }
+    public int cantidadEmpleados() { return empleados.getTam(); }
 }
 

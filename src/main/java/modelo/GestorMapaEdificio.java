@@ -1,5 +1,8 @@
 package modelo;
 
+import estructuras.Arista;
+import estructuras.Vertice;
+
 import estructuras.Grafo;
 import estructuras.ListaDoblementeEnlazada;
 

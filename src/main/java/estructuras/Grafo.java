@@ -1,6 +1,4 @@
 package estructuras;
-import modelo.Arista;
-import modelo.Vertice;
 
 
 import java.util.Iterator;

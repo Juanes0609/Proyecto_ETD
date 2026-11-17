@@ -1,4 +1,6 @@
-package modelo;
+package pruebas;
+
+import modelo.*;
 
 import estructuras.ListaDoblementeEnlazada;
 

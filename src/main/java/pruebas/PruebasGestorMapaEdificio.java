@@ -1,4 +1,9 @@
-package modelo;
+package pruebas;
+
+import modelo.*;
+
+import estructuras.Arista;
+import estructuras.Vertice;
 
 import estructuras.ListaDoblementeEnlazada;
 

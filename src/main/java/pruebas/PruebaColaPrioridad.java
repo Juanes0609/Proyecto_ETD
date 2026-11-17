@@ -1,4 +1,6 @@
-package modelo;
+package pruebas;
+
+import modelo.*;
 
 import estructuras.ColaPrioridad;
 
@@ -8,9 +10,7 @@ public class PruebaColaPrioridad {
     public static void main(String[] args) {
 
         ColaPrioridad<OrdenPreparacion> cola =
-                new ColaPrioridad<>(
-                        new ComparadorPrioridadPreparacion()
-                );
+                new ColaPrioridad<>(GestorPreparacion.PRIORIDAD);
 
         LocalDateTime ahora = LocalDateTime.now();
 

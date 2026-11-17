@@ -4,7 +4,6 @@ import estructuras.Conjunto;
 import estructuras.ListaDoblementeEnlazada;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public class Huesped extends Persona implements Comparable<Huesped> {
     private LocalDate fechaNacimiento;

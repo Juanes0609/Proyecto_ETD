@@ -12,7 +12,7 @@ import gui.integracion.dto.RutaDTO;
 import gui.integracion.dto.SolicitudExternaDTO;
 import gui.integracion.dto.TemporadaDTO;
 import modelo.Apartamento;
-import modelo.Arista;
+import estructuras.Arista;
 import modelo.AsignadorGrupos;
 import modelo.Estancia;
 import modelo.ConflictoCanal;
@@ -27,7 +27,7 @@ import modelo.TipoTemporada;
 import modelo.ReporteEstadisticas;
 import modelo.SistemaGestionAlojamiento;
 import modelo.SolicitudExterna;
-import modelo.Vertice;
+import estructuras.Vertice;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

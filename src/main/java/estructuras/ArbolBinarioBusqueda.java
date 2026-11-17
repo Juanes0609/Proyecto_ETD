@@ -20,7 +20,7 @@ public class ArbolBinarioBusqueda<T extends Comparable<? super T>>
         return raiz;
     }
 
-    public int size() {
+    public int getTam() {
         return tamanio;
     }
 
@@ -325,15 +325,4 @@ public class ArbolBinarioBusqueda<T extends Comparable<? super T>>
         return sucesor == null ? null : sucesor.getDato();
     }
 
-    public void setRaiz(NodoArbol<T> raiz) {
-        this.raiz = raiz;
-    }
-
-    public int getTamanio() {
-        return tamanio;
-    }
-
-    public void setTamanio(int tamanio) {
-        this.tamanio = tamanio;
-    }
 }

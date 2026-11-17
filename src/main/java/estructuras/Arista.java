@@ -1,4 +1,4 @@
-package modelo;
+package estructuras;
 
 public class Arista<T> {
     private Vertice<T> origen;

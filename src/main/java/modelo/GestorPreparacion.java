@@ -8,6 +8,20 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 
 public class GestorPreparacion {
+
+    /**
+     * Prioridad de la cola de preparación, combinando comparadores con thenComparing:
+     * primero los que tienen entrada hoy (prioridad 1), luego por hora estimada de
+     * llegada (sin hora al final), después por antigüedad en la cola y por código.
+     */
+    public static final Comparator<OrdenPreparacion> PRIORIDAD =
+            Comparator.comparingInt(OrdenPreparacion::getPrioridad)
+                    .thenComparing(OrdenPreparacion::getHoraLlegadaEstimada,
+                            Comparator.nullsLast(Comparator.naturalOrder()))
+                    .thenComparing(OrdenPreparacion::getFechaCreacion,
+                            Comparator.nullsLast(Comparator.naturalOrder()))
+                    .thenComparing(OrdenPreparacion::getCodigo);
+
     private final ColaPrioridad<OrdenPreparacion> cola;
     private final ListaDoblementeEnlazada<OrdenPreparacion> enPreparacion;
     private final ListaDoblementeEnlazada<OrdenPreparacion> terminadas;
@@ -22,19 +36,7 @@ public class GestorPreparacion {
         this.enPreparacion = new ListaDoblementeEnlazada<>();
         this.terminadas = new ListaDoblementeEnlazada<>();
 
-        // Comparator obligatorio: entrada hoy primero, luego hora de llegada
-        // (thenComparing), y por último el código para desempatar.
-        Comparator<OrdenPreparacion> comparador =
-                Comparator.comparingInt(OrdenPreparacion::getPrioridad)
-                        .thenComparing(
-                                OrdenPreparacion::getHoraLlegadaEstimada,
-                                Comparator.nullsLast(Comparator.naturalOrder())
-                        )
-                        .thenComparing(OrdenPreparacion::getFechaCreacion,
-                                Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(OrdenPreparacion::getCodigo);
-
-        this.cola = new ColaPrioridad<>(comparador);
+        this.cola = new ColaPrioridad<>(PRIORIDAD);
     }
 
     /**

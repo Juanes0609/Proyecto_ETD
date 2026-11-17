@@ -1,8 +1,6 @@
-package modelo;
+package estructuras;
 
-import estructuras.ListaDoblementeEnlazada;
 
-import java.util.List;
 
 public class Vertice<T> {
     private T dato;
