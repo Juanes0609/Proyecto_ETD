@@ -1,6 +1,7 @@
 package modelo;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class GestorEstadisticas {
     private final SistemaGestionAlojamiento sistema;
@@ -37,7 +38,7 @@ public class GestorEstadisticas {
 
         ReporteEstadisticas reporte = new ReporteEstadisticas();
         calcularApartamentosYOcupacion(reporte, desde, hasta, temporadas);
-        calcularReservasEIngresos(reporte);
+        calcularReservasEIngresos(reporte, desde, hasta);
 
         reporte.setConflictosDeCanal(canalExterno.getConflictos().getTam());
         reporte.setTiempoPromedioPreparacion(preparacion.minutosPromedioPreparacion());
@@ -122,7 +123,7 @@ public class GestorEstadisticas {
 
     // ---------- reservas por canal / estado e ingresos ----------
 
-    private void calcularReservasEIngresos(ReporteEstadisticas reporte) {
+    private void calcularReservasEIngresos(ReporteEstadisticas reporte, LocalDate desde, LocalDate hasta) {
         int[] porCanal = new int[Canal.values().length];
         int[] porEstado = new int[EstadoReserva.values().length];
         double ingresos = 0;
@@ -136,7 +137,7 @@ public class GestorEstadisticas {
                 if (reserva.getEstadoReserva() != null) {
                     porEstado[reserva.getEstadoReserva().ordinal()]++;
                 }
-                ingresos += ingresosDe(reserva);
+                ingresos += ingresosDe(reserva, desde, hasta);
             }
         }
 
@@ -152,17 +153,23 @@ public class GestorEstadisticas {
     }
 
     /**
-     * Dinero realmente cobrado en el folio: pagos menos reembolsos.
-     * Deshacer un pago crea un CARGO "Reverso de ..." (se resta); deshacer un
-     * cargo crea un PAGO "Reverso de ..." (no es ingreso, se ignora).
+     * Dinero realmente cobrado en el folio dentro del periodo [desde, hasta):
+     * pagos menos reembolsos, según la fecha de cada movimiento.
+     * Deshacer un pago crea un CARGO marcado como reverso (se resta); deshacer un
+     * cargo crea un PAGO marcado como reverso (no es ingreso, se ignora).
      */
-    private double ingresosDe(Reserva reserva) {
+    private double ingresosDe(Reserva reserva, LocalDate desde, LocalDate hasta) {
         if (reserva.getFolio() == null) {
             return 0;
         }
+        LocalDateTime inicio = desde.atStartOfDay();
+        LocalDateTime fin = hasta.atStartOfDay();
         double neto = 0;
         for (MovimientoFolio m : reserva.getFolio().getListMovimientosFolio()) {
-            boolean esReverso = m.getConcepto() != null && m.getConcepto().startsWith("Reverso");
+            if (m.getFechaHora() == null || m.getFechaHora().isBefore(inicio) || !m.getFechaHora().isBefore(fin)) {
+                continue; // fuera del periodo del reporte
+            }
+            boolean esReverso = m.esReverso();
             if (m.getTipoMovimiento() == TipoMovimientoFolio.PAGO && !esReverso) {
                 neto += m.getValor();
             } else if (m.getTipoMovimiento() == TipoMovimientoFolio.CARGO && esReverso) {
